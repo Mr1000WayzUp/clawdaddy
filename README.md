@@ -29,6 +29,15 @@ ClawDaddy is a comprehensive AI-powered assistant built with OpenClaw framework,
 
 ### Installation
 
+**Option 1: Quick Start Script (Recommended)**
+```bash
+git clone https://github.com/Mr1000WayzUp/clawdaddy.git
+cd clawdaddy
+./start.sh
+```
+
+**Option 2: Manual Setup**
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/Mr1000WayzUp/clawdaddy.git
