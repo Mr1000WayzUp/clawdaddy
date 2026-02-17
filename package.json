@@ -1,7 +1,7 @@
 {
   "name": "clawdaddy",
   "version": "1.0.0",
-  "description": "my everything assisant",
+  "description": "AI-powered assistant for small business automation",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
