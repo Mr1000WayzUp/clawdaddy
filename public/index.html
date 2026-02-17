@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawDaddy - AI Assistant Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦞 ClawDaddy AI Assistant</h1>
+            <p class="subtitle">Your everything assistant for small business</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="workflows">Workflows</button>
+            <button class="tab-btn" data-tab="skills">Skills</button>
+            <button class="tab-btn" data-tab="outputs">Outputs</button>
+            <button class="tab-btn" data-tab="config">Configuration</button>
+        </nav>
+
+        <!-- Workflows Tab -->
+        <div id="workflows" class="tab-content active">
+            <h2>Execute Workflow</h2>
+            <div class="card">
+                <label for="workflow-request">What would you like me to do?</label>
+                <textarea id="workflow-request" rows="4" placeholder="E.g., Create a marketing strategy for a new product launch, Research competitors in the SaaS space, Generate social media content about AI..."></textarea>
+                <button id="execute-btn" class="btn btn-primary">Execute</button>
+            </div>
+
+            <div id="workflow-result" class="result-container" style="display: none;">
+                <h3>Result</h3>
+                <div id="workflow-result-content" class="result-card"></div>
+            </div>
+        </div>
+
+        <!-- Skills Tab -->
+        <div id="skills" class="tab-content">
+            <h2>Available Skills</h2>
+            <div id="skills-list" class="skills-grid">
+                <p>Loading skills...</p>
+            </div>
+
+            <div class="card">
+                <h3>Execute Specific Skill</h3>
+                <select id="skill-select">
+                    <option value="">Select a skill...</option>
+                </select>
+                <textarea id="skill-input" rows="4" placeholder='Enter parameters as JSON, e.g., {"task": "Create a blog post", "topic": "AI trends"}'></textarea>
+                <button id="execute-skill-btn" class="btn btn-primary">Execute Skill</button>
+            </div>
+
+            <div id="skill-result" class="result-container" style="display: none;">
+                <h3>Skill Result</h3>
+                <div id="skill-result-content" class="result-card"></div>
+            </div>
+        </div>
+
+        <!-- Outputs Tab -->
+        <div id="outputs" class="tab-content">
+            <h2>Recent Outputs</h2>
+            <button id="refresh-outputs-btn" class="btn">Refresh</button>
+            <div id="outputs-list" class="outputs-container">
+                <p>Loading outputs...</p>
+            </div>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="config" class="tab-content">
+            <h2>API Configuration</h2>
+            <div class="config-status" id="config-status">
+                <p>Loading configuration...</p>
+            </div>
+
+            <div class="card">
+                <h3>Update API Keys</h3>
+                <div class="form-group">
+                    <label for="anthropic-key">Anthropic API Key (Claude)</label>
+                    <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+                    <button class="btn btn-small" onclick="updateApiKey('anthropic')">Update</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="openai-key">OpenAI API Key</label>
+                    <input type="password" id="openai-key" placeholder="sk-...">
+                    <button class="btn btn-small" onclick="updateApiKey('openai')">Update</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="twitter-key">Twitter API Key</label>
+                    <input type="password" id="twitter-key" placeholder="Your Twitter API key">
+                    <button class="btn btn-small" onclick="updateApiKey('twitter')">Update</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>About</h3>
+                <p>ClawDaddy is an AI-powered assistant built with OpenClaw framework for small business automation.</p>
+                <p><strong>Capabilities:</strong></p>
+                <ul>
+                    <li>Marketing strategy and content creation</li>
+                    <li>Research and competitive analysis</li>
+                    <li>Social media management</li>
+                    <li>Lead management and qualification</li>
+                    <li>Browser automation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
