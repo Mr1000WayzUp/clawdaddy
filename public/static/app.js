@@ -1,37 +1,28 @@
-/* =====================================================
-   LocalWeb CRM – Full Frontend Application
-   ===================================================== */
+/* ===================================================
+   LocalWeb CRM - Frontend Application
+   =================================================== */
 
-const API = axios.create({ baseURL: '/api' });
-
-// ===== STATE =====
-let currentPage = 'dashboard';
-let allLeads = [], allClients = [], allProposals = [], allTasks = [];
-let dashCharts = {};
-
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-  navigateTo('dashboard');
-  setupGlobalSearch();
-  setInterval(refreshBadges, 30000);
-});
+const API = '/api'
+let currentPage = 'dashboard'
+let charts = {}
 
 // ===== NAVIGATION =====
 function navigateTo(page) {
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const navEl = document.getElementById('nav-' + page);
-  if (navEl) navEl.classList.add('active');
+  currentPage = page
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
+  const navEl = document.getElementById('nav-' + page)
+  if (navEl) navEl.classList.add('active')
 
   const titles = {
     dashboard: 'Dashboard', leads: 'Leads', pipeline: 'Pipeline',
     clients: 'Clients', proposals: 'Proposals', tasks: 'Tasks',
-    revenue: 'Revenue & Analytics', scraper: 'Lead Finder'
-  };
-  document.getElementById('page-title').textContent = titles[page] || page;
+    revenue: 'Revenue Report', scraper: 'Lead Finder'
+  }
+  document.getElementById('page-title').textContent = titles[page] || page
 
-  const content = document.getElementById('main-content');
-  content.innerHTML = '<div class="flex items-center justify-center h-64"><div class="spinner"></div></div>';
+  // destroy existing charts to avoid canvas reuse errors
+  Object.values(charts).forEach(ch => { try { ch.destroy() } catch(e){} })
+  charts = {}
 
   const pages = {
     dashboard: renderDashboard,
@@ -42,1130 +33,487 @@ function navigateTo(page) {
     tasks: renderTasks,
     revenue: renderRevenue,
     scraper: renderScraper,
-  };
-  if (pages[page]) pages[page]();
-  refreshBadges();
+  }
+  if (pages[page]) pages[page]()
 }
 
-// ===== BADGES =====
-async function refreshBadges() {
+// ===== HELPERS =====
+function fmt$(n) { return '$' + (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) }
+function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) }
+function fmtDateTime(d) { if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) }
+function timeAgo(d) {
+  const diff = Date.now() - new Date(d).getTime()
+  const m = Math.floor(diff/60000), h = Math.floor(m/60), day = Math.floor(h/24)
+  if (day>0) return day+'d ago'; if (h>0) return h+'h ago'; if (m>0) return m+'m ago'; return 'just now'
+}
+function escHtml(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function statusBadge(s) { return `<span class="badge badge-${s}">${s.replace(/_/g,' ')}</span>` }
+function priorityBadge(p) { return `<span class="badge badge-${p}">${p}</span>` }
+function industryIcon(ind) {
+  const icons = { 'Home Services':'wrench','Restaurant':'utensils','Salon':'scissors','Auto Repair':'car','Retail':'store','Healthcare':'heartbeat','Legal':'balance-scale','Fitness':'dumbbell','Education':'graduation-cap','Other':'building' }
+  return icons[ind] || 'building'
+}
+function packageColor(tier) {
+  if(tier==='Premium') return 'text-yellow-400'
+  if(tier==='Professional') return 'text-blue-400'
+  return 'text-green-400'
+}
+
+async function api(method, path, data) {
   try {
-    const [leadsRes, tasksRes] = await Promise.all([
-      API.get('/leads?status=new'),
-      API.get('/tasks?status=pending')
-    ]);
-    const newLeads = leadsRes.data.length;
-    const pendingTasks = tasksRes.data.length;
-
-    const lc = document.getElementById('nav-leads-count');
-    if (lc) { lc.textContent = newLeads; lc.classList.toggle('hidden', newLeads === 0); }
-    const tc = document.getElementById('nav-tasks-count');
-    if (tc) { tc.textContent = pendingTasks; tc.classList.toggle('hidden', pendingTasks === 0); }
-  } catch(e) {}
+    const opts = { method, headers: {'Content-Type':'application/json'} }
+    if (data) opts.body = JSON.stringify(data)
+    const res = await fetch(API + path, opts)
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || 'Request failed') }
+    return await res.json()
+  } catch(e) { showToast(e.message, 'error'); throw e }
 }
 
-// ===== GLOBAL SEARCH =====
-function setupGlobalSearch() {
-  const input = document.getElementById('global-search');
-  let debounce;
-  input.addEventListener('input', (e) => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      const q = e.target.value.trim();
-      if (q.length > 1) performGlobalSearch(q);
-    }, 350);
-  });
+function showToast(msg, type='info') {
+  const toast = document.getElementById('toast')
+  const inner = document.getElementById('toast-inner')
+  const icons = { success:'check-circle', error:'times-circle', info:'info-circle' }
+  inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium border toast-${type}`
+  inner.innerHTML = `<i class="fas fa-${icons[type]}"></i><span>${escHtml(msg)}</span>`
+  toast.classList.remove('hidden')
+  clearTimeout(toast._t)
+  toast._t = setTimeout(() => toast.classList.add('hidden'), 3500)
 }
 
-async function performGlobalSearch(q) {
-  try {
-    const [leadsRes, clientsRes] = await Promise.all([
-      API.get(`/leads?search=${encodeURIComponent(q)}`),
-      API.get(`/clients?search=${encodeURIComponent(q)}`)
-    ]);
-    // Navigate to leads if results found
-    if (leadsRes.data.length > 0 || clientsRes.data.length > 0) {
-      navigateTo('leads');
-      setTimeout(() => {
-        const s = document.getElementById('leads-search');
-        if (s) { s.value = q; filterLeads(); }
-      }, 300);
-    }
-  } catch(e) {}
-}
+function closeModal(id) { document.getElementById(id).classList.add('hidden') }
+function openModal(id)  { document.getElementById(id).classList.remove('hidden') }
 
-// =====================================================
-// DASHBOARD
-// =====================================================
+function setContent(html) { document.getElementById('main-content').innerHTML = html }
+
+// ===== DASHBOARD =====
 async function renderDashboard() {
-  try {
-    const [summaryRes, statusRes, industryRes, activityRes, revenueRes] = await Promise.all([
-      API.get('/analytics/summary'),
-      API.get('/analytics/leads-by-status'),
-      API.get('/analytics/leads-by-industry'),
-      API.get('/analytics/recent-activity'),
-      API.get('/analytics/revenue-by-month'),
-    ]);
-    const s = summaryRes.data;
-    const byStatus = statusRes.data;
-    const byIndustry = industryRes.data;
-    const recentActivity = activityRes.data;
-    const revenueByMonth = revenueRes.data;
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const [stats, byStatus, byIndustry, recentActivity, pendingTasks] = await Promise.all([
+    api('GET','/analytics/summary'),
+    api('GET','/analytics/leads-by-status'),
+    api('GET','/analytics/leads-by-industry'),
+    api('GET','/analytics/recent-activity'),
+    api('GET','/tasks?status=pending'),
+  ])
 
-    document.getElementById('main-content').innerHTML = `
-      <!-- KPI Row -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        ${statCard('Total Leads', s.leads.total, 'fas fa-map-marker-alt', 'blue', `${s.leads.new} new`)}
-        ${statCard('Active Clients', s.clients.active, 'fas fa-users', 'green', `${s.clients.total} total`)}
-        ${statCard('Total Revenue', '$' + fmt(s.revenue.total), 'fas fa-dollar-sign', 'emerald', '+$' + fmt(s.revenue.monthly) + '/mo recurring')}
-        ${statCard('Conversion Rate', s.leads.conversionRate + '%', 'fas fa-chart-line', 'indigo', `${s.leads.won} won / ${s.leads.lost} lost`)}
+  // update nav badges
+  const newCount = stats.leads.new
+  const taskCount = stats.tasks.pending
+  const nc = document.getElementById('nav-leads-count')
+  const tc = document.getElementById('nav-tasks-count')
+  if(nc){ nc.textContent=newCount; nc.classList.toggle('hidden', newCount===0) }
+  if(tc){ tc.textContent=taskCount; tc.classList.toggle('hidden', taskCount===0) }
+
+  const convRate = stats.leads.conversionRate
+  setContent(`
+    <div class="space-y-6">
+      <!-- Welcome banner -->
+      <div class="bg-gradient-to-r from-blue-900/40 to-indigo-900/30 border border-blue-800/40 rounded-2xl p-5 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white">Welcome back! 👋</h2>
+          <p class="text-blue-300 text-sm mt-1">Here's your business overview for today</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-blue-400 font-semibold uppercase tracking-wide">Monthly Recurring</p>
+          <p class="text-3xl font-bold text-green-400">${fmt$(stats.revenue.monthly)}<span class="text-sm text-gray-400">/mo</span></p>
+        </div>
       </div>
 
-      <!-- Second KPI Row -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        ${statCard('Pipeline (In Progress)', s.leads.contacted, 'fas fa-stream', 'violet', 'Contacted + Demo + Proposal')}
-        ${statCard('Open Proposals', s.proposals.sent, 'fas fa-file-invoice-dollar', 'amber', `${s.proposals.accepted} accepted`)}
-        ${statCard('Monthly Recurring', '$' + fmt(s.revenue.monthly), 'fas fa-sync-alt', 'teal', '$' + fmt(s.revenue.annualRecurring) + '/yr ARR')}
-        ${statCard('Pending Tasks', s.tasks.pending, 'fas fa-tasks', s.tasks.overdue > 0 ? 'red' : 'slate', s.tasks.overdue > 0 ? s.tasks.overdue + ' overdue' : 'All on track')}
+      <!-- KPI Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        ${kpiCard('Total Leads','map-marker-alt',stats.leads.total,'blue',`${stats.leads.new} new`)}
+        ${kpiCard('Active Clients','users',stats.clients.active,'green',`${stats.clients.total} total`)}
+        ${kpiCard('Total Revenue','dollar-sign',fmt$(stats.revenue.total),'emerald',`${fmt$(stats.revenue.monthly)}/mo recurring`)}
+        ${kpiCard('Conversion Rate','chart-line',convRate+'%','purple',`${stats.leads.won} won · ${stats.leads.lost} lost`)}
       </div>
 
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <!-- Charts row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Pipeline funnel -->
         <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-funnel-dollar mr-2 text-blue-400"></i>Lead Pipeline</h3>
-          <div id="pipeline-funnel" class="space-y-3"></div>
-        </div>
-        <!-- Revenue chart -->
-        <div class="card lg:col-span-2">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-chart-bar mr-2 text-green-400"></i>Monthly Revenue</h3>
-          <div class="chart-wrapper" style="height:200px">
-            <canvas id="revenueChart"></canvas>
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-stream text-blue-400 text-sm"></i>Lead Pipeline</h3>
+          <div class="space-y-3">
+            ${renderPipelineFunnel(byStatus)}
           </div>
         </div>
-      </div>
-
-      <!-- Bottom Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <!-- Industry breakdown -->
+        <!-- Industry chart -->
         <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-industry mr-2 text-purple-400"></i>Leads by Industry</h3>
-          <div class="chart-wrapper" style="height:200px">
-            <canvas id="industryChart"></canvas>
-          </div>
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-building text-indigo-400 text-sm"></i>Leads by Industry</h3>
+          <div class="chart-wrapper" style="height:220px"><canvas id="industryChart"></canvas></div>
         </div>
-        <!-- Recent Activity -->
-        <div class="card lg:col-span-2">
+        <!-- Tasks summary -->
+        <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-white text-sm"><i class="fas fa-bolt mr-2 text-yellow-400"></i>Recent Activity</h3>
+            <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-tasks text-orange-400 text-sm"></i>Upcoming Tasks</h3>
+            <button onclick="navigateTo('tasks')" class="text-xs text-blue-400 hover:text-blue-300">View all</button>
           </div>
-          <div class="space-y-1 max-h-52 overflow-y-auto pr-1">
-            ${recentActivity.slice(0, 12).map(a => activityItem(a)).join('') || '<p class="text-muted text-center py-4">No activity yet</p>'}
+          <div class="space-y-2">
+            ${pendingTasks.slice(0,5).map(t=>`
+              <div class="flex items-start gap-3 p-2.5 rounded-lg bg-gray-900/50 hover:bg-gray-900 cursor-pointer transition-colors" onclick="showEditTaskModal(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+                <div class="mt-0.5">${priorityDot(t.priority)}</div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-white truncate">${escHtml(t.title)}</p>
+                  <p class="text-xs text-gray-500">${t.due_date ? fmtDate(t.due_date) : 'No due date'}</p>
+                </div>
+                <button onclick="event.stopPropagation();completeTask(${t.id})" class="btn-icon btn-sm flex-shrink-0" title="Mark done"><i class="fas fa-check text-green-400"></i></button>
+              </div>
+            `).join('') || `<div class="text-center py-6 text-gray-600 text-sm"><i class="fas fa-check-circle text-2xl mb-2 block text-green-700"></i>All caught up!</div>`}
           </div>
         </div>
       </div>
-    `;
 
-    // Pipeline funnel
-    const statusOrder = ['new', 'contacted', 'demo_sent', 'proposal_sent', 'won', 'lost'];
-    const statusColors = { new:'#3b82f6', contacted:'#8b5cf6', demo_sent:'#a78bfa', proposal_sent:'#c4b5fd', won:'#10b981', lost:'#ef4444' };
-    const statusMap = {};
-    byStatus.forEach(r => statusMap[r.status] = r.count);
-    const total = s.leads.total || 1;
-    const funnelContainer = document.getElementById('pipeline-funnel');
-    funnelContainer.innerHTML = statusOrder.map(st => {
-      const cnt = statusMap[st] || 0;
-      const pct = Math.round((cnt / total) * 100);
-      return `<div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="font-medium" style="color:${statusColors[st]}">${st.replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase())}</span>
-          <span class="text-gray-400">${cnt} (${pct}%)</span>
+      <!-- Bottom row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Proposals stats -->
+        <div class="card">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-file-invoice-dollar text-yellow-400 text-sm"></i>Proposals Overview</h3>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="bg-gray-900 rounded-xl p-3">
+              <p class="text-2xl font-bold text-white">${stats.proposals.total}</p>
+              <p class="text-xs text-gray-500 mt-1">Total</p>
+            </div>
+            <div class="bg-blue-900/30 rounded-xl p-3">
+              <p class="text-2xl font-bold text-blue-400">${stats.proposals.sent}</p>
+              <p class="text-xs text-gray-500 mt-1">Sent</p>
+            </div>
+            <div class="bg-green-900/30 rounded-xl p-3">
+              <p class="text-2xl font-bold text-green-400">${stats.proposals.accepted}</p>
+              <p class="text-xs text-gray-500 mt-1">Accepted</p>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Acceptance rate</span>
+              <span>${stats.proposals.total>0?Math.round(stats.proposals.accepted/stats.proposals.total*100):0}%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill bg-gradient-to-r from-green-600 to-emerald-400" style="width:${stats.proposals.total>0?Math.round(stats.proposals.accepted/stats.proposals.total*100):0}%"></div></div>
+          </div>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${pct}%;background:${statusColors[st]}"></div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-history text-gray-400 text-sm"></i>Recent Activity</h3>
+          </div>
+          <div class="space-y-0 max-h-48 overflow-y-auto">
+            ${recentActivity.slice(0,8).map(a => activityItem(a)).join('') || '<p class="text-gray-600 text-sm text-center py-4">No activity yet</p>'}
+          </div>
         </div>
-      </div>`;
-    }).join('');
+      </div>
+    </div>
+  `)
 
-    // Revenue chart
-    const months = revenueByMonth.map(r => r.month ? r.month.slice(0,7) : '');
-    const revenues = revenueByMonth.map(r => r.revenue || 0);
-    renderChart('revenueChart', 'bar', months, revenues, '#10b981', 'Revenue ($)');
-
-    // Industry chart
-    renderChart('industryChart', 'doughnut',
-      byIndustry.map(r => r.industry),
-      byIndustry.map(r => r.count),
-      ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'],
-      'Leads'
-    );
-
-  } catch(e) {
-    console.error(e);
-    document.getElementById('main-content').innerHTML = errorState('Failed to load dashboard');
+  // Render industry doughnut
+  const iCtx = document.getElementById('industryChart')
+  if(iCtx && byIndustry.length) {
+    charts.industry = new Chart(iCtx, {
+      type:'doughnut',
+      data: {
+        labels: byIndustry.map(x=>x.industry),
+        datasets:[{ data: byIndustry.map(x=>x.count), backgroundColor:['#3b82f6','#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444'], borderWidth:0, hoverOffset:6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#9ca3af', boxWidth:10, padding:10, font:{size:11} } } }, cutout:'65%' }
+    })
   }
 }
 
-function statCard(label, value, icon, color, sub) {
-  const colors = {
-    blue:'from-blue-500 to-blue-700', green:'from-green-500 to-emerald-600',
-    emerald:'from-emerald-400 to-green-600', indigo:'from-indigo-500 to-indigo-700',
-    violet:'from-violet-500 to-purple-700', amber:'from-amber-400 to-orange-500',
-    teal:'from-teal-400 to-cyan-600', red:'from-red-500 to-rose-700',
-    slate:'from-slate-500 to-slate-700'
-  };
-  return `<div class="stat-card">
-    <div class="flex items-start justify-between">
-      <div>
-        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">${label}</p>
-        <p class="text-2xl font-bold text-white">${value}</p>
-        ${sub ? `<p class="text-xs text-gray-500 mt-1">${sub}</p>` : ''}
+function kpiCard(label, icon, value, color, sub) {
+  const colors = { blue:'text-blue-400 bg-blue-900/30', green:'text-green-400 bg-green-900/30', emerald:'text-emerald-400 bg-emerald-900/30', purple:'text-purple-400 bg-purple-900/30' }
+  const [tc,bc] = (colors[color]||'text-gray-400 bg-gray-800').split(' ')
+  return `
+    <div class="stat-card flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl ${bc} flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-${icon} ${tc} text-lg"></i>
       </div>
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${colors[color]||colors.blue} flex items-center justify-center shadow-lg flex-shrink-0">
-        <i class="${icon} text-white text-sm"></i>
+      <div class="min-w-0">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">${label}</p>
+        <p class="text-2xl font-bold text-white mt-0.5">${value}</p>
+        <p class="text-xs text-gray-500 mt-0.5 truncate">${sub}</p>
       </div>
-    </div>
-  </div>`;
+    </div>`
+}
+
+function renderPipelineFunnel(byStatus) {
+  const order = ['new','contacted','demo_sent','proposal_sent','won','lost']
+  const colors = { new:'bg-blue-600', contacted:'bg-indigo-500', demo_sent:'bg-violet-500', proposal_sent:'bg-purple-500', won:'bg-green-500', lost:'bg-red-600' }
+  const map = {}; byStatus.forEach(x => map[x.status]=x.count)
+  const total = Object.values(map).reduce((a,b)=>a+Number(b),0) || 1
+  return order.map(s => {
+    const count = map[s]||0
+    const pct = Math.round(count/total*100)
+    return `<div>
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-gray-400 capitalize">${s.replace(/_/g,' ')}</span>
+        <span class="text-white font-semibold">${count}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${colors[s]||'bg-gray-500'}" style="width:${pct}%"></div></div>
+    </div>`
+  }).join('')
+}
+
+function priorityDot(p) {
+  const c = { high:'bg-red-500', medium:'bg-orange-400', low:'bg-green-500' }
+  return `<span class="inline-block w-2 h-2 rounded-full ${c[p]||'bg-gray-400'} mt-1.5"></span>`
 }
 
 function activityItem(a) {
-  const icons = {
-    lead_created:'fa-plus', status_change:'fa-exchange-alt', note_added:'fa-sticky-note',
-    client_created:'fa-user-plus', proposal_sent:'fa-paper-plane', proposal_created:'fa-file-alt'
-  };
-  const colors = {
-    lead_created:'bg-blue-900 text-blue-400', status_change:'bg-purple-900 text-purple-400',
-    note_added:'bg-yellow-900 text-yellow-400', client_created:'bg-green-900 text-green-400',
-    proposal_sent:'bg-indigo-900 text-indigo-400', proposal_created:'bg-violet-900 text-violet-400'
-  };
-  const icon = icons[a.action] || 'fa-circle';
-  const color = colors[a.action] || 'bg-gray-800 text-gray-400';
+  const icons = { lead_created:'plus-circle text-blue-400', status_change:'exchange-alt text-purple-400', note_added:'sticky-note text-yellow-400', client_created:'user-plus text-green-400', proposal_sent:'paper-plane text-indigo-400', proposal_created:'file-plus text-indigo-400' }
+  const icon = icons[a.action] || 'circle text-gray-500'
   return `<div class="timeline-item">
-    <div class="timeline-dot ${color}"><i class="fas ${icon}"></i></div>
-    <div class="min-w-0">
-      <p class="text-xs text-gray-300 leading-snug">${a.description || a.action}</p>
-      <p class="text-xs text-gray-600 mt-0.5">${timeAgo(a.created_at)}</p>
+    <div class="timeline-dot bg-gray-900"><i class="fas fa-${icon.split(' ')[0]} ${icon.split(' ')[1]||''} text-xs"></i></div>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm text-gray-300 truncate">${escHtml(a.description||a.action)}</p>
+      <p class="text-xs text-gray-600">${timeAgo(a.created_at)}</p>
     </div>
-  </div>`;
+  </div>`
 }
 
-function renderChart(canvasId, type, labels, data, color, label) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-  if (dashCharts[canvasId]) dashCharts[canvasId].destroy();
-  const isDonut = type === 'doughnut';
-  dashCharts[canvasId] = new Chart(ctx, {
-    type,
-    data: {
-      labels,
-      datasets: [{
-        label,
-        data,
-        backgroundColor: Array.isArray(color) ? color.map(c => c + 'cc') : (isDonut ? labels.map((_, i) => ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'][i%8] + 'cc') : color + '33'),
-        borderColor: Array.isArray(color) ? color : color,
-        borderWidth: isDonut ? 2 : 1.5,
-        borderRadius: isDonut ? 0 : 6,
-        fill: !isDonut,
-        tension: 0.4,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: isDonut, labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12, padding: 12 } }
-      },
-      scales: isDonut ? {} : {
-        x: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 11 } } },
-        y: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 11 } } }
-      }
-    }
-  });
-}
-
-// =====================================================
-// LEADS
-// =====================================================
+// ===== LEADS =====
+let leadsData = []
 async function renderLeads() {
-  try {
-    const res = await API.get('/leads');
-    allLeads = res.data;
-    renderLeadsUI(allLeads);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load leads');
-  }
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  leadsData = await api('GET', '/leads')
+  renderLeadsTable(leadsData)
 }
 
-function renderLeadsUI(leads) {
-  const statusCounts = {};
-  leads.forEach(l => statusCounts[l.status] = (statusCounts[l.status]||0)+1);
+function renderLeadsTable(data) {
+  setContent(`
+    <div class="space-y-4">
+      <!-- Toolbar -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="filter-bar">
+          <input type="text" id="lead-search" placeholder="Search leads..." class="form-input w-48" oninput="filterLeads()" />
+          <select id="lead-filter-status" class="form-input w-36" onchange="filterLeads()">
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="demo_sent">Demo Sent</option>
+            <option value="proposal_sent">Proposal Sent</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+          </select>
+          <select id="lead-filter-industry" class="form-input w-40" onchange="filterLeads()">
+            <option value="">All Industries</option>
+            <option>Home Services</option><option>Restaurant</option><option>Salon</option>
+            <option>Auto Repair</option><option>Retail</option><option>Healthcare</option>
+            <option>Legal</option><option>Fitness</option><option>Other</option>
+          </select>
+        </div>
+        <button onclick="showAddLeadModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Lead</button>
+      </div>
 
-  document.getElementById('main-content').innerHTML = `
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-      <div class="flex flex-wrap gap-2">
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="filterLeadsByStatus('all', this)">All <span class="ml-1 text-xs opacity-70">${leads.length}</span></button>
-          ${['new','contacted','demo_sent','proposal_sent','won','lost'].map(s =>
-            `<button class="tab-btn" onclick="filterLeadsByStatus('${s}', this)">${s.replace('_',' ')} <span class="ml-1 text-xs opacity-70">${statusCounts[s]||0}</span></button>`
-          ).join('')}
+      <!-- Stats row -->
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-3" id="lead-stat-chips"></div>
+
+      <!-- Table -->
+      <div class="card p-0 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table" id="leads-table">
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Industry</th>
+                <th>City</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th>Added</th>
+                <th class="w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
         </div>
       </div>
-      <div class="flex gap-2 items-center">
-        <input id="leads-search" type="text" placeholder="Search leads..." class="form-input" style="width:200px" oninput="filterLeads()"/>
-        <select id="leads-industry" class="form-input" style="width:150px" onchange="filterLeads()">
-          <option value="">All industries</option>
-          ${[...new Set(allLeads.map(l=>l.industry))].sort().map(i=>`<option>${i}</option>`).join('')}
-        </select>
-        <button onclick="showAddLeadModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Add Lead</button>
-        <button onclick="showImportModal()" class="btn-secondary"><i class="fas fa-upload mr-1"></i>Import</button>
-      </div>
     </div>
-
-    <!-- Table -->
-    <div class="card p-0 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Business</th><th>Industry</th><th>City</th>
-              <th>Contact</th><th>Status</th><th>Source</th><th>Date</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="leads-tbody">
-            ${renderLeadsRows(leads)}
-          </tbody>
-        </table>
-      </div>
-      ${leads.length === 0 ? emptyState('map-marker-alt', 'No leads yet', 'Add your first lead or use the Lead Finder tool') : ''}
-    </div>
-  `;
+  `)
+  updateLeadStatChips(data)
+  renderLeadRows(data)
 }
 
-function renderLeadsRows(leads) {
-  if (leads.length === 0) return `<tr><td colspan="8" class="text-center text-gray-600 py-8">No leads match filters</td></tr>`;
-  return leads.map(l => `
+function updateLeadStatChips(data) {
+  const counts = {}
+  data.forEach(l => { counts[l.status] = (counts[l.status]||0)+1 })
+  const chips = [
+    { label:'All', val:'', count:data.length, color:'bg-gray-800 text-gray-300' },
+    { label:'New', val:'new', count:counts.new||0, color:'bg-blue-900/40 text-blue-300' },
+    { label:'Contacted', val:'contacted', count:counts.contacted||0, color:'bg-indigo-900/40 text-indigo-300' },
+    { label:'Demo', val:'demo_sent', count:counts.demo_sent||0, color:'bg-violet-900/40 text-violet-300' },
+    { label:'Won', val:'won', count:counts.won||0, color:'bg-green-900/40 text-green-300' },
+    { label:'Lost', val:'lost', count:counts.lost||0, color:'bg-red-900/40 text-red-300' },
+  ]
+  document.getElementById('lead-stat-chips').innerHTML = chips.map(c=>`
+    <button onclick="quickFilterLeads('${c.val}')" class="${c.color} rounded-lg px-3 py-2 text-center cursor-pointer hover:opacity-80 transition-opacity border border-white/5">
+      <p class="text-xl font-bold">${c.count}</p>
+      <p class="text-xs mt-0.5 opacity-80">${c.label}</p>
+    </button>`).join('')
+}
+
+function renderLeadRows(data) {
+  const tbody = document.getElementById('leads-tbody')
+  if(!tbody) return
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-map-marker-alt"></i><p class="text-lg font-semibold text-gray-500">No leads found</p><p class="text-sm mt-1">Add your first lead to get started</p></div></td></tr>`
+    return
+  }
+  tbody.innerHTML = data.map(l => `
     <tr onclick="showLeadDetail(${l.id})">
       <td>
-        <div class="font-semibold text-white text-sm">${esc(l.business_name)}</div>
-        ${l.owner_name ? `<div class="text-xs text-gray-500">${esc(l.owner_name)}</div>` : ''}
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-${industryIcon(l.industry)} text-blue-400 text-xs"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold text-white truncate max-w-[160px]">${escHtml(l.business_name)}</p>
+            ${l.owner_name ? `<p class="text-xs text-gray-500 truncate">${escHtml(l.owner_name)}</p>` : ''}
+          </div>
+        </div>
       </td>
-      <td><span class="text-sm">${esc(l.industry)}</span></td>
-      <td><span class="text-sm">${esc(l.city)}</span></td>
+      <td><span class="text-gray-400 text-sm">${escHtml(l.industry)}</span></td>
+      <td><span class="text-gray-400 text-sm">${escHtml(l.city)}</span></td>
       <td>
-        ${l.phone ? `<div class="text-xs text-gray-300"><i class="fas fa-phone mr-1 text-gray-500"></i>${esc(l.phone)}</div>` : ''}
-        ${l.email ? `<div class="text-xs text-gray-400"><i class="fas fa-envelope mr-1 text-gray-500"></i>${esc(l.email)}</div>` : ''}
-        ${!l.phone && !l.email ? '<span class="text-gray-600 text-xs">—</span>' : ''}
+        <div class="text-sm">
+          ${l.phone ? `<a href="tel:${escHtml(l.phone)}" onclick="event.stopPropagation()" class="text-blue-400 hover:text-blue-300 block">${escHtml(l.phone)}</a>` : ''}
+          ${l.email ? `<span class="text-gray-500 text-xs truncate block max-w-[120px]">${escHtml(l.email)}</span>` : ''}
+          ${!l.phone && !l.email ? '<span class="text-gray-600 text-xs">No contact</span>' : ''}
+        </div>
       </td>
-      <td><span class="badge badge-${l.status}">${l.status.replace('_',' ')}</span></td>
-      <td><span class="text-xs text-gray-500">${l.source||'—'}</span></td>
-      <td><span class="text-xs text-gray-600">${fmtDate(l.created_at)}</span></td>
-      <td onclick="event.stopPropagation()">
-        <div class="flex gap-1 row-actions">
-          <button class="btn-icon" onclick="editLead(${l.id})" title="Edit"><i class="fas fa-pen"></i></button>
-          <button class="btn-icon" onclick="showProposalModal(${l.id})" title="Proposal"><i class="fas fa-file-invoice-dollar"></i></button>
-          <button class="btn-icon" onclick="convertToClient(${l.id})" title="Convert to Client"><i class="fas fa-user-plus"></i></button>
-          <button class="btn-icon" onclick="deleteLead(${l.id})" title="Delete" style="color:#f87171"><i class="fas fa-trash"></i></button>
+      <td>${statusBadge(l.status)}</td>
+      <td><span class="text-gray-500 text-xs capitalize">${(l.source||'').replace(/_/g,' ')}</span></td>
+      <td><span class="text-gray-500 text-xs">${fmtDate(l.created_at)}</span></td>
+      <td>
+        <div class="row-actions flex items-center gap-1" onclick="event.stopPropagation()">
+          <button onclick="showProposalModal({lead_id:${l.id},business_name:'${escHtml(l.business_name)}',owner_name:'${escHtml(l.owner_name||'')}'})" class="btn-icon btn-sm" title="Create proposal"><i class="fas fa-file-invoice-dollar text-yellow-400"></i></button>
+          <button onclick="showEditLeadModal(${l.id})" class="btn-icon btn-sm" title="Edit"><i class="fas fa-edit text-blue-400"></i></button>
+          <button onclick="confirmDeleteLead(${l.id})" class="btn-icon btn-sm" title="Delete"><i class="fas fa-trash text-red-400"></i></button>
         </div>
       </td>
     </tr>
-  `).join('');
-}
-
-let currentLeadStatusFilter = 'all';
-function filterLeadsByStatus(status, btn) {
-  currentLeadStatusFilter = status;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  filterLeads();
+  `).join('')
 }
 
 function filterLeads() {
-  const search = (document.getElementById('leads-search')?.value || '').toLowerCase();
-  const industry = document.getElementById('leads-industry')?.value || '';
-  let filtered = allLeads;
-  if (currentLeadStatusFilter !== 'all') filtered = filtered.filter(l => l.status === currentLeadStatusFilter);
-  if (search) filtered = filtered.filter(l =>
-    l.business_name.toLowerCase().includes(search) ||
-    (l.owner_name||'').toLowerCase().includes(search) ||
-    (l.phone||'').includes(search) ||
-    (l.city||'').toLowerCase().includes(search)
-  );
-  if (industry) filtered = filtered.filter(l => l.industry === industry);
-  const tbody = document.getElementById('leads-tbody');
-  if (tbody) tbody.innerHTML = renderLeadsRows(filtered);
+  const q = (document.getElementById('lead-search')?.value||'').toLowerCase()
+  const st = document.getElementById('lead-filter-status')?.value||''
+  const ind = document.getElementById('lead-filter-industry')?.value||''
+  let filtered = leadsData
+  if(q) filtered = filtered.filter(l => (l.business_name+l.owner_name+l.city+l.phone+l.email).toLowerCase().includes(q))
+  if(st) filtered = filtered.filter(l => l.status===st)
+  if(ind) filtered = filtered.filter(l => l.industry===ind)
+  renderLeadRows(filtered)
+}
+
+function quickFilterLeads(status) {
+  const el = document.getElementById('lead-filter-status')
+  if(el) { el.value=status; filterLeads() }
 }
 
 async function showLeadDetail(id) {
-  try {
-    const res = await API.get(`/leads/${id}`);
-    const { lead: l, activities, tasks, proposals } = res.data;
-    document.getElementById('ld-title').textContent = l.business_name;
-    document.getElementById('lead-detail-content').innerHTML = `
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          ${detailRow('Industry', l.industry)}
-          ${detailRow('City', l.city)}
-          ${detailRow('Owner', l.owner_name || '—')}
-          ${detailRow('Phone', l.phone ? `<a href="tel:${l.phone}" class="text-blue-400">${l.phone}</a>` : '—')}
-          ${detailRow('Email', l.email ? `<a href="mailto:${l.email}" class="text-blue-400">${l.email}</a>` : '—')}
-          ${detailRow('Source', l.source || '—')}
-        </div>
-        <div>
-          ${detailRow('Status', `<span class="badge badge-${l.status}">${l.status.replace('_',' ')}</span>`)}
-          ${detailRow('Added', fmtDate(l.created_at))}
-          ${l.google_maps_url ? detailRow('Maps', `<a href="${l.google_maps_url}" target="_blank" class="text-blue-400 text-xs">View on Maps</a>`) : ''}
-          ${l.address ? detailRow('Address', l.address) : ''}
-        </div>
+  const data = await api('GET', `/leads/${id}`)
+  const l = data.lead
+  document.getElementById('ld-title').textContent = l.business_name
+  document.getElementById('lead-detail-content').innerHTML = `
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="space-y-3">
+        <div><p class="text-xs text-gray-500 uppercase font-semibold">Status</p><div class="mt-1">${statusBadge(l.status)}</div></div>
+        <div><p class="text-xs text-gray-500 uppercase font-semibold">Industry</p><p class="text-white text-sm mt-1">${escHtml(l.industry)}</p></div>
+        <div><p class="text-xs text-gray-500 uppercase font-semibold">City</p><p class="text-white text-sm mt-1">${escHtml(l.city)}</p></div>
+        ${l.owner_name?`<div><p class="text-xs text-gray-500 uppercase font-semibold">Owner</p><p class="text-white text-sm mt-1">${escHtml(l.owner_name)}</p></div>`:''}
+        ${l.phone?`<div><p class="text-xs text-gray-500 uppercase font-semibold">Phone</p><a href="tel:${escHtml(l.phone)}" class="text-blue-400 text-sm mt-1 block">${escHtml(l.phone)}</a></div>`:''}
+        ${l.email?`<div><p class="text-xs text-gray-500 uppercase font-semibold">Email</p><p class="text-blue-400 text-sm mt-1 break-all">${escHtml(l.email)}</p></div>`:''}
+        ${l.address?`<div><p class="text-xs text-gray-500 uppercase font-semibold">Address</p><p class="text-white text-sm mt-1">${escHtml(l.address)}</p></div>`:''}
       </div>
-      ${l.notes ? `<div class="bg-gray-900 rounded-lg p-3 mb-4 text-sm text-gray-300"><i class="fas fa-sticky-note mr-2 text-yellow-400"></i>${esc(l.notes)}</div>` : ''}
-
-      <!-- Quick status change -->
-      <div class="mb-4">
-        <label class="form-label">Update Status</label>
-        <div class="flex flex-wrap gap-2 mt-1">
-          ${['new','contacted','demo_sent','proposal_sent','won','lost'].map(s =>
-            `<button onclick="quickUpdateLeadStatus(${l.id},'${s}')" class="btn-secondary btn-sm ${l.status===s?'border-blue-500 text-blue-400':''}">${s.replace('_',' ')}</button>`
-          ).join('')}
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-2 mb-4">
-        <button onclick="closeModal('lead-detail-modal');editLead(${l.id})" class="btn-secondary btn-sm"><i class="fas fa-pen mr-1"></i>Edit</button>
-        <button onclick="closeModal('lead-detail-modal');showProposalModal(${l.id})" class="btn-primary btn-sm"><i class="fas fa-file-invoice-dollar mr-1"></i>Create Proposal</button>
-        <button onclick="closeModal('lead-detail-modal');convertToClient(${l.id})" class="btn-secondary btn-sm"><i class="fas fa-user-plus mr-1"></i>Convert to Client</button>
-      </div>
-
-      <!-- Proposals -->
-      ${proposals.length > 0 ? `
-        <div class="mb-4">
-          <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Proposals</h4>
-          ${proposals.map(p => `<div class="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 mb-2 text-sm">
-            <span class="text-white">${p.package_tier} – $${fmt(p.package_price)}</span>
-            <span class="badge badge-${p.status}">${p.status}</span>
-          </div>`).join('')}
-        </div>` : ''}
-
-      <!-- Timeline -->
-      <div>
-        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Activity Timeline</h4>
-        ${activities.length > 0
-          ? `<div class="max-h-48 overflow-y-auto">${activities.map(a => activityItem(a)).join('')}</div>`
-          : '<p class="text-muted">No activity recorded</p>'}
-      </div>
-
-      <!-- Add Note -->
-      <div class="mt-4">
-        <div class="flex gap-2">
-          <input id="new-note-input" type="text" class="form-input flex-1" placeholder="Add a note..."/>
-          <button onclick="addNote(${l.id})" class="btn-primary btn-sm"><i class="fas fa-plus"></i></button>
-        </div>
-      </div>
-    `;
-    openModal('lead-detail-modal');
-  } catch(e) { showToast('Failed to load lead details', 'error'); }
-}
-
-async function addNote(leadId) {
-  const input = document.getElementById('new-note-input');
-  const note = input.value.trim();
-  if (!note) return;
-  try {
-    await API.post(`/leads/${leadId}/notes`, { note });
-    input.value = '';
-    showToast('Note added');
-    showLeadDetail(leadId);
-  } catch(e) { showToast('Failed to add note', 'error'); }
-}
-
-async function quickUpdateLeadStatus(id, status) {
-  try {
-    await API.patch(`/leads/${id}/status`, { status });
-    showToast('Status updated to ' + status.replace('_',' '));
-    showLeadDetail(id);
-    const lead = allLeads.find(l => l.id === id);
-    if (lead) lead.status = status;
-    filterLeads();
-  } catch(e) { showToast('Failed to update status', 'error'); }
-}
-
-async function deleteLead(id) {
-  if (!confirm('Delete this lead? This cannot be undone.')) return;
-  try {
-    await API.delete(`/leads/${id}`);
-    allLeads = allLeads.filter(l => l.id !== id);
-    filterLeads();
-    showToast('Lead deleted');
-  } catch(e) { showToast('Failed to delete lead', 'error'); }
-}
-
-async function convertToClient(leadId) {
-  const lead = allLeads.find(l => l.id === leadId);
-  if (!lead) return;
-  // Pre-fill client modal from lead data
-  openClientModal(null, lead);
-}
-
-// =====================================================
-// PIPELINE (Kanban)
-// =====================================================
-async function renderPipeline() {
-  try {
-    const res = await API.get('/leads');
-    allLeads = res.data;
-    renderPipelineUI(allLeads);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load pipeline');
-  }
-}
-
-function renderPipelineUI(leads) {
-  const stages = [
-    { key: 'new',           label: 'New Leads',     color: '#3b82f6', icon: 'fa-inbox' },
-    { key: 'contacted',     label: 'Contacted',     color: '#8b5cf6', icon: 'fa-phone' },
-    { key: 'demo_sent',     label: 'Demo Sent',     color: '#a78bfa', icon: 'fa-desktop' },
-    { key: 'proposal_sent', label: 'Proposal Sent', color: '#c4b5fd', icon: 'fa-file-invoice-dollar' },
-    { key: 'won',           label: 'Won',           color: '#10b981', icon: 'fa-check-circle' },
-    { key: 'lost',          label: 'Lost',          color: '#ef4444', icon: 'fa-times-circle' },
-  ];
-  const grouped = {};
-  stages.forEach(s => grouped[s.key] = []);
-  leads.forEach(l => { if (grouped[l.status] !== undefined) grouped[l.status].push(l); });
-
-  document.getElementById('main-content').innerHTML = `
-    <div class="flex gap-4 overflow-x-auto pb-4" style="min-height:calc(100vh - 160px)">
-      ${stages.map(stage => `
-        <div class="kanban-col">
-          <div class="kanban-col-header" style="border-top: 3px solid ${stage.color}">
-            <div class="flex items-center gap-2" style="color:${stage.color}">
-              <i class="fas ${stage.icon} text-xs"></i>
-              <span>${stage.label}</span>
-            </div>
-            <span class="text-gray-500 text-xs font-bold">${grouped[stage.key].length}</span>
-          </div>
-          <div class="kanban-cards" id="kanban-${stage.key}">
-            ${grouped[stage.key].map(l => kanbanCard(l, stage.color)).join('')}
-            ${grouped[stage.key].length === 0 ? '<p class="text-center text-gray-700 text-xs py-4">No leads</p>' : ''}
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function kanbanCard(l, color) {
-  return `<div class="kanban-card" onclick="showLeadDetail(${l.id})">
-    <p class="font-semibold text-white text-xs leading-tight mb-1">${esc(l.business_name)}</p>
-    <p class="text-xs text-gray-500 mb-2">${esc(l.industry)} · ${esc(l.city)}</p>
-    ${l.phone ? `<p class="text-xs text-gray-400"><i class="fas fa-phone mr-1 text-gray-600"></i>${esc(l.phone)}</p>` : ''}
-    <div class="flex gap-1 mt-2 flex-wrap">
-      ${['contacted','demo_sent','won','lost'].map(s =>
-        l.status !== s ? `<button onclick="event.stopPropagation();moveCard(${l.id},'${s}')" class="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">${s.replace('_',' ')}</button>` : ''
-      ).join('')}
-    </div>
-  </div>`;
-}
-
-async function moveCard(leadId, newStatus) {
-  try {
-    await API.patch(`/leads/${leadId}/status`, { status: newStatus });
-    const lead = allLeads.find(l => l.id === leadId);
-    if (lead) lead.status = newStatus;
-    renderPipelineUI(allLeads);
-    showToast('Moved to ' + newStatus.replace('_',' '));
-  } catch(e) { showToast('Failed to move', 'error'); }
-}
-
-// =====================================================
-// CLIENTS
-// =====================================================
-async function renderClients() {
-  try {
-    const res = await API.get('/clients');
-    allClients = res.data;
-    renderClientsUI(allClients);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load clients');
-  }
-}
-
-function renderClientsUI(clients) {
-  const totalMRR = clients.filter(c=>c.status==='active').reduce((s,c)=>s+c.recurring_fee,0);
-  const totalRevenue = clients.reduce((s,c)=>s+c.package_price,0);
-
-  document.getElementById('main-content').innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-      <div class="flex gap-4">
-        <div class="text-sm"><span class="text-gray-500">Total Revenue: </span><span class="text-money">$${fmt(totalRevenue)}</span></div>
-        <div class="text-sm"><span class="text-gray-500">MRR: </span><span class="text-money">$${fmt(totalMRR)}/mo</span></div>
-        <div class="text-sm"><span class="text-gray-500">Active: </span><span class="text-white font-bold">${clients.filter(c=>c.status==='active').length}</span></div>
-      </div>
-      <div class="flex gap-2 items-center">
-        <input id="clients-search" type="text" placeholder="Search clients..." class="form-input" style="width:200px" oninput="filterClients()"/>
-        <select id="clients-status" class="form-input" style="width:130px" onchange="filterClients()">
-          <option value="">All statuses</option>
-          <option>active</option><option>completed</option><option>paused</option><option>churned</option>
-        </select>
-        <button onclick="openClientModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Add Client</button>
+      <div class="space-y-3">
+        <div><p class="text-xs text-gray-500 uppercase font-semibold">Source</p><p class="text-white text-sm mt-1 capitalize">${(l.source||'').replace(/_/g,' ')}</p></div>
+        <div><p class="text-xs text-gray-500 uppercase font-semibold">Added</p><p class="text-white text-sm mt-1">${fmtDate(l.created_at)}</p></div>
+        ${l.notes?`<div><p class="text-xs text-gray-500 uppercase font-semibold">Notes</p><p class="text-gray-300 text-sm mt-1 whitespace-pre-wrap">${escHtml(l.notes)}</p></div>`:''}
+        ${l.google_maps_url?`<div><a href="${escHtml(l.google_maps_url)}" target="_blank" class="btn-secondary btn-sm"><i class="fas fa-map-marker-alt mr-1 text-red-400"></i>View on Maps</a></div>`:''}
       </div>
     </div>
 
-    <div class="card p-0 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Business</th><th>Industry</th><th>Package</th><th>Price</th>
-              <th>Monthly</th><th>Website</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="clients-tbody">
-            ${renderClientsRows(clients)}
-          </tbody>
-        </table>
-      </div>
-      ${clients.length === 0 ? emptyState('users', 'No clients yet', 'Convert a lead or add a client directly') : ''}
-    </div>
-  `;
-}
-
-function renderClientsRows(clients) {
-  if (clients.length === 0) return `<tr><td colspan="8" class="text-center text-gray-600 py-8">No clients match filters</td></tr>`;
-  return clients.map(c => `
-    <tr>
-      <td>
-        <div class="font-semibold text-white text-sm">${esc(c.business_name)}</div>
-        ${c.owner_name ? `<div class="text-xs text-gray-500">${esc(c.owner_name)}</div>` : ''}
-        ${c.phone ? `<div class="text-xs text-gray-500"><i class="fas fa-phone mr-1"></i>${esc(c.phone)}</div>` : ''}
-      </td>
-      <td>${esc(c.industry)}</td>
-      <td><span class="text-sm font-medium text-indigo-300">${c.package_tier}</span></td>
-      <td><span class="text-money">$${fmt(c.package_price)}</span></td>
-      <td>${c.recurring_fee > 0 ? `<span class="text-green-400 text-sm">$${fmt(c.recurring_fee)}/mo</span>` : '<span class="text-gray-600">—</span>'}</td>
-      <td>${c.website_url ? `<a href="${c.website_url}" target="_blank" onclick="event.stopPropagation()" class="text-blue-400 text-xs hover:underline"><i class="fas fa-external-link-alt mr-1"></i>View</a>` : '<span class="text-gray-600 text-xs">—</span>'}</td>
-      <td><span class="badge badge-${c.status}">${c.status}</span></td>
-      <td onclick="event.stopPropagation()">
-        <div class="flex gap-1 row-actions">
-          <button class="btn-icon" onclick="openClientModal(${c.id})" title="Edit"><i class="fas fa-pen"></i></button>
-          <button class="btn-icon" onclick="deleteClient(${c.id})" title="Delete" style="color:#f87171"><i class="fas fa-trash"></i></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function filterClients() {
-  const search = (document.getElementById('clients-search')?.value || '').toLowerCase();
-  const status = document.getElementById('clients-status')?.value || '';
-  let filtered = allClients;
-  if (search) filtered = filtered.filter(c =>
-    c.business_name.toLowerCase().includes(search) ||
-    (c.owner_name||'').toLowerCase().includes(search) ||
-    (c.phone||'').includes(search)
-  );
-  if (status) filtered = filtered.filter(c => c.status === status);
-  const tbody = document.getElementById('clients-tbody');
-  if (tbody) tbody.innerHTML = renderClientsRows(filtered);
-}
-
-async function deleteClient(id) {
-  if (!confirm('Delete this client?')) return;
-  try {
-    await API.delete(`/clients/${id}`);
-    allClients = allClients.filter(c => c.id !== id);
-    renderClientsUI(allClients);
-    showToast('Client deleted');
-  } catch(e) { showToast('Failed to delete', 'error'); }
-}
-
-// =====================================================
-// PROPOSALS
-// =====================================================
-async function renderProposals() {
-  try {
-    const res = await API.get('/proposals');
-    allProposals = res.data;
-    renderProposalsUI(allProposals);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load proposals');
-  }
-}
-
-function renderProposalsUI(proposals) {
-  document.getElementById('main-content').innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="filterProposalsByStatus('all',this)">All <span class="ml-1 text-xs opacity-70">${proposals.length}</span></button>
-        ${['draft','sent','accepted','declined'].map(s =>
-          `<button class="tab-btn" onclick="filterProposalsByStatus('${s}',this)">${s} <span class="ml-1 text-xs opacity-70">${proposals.filter(p=>p.status===s).length}</span></button>`
-        ).join('')}
-      </div>
-      <div class="flex gap-2 items-center">
-        <input id="proposals-search" type="text" placeholder="Search proposals..." class="form-input" style="width:200px" oninput="filterProposals()"/>
-        <button onclick="showProposalModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>New Proposal</button>
+    <!-- Update status -->
+    <div class="bg-gray-900 rounded-xl p-3 mb-4">
+      <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Update Status</p>
+      <div class="flex flex-wrap gap-2">
+        ${['new','contacted','demo_sent','proposal_sent','won','lost'].map(s=>`
+          <button onclick="quickStatusChange(${l.id},'${s}')" class="badge badge-${s} cursor-pointer hover:opacity-80 ${l.status===s?'ring-2 ring-white/30':''}">${s.replace(/_/g,' ')}</button>
+        `).join('')}
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="proposals-grid">
-      ${renderProposalCards(proposals)}
-    </div>
-    ${proposals.length === 0 ? emptyState('file-invoice-dollar', 'No proposals yet', 'Create your first proposal from a lead') : ''}
-  `;
-}
-
-function renderProposalCards(proposals) {
-  if (proposals.length === 0) return '<p class="col-span-3 text-center text-gray-600 py-8">No proposals match filters</p>';
-  return proposals.map(p => {
-    const features = p.features ? p.features.split(',').filter(Boolean) : [];
-    return `<div class="card hover:border-gray-600 transition-all cursor-pointer" onclick="editProposal(${p.id})">
-      <div class="flex items-start justify-between mb-3">
-        <div>
-          <h3 class="font-bold text-white text-sm">${esc(p.business_name)}</h3>
-          ${p.owner_name ? `<p class="text-xs text-gray-500">${esc(p.owner_name)}</p>` : ''}
-        </div>
-        <span class="badge badge-${p.status}">${p.status}</span>
-      </div>
-      <div class="flex items-center gap-3 mb-3">
-        <div>
-          <p class="text-xs text-gray-500">Package</p>
-          <p class="text-sm font-semibold text-indigo-300">${p.package_tier}</p>
-        </div>
-        <div>
-          <p class="text-xs text-gray-500">One-time</p>
-          <p class="text-money text-sm">$${fmt(p.package_price)}</p>
-        </div>
-        ${p.recurring_fee > 0 ? `<div>
-          <p class="text-xs text-gray-500">Monthly</p>
-          <p class="text-green-400 text-sm font-bold">$${fmt(p.recurring_fee)}/mo</p>
-        </div>` : ''}
-      </div>
-      ${features.length > 0 ? `<div class="flex flex-wrap gap-1 mb-3">
-        ${features.slice(0,4).map(f=>`<span class="proposal-feature-tag"><i class="fas fa-check"></i>${f}</span>`).join('')}
-        ${features.length > 4 ? `<span class="text-xs text-gray-500">+${features.length-4} more</span>` : ''}
-      </div>` : ''}
-      <div class="flex gap-2 mt-3 pt-3 border-t border-gray-800">
-        <button onclick="event.stopPropagation();editProposal(${p.id})" class="btn-secondary btn-sm flex-1"><i class="fas fa-pen mr-1"></i>Edit</button>
-        <button onclick="event.stopPropagation();markProposalSent(${p.id})" class="btn-primary btn-sm flex-1" ${p.status==='sent'?'disabled':''}>
-          <i class="fas fa-paper-plane mr-1"></i>${p.status==='sent'?'Sent':'Mark Sent'}
-        </button>
-        <button onclick="event.stopPropagation();deleteProposal(${p.id})" class="btn-icon" style="color:#f87171"><i class="fas fa-trash text-xs"></i></button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-let currentProposalStatusFilter = 'all';
-function filterProposalsByStatus(status, btn) {
-  currentProposalStatusFilter = status;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  filterProposals();
-}
-function filterProposals() {
-  const search = (document.getElementById('proposals-search')?.value || '').toLowerCase();
-  let filtered = allProposals;
-  if (currentProposalStatusFilter !== 'all') filtered = filtered.filter(p => p.status === currentProposalStatusFilter);
-  if (search) filtered = filtered.filter(p => p.business_name.toLowerCase().includes(search) || (p.owner_name||'').toLowerCase().includes(search));
-  const grid = document.getElementById('proposals-grid');
-  if (grid) grid.innerHTML = renderProposalCards(filtered);
-}
-
-async function markProposalSent(id) {
-  try {
-    const p = allProposals.find(p => p.id === id);
-    if (!p) return;
-    await API.put(`/proposals/${id}`, { ...p, status: 'sent', features: p.features });
-    p.status = 'sent';
-    renderProposalsUI(allProposals);
-    showToast('Proposal marked as sent');
-  } catch(e) { showToast('Failed to update', 'error'); }
-}
-
-async function deleteProposal(id) {
-  if (!confirm('Delete this proposal?')) return;
-  try {
-    await API.delete(`/proposals/${id}`);
-    allProposals = allProposals.filter(p => p.id !== id);
-    renderProposalsUI(allProposals);
-    showToast('Proposal deleted');
-  } catch(e) { showToast('Failed to delete', 'error'); }
-}
-
-// =====================================================
-// TASKS
-// =====================================================
-async function renderTasks() {
-  try {
-    const res = await API.get('/tasks');
-    allTasks = res.data;
-    renderTasksUI(allTasks);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load tasks');
-  }
-}
-
-function renderTasksUI(tasks) {
-  const now = new Date();
-  document.getElementById('main-content').innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="filterTasksByStatus('all',this)">All</button>
-        <button class="tab-btn" onclick="filterTasksByStatus('pending',this)">Pending</button>
-        <button class="tab-btn" onclick="filterTasksByStatus('in_progress',this)">In Progress</button>
-        <button class="tab-btn" onclick="filterTasksByStatus('done',this)">Done</button>
-      </div>
-      <button onclick="openTaskModal()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Add Task</button>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="tasks-grid">
-      ${renderTaskCards(tasks, now)}
-    </div>
-    ${tasks.length === 0 ? emptyState('tasks', 'No tasks yet', 'Create tasks to stay on top of your pipeline') : ''}
-  `;
-}
-
-function renderTaskCards(tasks, now) {
-  if (tasks.length === 0) return '<p class="col-span-3 text-center text-gray-600 py-8">No tasks match filters</p>';
-  return tasks.map(t => {
-    const overdue = t.due_date && new Date(t.due_date) < now && t.status !== 'done';
-    return `<div class="card ${overdue ? 'border-red-900' : ''} hover:border-gray-600 transition-all">
-      <div class="flex items-start justify-between mb-2">
-        <h3 class="font-semibold text-white text-sm pr-2">${esc(t.title)}</h3>
-        <div class="flex gap-1 flex-shrink-0">
-          <span class="badge badge-${t.priority}">${t.priority}</span>
-        </div>
-      </div>
-      ${t.description ? `<p class="text-xs text-gray-500 mb-2 truncate-2">${esc(t.description)}</p>` : ''}
-      <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-        ${t.due_date ? `<span class="${overdue?'text-red-400 font-semibold':''}"><i class="fas fa-calendar mr-1"></i>${fmtDate(t.due_date)}</span>` : ''}
-        <span class="badge badge-${t.status} text-xs">${t.status.replace('_',' ')}</span>
-      </div>
-      <div class="flex gap-2 pt-2 border-t border-gray-800">
-        ${t.status !== 'done' ? `<button onclick="completeTask(${t.id})" class="btn-secondary btn-sm flex-1"><i class="fas fa-check mr-1 text-green-400"></i>Done</button>` : ''}
-        <button onclick="openTaskModal(${t.id})" class="btn-secondary btn-sm ${t.status==='done'?'flex-1':''}"><i class="fas fa-pen mr-1"></i>Edit</button>
-        <button onclick="deleteTask(${t.id})" class="btn-icon" style="color:#f87171"><i class="fas fa-trash text-xs"></i></button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-let currentTaskFilter = 'all';
-function filterTasksByStatus(status, btn) {
-  currentTaskFilter = status;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  const filtered = status === 'all' ? allTasks : allTasks.filter(t => t.status === status);
-  const grid = document.getElementById('tasks-grid');
-  if (grid) grid.innerHTML = renderTaskCards(filtered, new Date());
-}
-
-async function completeTask(id) {
-  try {
-    await API.patch(`/tasks/${id}/status`, { status: 'done' });
-    const t = allTasks.find(t => t.id === id);
-    if (t) t.status = 'done';
-    filterTasksByStatus(currentTaskFilter, null);
-    showToast('Task completed!');
-    refreshBadges();
-  } catch(e) { showToast('Failed to update task', 'error'); }
-}
-
-async function deleteTask(id) {
-  if (!confirm('Delete this task?')) return;
-  try {
-    await API.delete(`/tasks/${id}`);
-    allTasks = allTasks.filter(t => t.id !== id);
-    filterTasksByStatus(currentTaskFilter, null);
-    showToast('Task deleted');
-  } catch(e) { showToast('Failed to delete', 'error'); }
-}
-
-// =====================================================
-// REVENUE ANALYTICS
-// =====================================================
-async function renderRevenue() {
-  try {
-    const [summaryRes, packageRes, monthlyRes, cityRes] = await Promise.all([
-      API.get('/analytics/summary'),
-      API.get('/analytics/clients-by-package'),
-      API.get('/analytics/revenue-by-month'),
-      API.get('/analytics/leads-by-city'),
-    ]);
-    const s = summaryRes.data;
-    const byPackage = packageRes.data;
-    const byMonth = monthlyRes.data;
-    const byCity = cityRes.data;
-
-    document.getElementById('main-content').innerHTML = `
-      <!-- Revenue KPIs -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        ${statCard('Total Revenue', '$' + fmt(s.revenue.total), 'fas fa-dollar-sign', 'emerald', 'All-time one-time sales')}
-        ${statCard('Monthly Recurring', '$' + fmt(s.revenue.monthly), 'fas fa-sync-alt', 'teal', 'MRR')}
-        ${statCard('Annual Recurring', '$' + fmt(s.revenue.annualRecurring), 'fas fa-calendar-check', 'indigo', 'ARR projection')}
-        ${statCard('Avg Deal Size', s.clients.total > 0 ? '$' + fmt(Math.round(s.revenue.total / s.clients.total)) : '$0', 'fas fa-chart-pie', 'violet', `from ${s.clients.total} clients`)}
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <!-- Revenue trend -->
-        <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-chart-line mr-2 text-green-400"></i>Revenue by Month</h3>
-          <div class="chart-wrapper" style="height:220px">
-            <canvas id="revTrendChart"></canvas>
-          </div>
-        </div>
-        <!-- Package breakdown -->
-        <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-box mr-2 text-indigo-400"></i>Revenue by Package</h3>
-          <div class="chart-wrapper" style="height:220px">
-            <canvas id="packageChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Package table -->
-        <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-list mr-2 text-purple-400"></i>Package Performance</h3>
-          <table class="data-table">
-            <thead><tr><th>Package</th><th>Clients</th><th>Revenue</th><th>Avg</th></tr></thead>
-            <tbody>
-              ${byPackage.map(p => `<tr>
-                <td><span class="font-medium text-indigo-300">${p.package_tier}</span></td>
-                <td>${p.count}</td>
-                <td><span class="text-money">$${fmt(p.revenue)}</span></td>
-                <td><span class="text-gray-300">$${fmt(Math.round(p.revenue / p.count))}</span></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-        <!-- City breakdown -->
-        <div class="card">
-          <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-city mr-2 text-blue-400"></i>Leads by City</h3>
-          ${byCity.map(c => `
-            <div class="mb-3">
-              <div class="flex justify-between text-xs mb-1">
-                <span class="text-gray-300 font-medium">${c.city}</span>
-                <span class="text-gray-500">${c.count} leads</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill bg-blue-500" style="width:${Math.round((c.count/byCity[0].count)*100)}%"></div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-
-    // Charts
-    renderChart('revTrendChart', 'line',
-      byMonth.map(r => r.month||''),
-      byMonth.map(r => r.revenue||0),
-      '#10b981', 'Revenue ($)'
-    );
-    renderChart('packageChart', 'doughnut',
-      byPackage.map(p => p.package_tier),
-      byPackage.map(p => p.revenue),
-      ['#6366f1','#8b5cf6','#a78bfa'],
-      'Revenue'
-    );
-
-  } catch(e) {
-    document.getElementById('main-content').innerHTML = errorState('Failed to load revenue data');
-  }
-}
-
-// =====================================================
-// LEAD FINDER / SCRAPER GUIDE
-// =====================================================
-function renderScraper() {
-  document.getElementById('main-content').innerHTML = `
-    <div class="max-w-4xl mx-auto space-y-6">
-      <!-- Hero -->
-      <div class="card bg-gradient-to-br from-blue-950 to-indigo-950 border-blue-800">
-        <div class="flex items-start gap-4">
-          <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-search-location text-white text-lg"></i>
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-white mb-1">Lead Finder Tool</h2>
-            <p class="text-blue-200 text-sm">Find local businesses on Google Maps that don't have websites. Use the methods below to build your lead list quickly.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Manual Entry -->
-      <div class="card">
-        <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-plus-circle mr-2 text-green-400"></i>Quick Add Lead</h3>
-        <p class="text-gray-400 text-sm mb-4">Found a business manually? Add it directly:</p>
-        <button onclick="showAddLeadModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Add Lead Manually</button>
-      </div>
-
-      <!-- Bulk Import -->
-      <div class="card">
-        <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-file-csv mr-2 text-blue-400"></i>Bulk Import from CSV</h3>
-        <p class="text-gray-400 text-sm mb-4">Import leads scraped from tools like Outscraper, Phantombuster, or Google Maps scraper.</p>
-        <div class="bg-gray-900 rounded-lg p-4 mb-4">
-          <p class="text-xs font-bold text-gray-400 mb-2">Expected CSV format:</p>
-          <code class="text-xs text-green-400">business_name, industry, city, phone, email, address, google_maps_url</code>
-        </div>
-        <div class="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center hover:border-blue-500 transition-all cursor-pointer" onclick="document.getElementById('csv-file-input').click()">
-          <i class="fas fa-cloud-upload-alt text-3xl text-gray-600 mb-3"></i>
-          <p class="text-gray-400 text-sm font-medium">Click to upload CSV file</p>
-          <p class="text-gray-600 text-xs mt-1">or paste data below</p>
-          <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="handleCsvUpload(event)"/>
-        </div>
-        <div class="mt-4">
-          <label class="form-label">Or paste CSV data directly</label>
-          <textarea id="csv-paste" class="form-input w-full font-mono text-xs" rows="5" placeholder="business_name,industry,city,phone,email&#10;Mike's Plumbing,Home Services,Austin,(512) 555-0101,mike@example.com"></textarea>
-          <button onclick="parseCsvPaste()" class="btn-primary mt-2"><i class="fas fa-upload mr-1"></i>Import Leads</button>
-        </div>
-      </div>
-
-      <!-- Scraping Guide -->
-      <div class="card">
-        <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-robot mr-2 text-purple-400"></i>Google Maps Scraping Methods</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          ${scraperMethodCard('Outscraper', 'Paid', 'Most reliable. Search "plumber in Austin", export CSV, filter for no-website results.', 'https://outscraper.com', 'fas fa-star text-yellow-400', '$50-100/mo')}
-          ${scraperMethodCard('Phantombuster', 'Paid', 'Google Maps Extractor phantom. Schedule runs for continuous lead generation.', 'https://phantombuster.com', 'fas fa-ghost text-purple-400', '$30-70/mo')}
-          ${scraperMethodCard('Manual Google Maps', 'Free', 'Search "[industry] in [city]", check each listing for website button. Slow but free.', '#', 'fas fa-map text-green-400', 'Free')}
-        </div>
-      </div>
-
-      <!-- Search Query Templates -->
-      <div class="card">
-        <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-search mr-2 text-cyan-400"></i>High-Converting Search Queries</h3>
-        <p class="text-sm text-gray-400 mb-4">Use these search terms in Google Maps to find businesses without websites:</p>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-          ${['plumber in [city]','electrician [city]','hair salon [city]','auto repair [city]','restaurant [city]','nail salon [city]','HVAC contractor [city]','landscaping [city]','dentist [city]','chiropractor [city]','pizza place [city]','barber shop [city]'].map(q =>
-            `<div class="bg-gray-900 rounded-lg px-3 py-2 text-xs font-mono text-green-400 flex items-center justify-between gap-2">
-              <span>${q}</span>
-              <button onclick="copyText('${q}')" class="text-gray-500 hover:text-white"><i class="fas fa-copy text-xs"></i></button>
-            </div>`
-          ).join('')}
-        </div>
-      </div>
-
-      <!-- Outreach Scripts -->
-      <div class="card">
-        <h3 class="font-bold text-white text-sm mb-4"><i class="fas fa-phone-alt mr-2 text-orange-400"></i>Outreach Scripts</h3>
-        <div class="space-y-4">
-          ${scriptCard('Phone Script', 'fas fa-phone text-green-400', `"Hi, may I speak with the owner? Hi [Name], I'm [Your Name] with [Company]. I was searching for [industry] businesses in [city] and found your listing on Google Maps. I noticed you don't have a website yet — I actually put together a quick mockup of what one could look like for your business. It takes about 2 minutes to show you. Would you be available for a quick call this week?"`)}
-          ${scriptCard('In-Person Script', 'fas fa-walking text-blue-400', `"Hi! I'm [Name]. I help local businesses get online with professional websites. I was in the area and noticed your business on Google Maps — I actually built a quick demo site for you. Mind if I show you on my phone? Takes about 2 minutes. No pressure at all." [Show demo, mention their competitor who has a website]`)}
-          ${scriptCard('Email Template', 'fas fa-envelope text-purple-400', `Subject: Quick question about [Business Name]'s online presence\n\nHi [Owner Name],\n\nI was searching for [industry] businesses in [city] and came across [Business Name] on Google Maps. You have great reviews!\n\nI noticed you don't have a website yet — I actually built a quick demo to show what it could look like for you.\n\nWould you have 10 minutes this week for a quick call?\n\nBest,\n[Your Name]`)}
-        </div>
+    <!-- Add note -->
+    <div class="bg-gray-900 rounded-xl p-3 mb-4">
+      <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Add Note</p>
+      <div class="flex gap-2">
+        <input id="ld-note-input" type="text" class="form-input flex-1" placeholder="Add a note..."/>
+        <button onclick="addLeadNote(${l.id})" class="btn-primary btn-sm">Add</button>
       </div>
     </div>
-  `;
-}
 
-function scraperMethodCard(name, type, desc, url, icon, price) {
-  return `<div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-    <div class="flex items-center gap-2 mb-2">
-      <i class="${icon}"></i>
-      <h4 class="font-bold text-white text-sm">${name}</h4>
-      <span class="ml-auto text-xs text-gray-500">${price}</span>
+    <!-- Activity timeline -->
+    ${data.activities.length?`
+    <div class="mb-4">
+      <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Activity Timeline</p>
+      <div class="space-y-0 max-h-40 overflow-y-auto">${data.activities.map(activityItem).join('')}</div>
+    </div>`:''}
+
+    <!-- Actions -->
+    <div class="flex gap-2 pt-2 border-t border-gray-800">
+      <button onclick="closeModal('lead-detail-modal');showEditLeadModal(${l.id})" class="btn-secondary btn-sm"><i class="fas fa-edit mr-1"></i>Edit</button>
+      <button onclick="closeModal('lead-detail-modal');showProposalModal({lead_id:${l.id},business_name:'${escHtml(l.business_name)}',owner_name:'${escHtml(l.owner_name||'')}'})" class="btn-secondary btn-sm"><i class="fas fa-file-invoice-dollar mr-1 text-yellow-400"></i>Proposal</button>
+      ${l.status==='won'?'':`<button onclick="closeModal('lead-detail-modal');convertToClient(${l.id})" class="btn-primary btn-sm"><i class="fas fa-user-plus mr-1"></i>Convert to Client</button>`}
     </div>
-    <p class="text-xs text-gray-400 mb-3">${desc}</p>
-    ${url !== '#' ? `<a href="${url}" target="_blank" class="text-blue-400 text-xs hover:underline"><i class="fas fa-external-link-alt mr-1"></i>Visit</a>` : '<span class="text-xs text-gray-600">No signup needed</span>'}
-  </div>`;
+  `
+  openModal('lead-detail-modal')
 }
 
-function scriptCard(title, icon, script) {
-  const id = 'script-' + title.replace(/\s+/g,'');
-  return `<div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-    <div class="flex items-center justify-between mb-2">
-      <h4 class="font-semibold text-white text-sm flex items-center gap-2"><i class="${icon}"></i>${title}</h4>
-      <button onclick="copyText(document.getElementById('${id}').textContent)" class="btn-secondary btn-sm"><i class="fas fa-copy mr-1"></i>Copy</button>
-    </div>
-    <p class="text-xs text-gray-400 whitespace-pre-wrap leading-relaxed" id="${id}">${script}</p>
-  </div>`;
+async function quickStatusChange(id, status) {
+  await api('PATCH', `/leads/${id}/status`, { status })
+  showToast('Status updated', 'success')
+  closeModal('lead-detail-modal')
+  renderLeads()
 }
 
-// =====================================================
-// CSV IMPORT
-// =====================================================
-function handleCsvUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('csv-paste').value = e.target.result;
-    parseCsvPaste();
-  };
-  reader.readAsText(file);
+async function addLeadNote(id) {
+  const note = document.getElementById('ld-note-input').value.trim()
+  if(!note) return
+  await api('POST', `/leads/${id}/notes`, { note })
+  showToast('Note added', 'success')
+  closeModal('lead-detail-modal')
+  renderLeads()
 }
 
-async function parseCsvPaste() {
-  const raw = document.getElementById('csv-paste')?.value?.trim();
-  if (!raw) { showToast('No data to import', 'error'); return; }
-  const lines = raw.split('\n').filter(l => l.trim());
-  const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g,''));
-  const rows = lines.slice(1);
-  if (rows.length === 0) { showToast('No data rows found', 'error'); return; }
-
-  let imported = 0, failed = 0;
-  for (const row of rows) {
-    const cols = row.split(',').map(c => c.trim().replace(/"/g,''));
-    const obj = {};
-    headers.forEach((h, i) => { obj[h] = cols[i] || ''; });
-    const lead = {
-      business_name: obj.business_name || obj.name || '',
-      industry: obj.industry || obj.category || 'Other',
-      city: obj.city || obj.location || '',
-      phone: obj.phone || obj.phone_number || '',
-      email: obj.email || '',
-      address: obj.address || '',
-      google_maps_url: obj.google_maps_url || obj.maps_url || obj.url || '',
-      status: 'new', source: 'import'
-    };
-    if (!lead.business_name || !lead.city) { failed++; continue; }
-    try {
-      await API.post('/leads', lead);
-      imported++;
-    } catch(e) { failed++; }
-  }
-  showToast(`Imported ${imported} leads${failed > 0 ? `, ${failed} failed` : ''}`, imported > 0 ? 'success' : 'error');
-  if (imported > 0) {
-    document.getElementById('csv-paste').value = '';
-    navigateTo('leads');
-  }
-}
-
-// =====================================================
-// MODAL HELPERS
-// =====================================================
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-// ===== LEAD MODAL =====
 function showAddLeadModal() {
-  document.getElementById('lead-modal-title').textContent = 'Add New Lead';
-  document.getElementById('lead-form').reset();
-  document.getElementById('lead-id').value = '';
-  openModal('lead-modal');
+  document.getElementById('lead-modal-title').textContent = 'Add New Lead'
+  document.getElementById('lead-id').value = ''
+  document.getElementById('lead-form').reset()
+  document.getElementById('lead-source').value = 'google_maps'
+  document.getElementById('lead-status').value = 'new'
+  openModal('lead-modal')
 }
 
-async function editLead(id) {
-  const lead = allLeads.find(l => l.id === id) || (await API.get(`/leads/${id}`)).data.lead;
-  document.getElementById('lead-modal-title').textContent = 'Edit Lead';
-  document.getElementById('lead-id').value = lead.id;
-  document.getElementById('lead-business-name').value = lead.business_name || '';
-  document.getElementById('lead-owner-name').value = lead.owner_name || '';
-  document.getElementById('lead-industry').value = lead.industry || '';
-  document.getElementById('lead-city').value = lead.city || '';
-  document.getElementById('lead-phone').value = lead.phone || '';
-  document.getElementById('lead-email').value = lead.email || '';
-  document.getElementById('lead-address').value = lead.address || '';
-  document.getElementById('lead-maps-url').value = lead.google_maps_url || '';
-  document.getElementById('lead-status').value = lead.status || 'new';
-  document.getElementById('lead-source').value = lead.source || 'google_maps';
-  document.getElementById('lead-notes').value = lead.notes || '';
-  openModal('lead-modal');
+async function showEditLeadModal(id) {
+  let lead = leadsData.find(l=>l.id===id)
+  if(!lead) { const d = await api('GET',`/leads/${id}`); lead = d.lead }
+  document.getElementById('lead-modal-title').textContent = 'Edit Lead'
+  document.getElementById('lead-id').value = lead.id
+  document.getElementById('lead-business-name').value = lead.business_name||''
+  document.getElementById('lead-owner-name').value = lead.owner_name||''
+  document.getElementById('lead-industry').value = lead.industry||''
+  document.getElementById('lead-city').value = lead.city||''
+  document.getElementById('lead-phone').value = lead.phone||''
+  document.getElementById('lead-email').value = lead.email||''
+  document.getElementById('lead-address').value = lead.address||''
+  document.getElementById('lead-maps-url').value = lead.google_maps_url||''
+  document.getElementById('lead-status').value = lead.status||'new'
+  document.getElementById('lead-source').value = lead.source||'google_maps'
+  document.getElementById('lead-notes').value = lead.notes||''
+  openModal('lead-modal')
 }
 
 document.getElementById('lead-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const id = document.getElementById('lead-id').value;
+  e.preventDefault()
+  const id = document.getElementById('lead-id').value
   const data = {
     business_name: document.getElementById('lead-business-name').value,
     owner_name: document.getElementById('lead-owner-name').value,
@@ -1178,80 +526,258 @@ document.getElementById('lead-form').addEventListener('submit', async (e) => {
     status: document.getElementById('lead-status').value,
     source: document.getElementById('lead-source').value,
     notes: document.getElementById('lead-notes').value,
-  };
-  try {
-    if (id) {
-      const res = await API.put(`/leads/${id}`, data);
-      const idx = allLeads.findIndex(l => l.id == id);
-      if (idx >= 0) allLeads[idx] = res.data;
-      showToast('Lead updated');
-    } else {
-      const res = await API.post('/leads', data);
-      allLeads.unshift(res.data);
-      showToast('Lead added!');
-    }
-    closeModal('lead-modal');
-    if (currentPage === 'leads') filterLeads();
-    else if (currentPage === 'pipeline') renderPipelineUI(allLeads);
-    refreshBadges();
-  } catch(err) { showToast('Failed to save lead', 'error'); }
-});
-
-// ===== CLIENT MODAL =====
-function openClientModal(id = null, prefillLead = null) {
-  document.getElementById('client-modal-title').textContent = id ? 'Edit Client' : 'Add Client';
-  document.getElementById('client-form').reset();
-  document.getElementById('client-id').value = id || '';
-
-  if (prefillLead) {
-    document.getElementById('client-business-name').value = prefillLead.business_name || '';
-    document.getElementById('client-owner-name').value = prefillLead.owner_name || '';
-    document.getElementById('client-industry').value = prefillLead.industry || '';
-    document.getElementById('client-city').value = prefillLead.city || '';
-    document.getElementById('client-phone').value = prefillLead.phone || '';
-    document.getElementById('client-email').value = prefillLead.email || '';
-    document.getElementById('client-package').value = 'Professional';
-    document.getElementById('client-price').value = 1500;
-    document.getElementById('client-recurring').value = 75;
-    // Store lead_id for conversion
-    document.getElementById('client-id').dataset.leadId = prefillLead.id;
-  } else if (id) {
-    const c = allClients.find(c => c.id === id);
-    if (c) {
-      document.getElementById('client-business-name').value = c.business_name;
-      document.getElementById('client-owner-name').value = c.owner_name || '';
-      document.getElementById('client-industry').value = c.industry;
-      document.getElementById('client-city').value = c.city;
-      document.getElementById('client-phone').value = c.phone || '';
-      document.getElementById('client-email').value = c.email || '';
-      document.getElementById('client-package').value = c.package_tier;
-      document.getElementById('client-price').value = c.package_price;
-      document.getElementById('client-recurring').value = c.recurring_fee || 0;
-      document.getElementById('client-status').value = c.status;
-      document.getElementById('client-website').value = c.website_url || '';
-      document.getElementById('client-notes').value = c.notes || '';
-    }
   }
-  openModal('client-modal');
+  try {
+    if(id) await api('PUT', `/leads/${id}`, data)
+    else await api('POST', '/leads', data)
+    showToast(id?'Lead updated':'Lead added!', 'success')
+    closeModal('lead-modal')
+    if(currentPage==='leads') renderLeads()
+    else if(currentPage==='pipeline') renderPipeline()
+    else if(currentPage==='dashboard') renderDashboard()
+  } catch(e) {}
+})
+
+async function confirmDeleteLead(id) {
+  if(!confirm('Delete this lead? This cannot be undone.')) return
+  await api('DELETE', `/leads/${id}`)
+  showToast('Lead deleted', 'info')
+  renderLeads()
+}
+
+function convertToClient(leadId) {
+  const lead = leadsData.find(l=>l.id===leadId)
+  if(!lead) return
+  document.getElementById('client-modal-title').textContent = 'Convert Lead to Client'
+  document.getElementById('client-id').value = ''
+  document.getElementById('client-business-name').value = lead.business_name||''
+  document.getElementById('client-owner-name').value = lead.owner_name||''
+  document.getElementById('client-industry').value = lead.industry||''
+  document.getElementById('client-city').value = lead.city||''
+  document.getElementById('client-phone').value = lead.phone||''
+  document.getElementById('client-email').value = lead.email||''
+  document.getElementById('client-package').value = ''
+  document.getElementById('client-price').value = ''
+  document.getElementById('client-recurring').value = '0'
+  document.getElementById('client-status').value = 'active'
+  document.getElementById('client-notes').value = ''
+  // Store lead_id for conversion
+  document.getElementById('client-form').dataset.leadId = leadId
+  openModal('client-modal')
+}
+
+// ===== PIPELINE KANBAN =====
+async function renderPipeline() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const leads = await api('GET', '/leads')
+  const stages = [
+    { key:'new', label:'New', color:'text-blue-400', dot:'bg-blue-500' },
+    { key:'contacted', label:'Contacted', color:'text-indigo-400', dot:'bg-indigo-500' },
+    { key:'demo_sent', label:'Demo Sent', color:'text-violet-400', dot:'bg-violet-500' },
+    { key:'proposal_sent', label:'Proposal Sent', color:'text-purple-400', dot:'bg-purple-500' },
+    { key:'won', label:'Won 🏆', color:'text-green-400', dot:'bg-green-500' },
+    { key:'lost', label:'Lost', color:'text-red-400', dot:'bg-red-600' },
+  ]
+  const grouped = {}
+  stages.forEach(s => { grouped[s.key] = leads.filter(l => l.status===s.key) })
+
+  setContent(`
+    <div class="overflow-x-auto pb-4">
+      <div class="flex gap-4 min-w-max">
+        ${stages.map(s => `
+          <div class="kanban-col">
+            <div class="kanban-col-header">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full ${s.dot}"></span>
+                <span class="${s.color}">${s.label}</span>
+              </div>
+              <span class="text-gray-500 text-xs bg-gray-800 px-2 py-0.5 rounded-full">${grouped[s.key].length}</span>
+            </div>
+            <div class="kanban-cards" id="col-${s.key}">
+              ${grouped[s.key].map(l => kanbanCard(l)).join('')}
+              ${!grouped[s.key].length ? `<div class="text-center py-6 text-gray-700 text-xs">No leads</div>`:''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <p class="text-xs text-gray-600 mt-2"><i class="fas fa-info-circle mr-1"></i>Click any card to view details and update status</p>
+  `)
+}
+
+function kanbanCard(l) {
+  return `<div class="kanban-card" onclick="showLeadDetail(${l.id})">
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <p class="text-sm font-semibold text-white leading-tight">${escHtml(l.business_name)}</p>
+      <i class="fas fa-${industryIcon(l.industry)} text-gray-600 text-xs flex-shrink-0 mt-0.5"></i>
+    </div>
+    ${l.owner_name?`<p class="text-xs text-gray-500 mb-1">${escHtml(l.owner_name)}</p>`:''}
+    <p class="text-xs text-gray-600">${escHtml(l.city)}</p>
+    ${l.phone?`<a href="tel:${escHtml(l.phone)}" onclick="event.stopPropagation()" class="text-xs text-blue-500 hover:text-blue-400 mt-1 block">${escHtml(l.phone)}</a>`:''}
+    ${l.notes?`<p class="text-xs text-gray-600 mt-2 truncate-2 italic">${escHtml(l.notes)}</p>`:''}
+    <div class="mt-2 pt-2 border-t border-gray-800 flex items-center justify-between">
+      <span class="text-xs text-gray-600">${fmtDate(l.created_at)}</span>
+      <button onclick="event.stopPropagation();showProposalModal({lead_id:${l.id},business_name:'${escHtml(l.business_name)}',owner_name:'${escHtml(l.owner_name||'')}'})" class="text-xs text-yellow-500 hover:text-yellow-400"><i class="fas fa-file-invoice-dollar"></i></button>
+    </div>
+  </div>`
+}
+
+// ===== CLIENTS =====
+let clientsData = []
+async function renderClients() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  clientsData = await api('GET', '/clients')
+  renderClientsTable(clientsData)
+}
+
+function renderClientsTable(data) {
+  const totalRevenue = data.reduce((a,c)=>a+(c.package_price||0),0)
+  const totalMRR = data.filter(c=>c.status==='active').reduce((a,c)=>a+(c.recurring_fee||0),0)
+  setContent(`
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="filter-bar">
+          <input type="text" id="client-search" placeholder="Search clients..." class="form-input w-48" oninput="filterClients()"/>
+          <select id="client-filter-status" class="form-input w-32" onchange="filterClients()">
+            <option value="">All Status</option>
+            <option value="active">Active</option><option value="completed">Completed</option>
+            <option value="paused">Paused</option><option value="churned">Churned</option>
+          </select>
+        </div>
+        <button onclick="showAddClientModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Client</button>
+      </div>
+
+      <!-- Revenue summary -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="stat-card">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Total Clients</p>
+          <p class="text-2xl font-bold text-white mt-1">${data.length}</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Total Revenue</p>
+          <p class="text-2xl font-bold text-green-400 mt-1">${fmt$(totalRevenue)}</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-xs text-gray-500 uppercase font-semibold">Monthly Recurring</p>
+          <p class="text-2xl font-bold text-emerald-400 mt-1">${fmt$(totalMRR)}<span class="text-sm text-gray-500">/mo</span></p>
+        </div>
+      </div>
+
+      <div class="card p-0 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Package</th>
+                <th>Price</th>
+                <th>Monthly</th>
+                <th>Status</th>
+                <th>Website</th>
+                <th>Started</th>
+                <th class="w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `)
+  renderClientRows(data)
+}
+
+function renderClientRows(data) {
+  const tbody = document.getElementById('clients-tbody')
+  if(!tbody) return
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fas fa-users"></i><p class="text-lg font-semibold text-gray-500">No clients yet</p><p class="text-sm mt-1">Convert a lead or add a client manually</p></div></td></tr>`
+    return
+  }
+  tbody.innerHTML = data.map(c => `
+    <tr>
+      <td>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-green-900/40 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-${industryIcon(c.industry)} text-green-400 text-xs"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold text-white truncate max-w-[150px]">${escHtml(c.business_name)}</p>
+            ${c.owner_name?`<p class="text-xs text-gray-500">${escHtml(c.owner_name)}</p>`:''}
+          </div>
+        </div>
+      </td>
+      <td><span class="${packageColor(c.package_tier)} font-semibold text-sm">${escHtml(c.package_tier)}</span></td>
+      <td><span class="text-money">${fmt$(c.package_price)}</span></td>
+      <td>${c.recurring_fee>0?`<span class="text-emerald-400 font-semibold">${fmt$(c.recurring_fee)}<span class="text-gray-600 text-xs">/mo</span></span>`:'<span class="text-gray-600 text-xs">—</span>'}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${c.website_url?`<a href="${escHtml(c.website_url)}" target="_blank" onclick="event.stopPropagation()" class="text-blue-400 hover:text-blue-300 text-xs truncate block max-w-[120px]">${escHtml(c.website_url)}</a>`:'<span class="text-gray-600 text-xs">—</span>'}</td>
+      <td><span class="text-gray-500 text-xs">${fmtDate(c.start_date)}</span></td>
+      <td>
+        <div class="row-actions flex items-center gap-1" onclick="event.stopPropagation()">
+          <button onclick="showEditClientModal(${c.id})" class="btn-icon btn-sm" title="Edit"><i class="fas fa-edit text-blue-400"></i></button>
+          <button onclick="confirmDeleteClient(${c.id})" class="btn-icon btn-sm" title="Delete"><i class="fas fa-trash text-red-400"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function filterClients() {
+  const q = (document.getElementById('client-search')?.value||'').toLowerCase()
+  const st = document.getElementById('client-filter-status')?.value||''
+  let f = clientsData
+  if(q) f = f.filter(c=>(c.business_name+c.owner_name).toLowerCase().includes(q))
+  if(st) f = f.filter(c=>c.status===st)
+  renderClientRows(f)
+}
+
+function showAddClientModal() {
+  document.getElementById('client-modal-title').textContent = 'Add New Client'
+  document.getElementById('client-id').value = ''
+  document.getElementById('client-form').reset()
+  document.getElementById('client-form').dataset.leadId = ''
+  document.getElementById('client-recurring').value = '0'
+  document.getElementById('client-status').value = 'active'
+  openModal('client-modal')
+}
+
+async function showEditClientModal(id) {
+  let c = clientsData.find(x=>x.id===id)
+  if(!c) { const d = await api('GET',`/clients/${id}`); c = d.client }
+  document.getElementById('client-modal-title').textContent = 'Edit Client'
+  document.getElementById('client-id').value = c.id
+  document.getElementById('client-business-name').value = c.business_name||''
+  document.getElementById('client-owner-name').value = c.owner_name||''
+  document.getElementById('client-industry').value = c.industry||''
+  document.getElementById('client-city').value = c.city||''
+  document.getElementById('client-phone').value = c.phone||''
+  document.getElementById('client-email').value = c.email||''
+  document.getElementById('client-package').value = c.package_tier||''
+  document.getElementById('client-price').value = c.package_price||''
+  document.getElementById('client-recurring').value = c.recurring_fee||0
+  document.getElementById('client-status').value = c.status||'active'
+  document.getElementById('client-website').value = c.website_url||''
+  document.getElementById('client-notes').value = c.notes||''
+  openModal('client-modal')
 }
 
 function updateClientPrice() {
-  const pkg = document.getElementById('client-package').value;
-  const defaults = { Basic: 650, Professional: 1500, Premium: 3000 };
-  const recurring = { Basic: 50, Professional: 75, Premium: 150 };
-  if (defaults[pkg]) {
-    document.getElementById('client-price').value = defaults[pkg];
-    document.getElementById('client-recurring').value = recurring[pkg];
+  const pkg = document.getElementById('client-package').value
+  const defaults = { Basic:650, Professional:1500, Premium:3000 }
+  const recurring = { Basic:50, Professional:75, Premium:150 }
+  if(defaults[pkg]) {
+    document.getElementById('client-price').value = defaults[pkg]
+    document.getElementById('client-recurring').value = recurring[pkg]
   }
 }
 
 document.getElementById('client-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const idEl = document.getElementById('client-id');
-  const id = idEl.value;
-  const leadId = idEl.dataset.leadId;
+  e.preventDefault()
+  const id = document.getElementById('client-id').value
+  const leadId = document.getElementById('client-form').dataset.leadId
   const data = {
-    lead_id: leadId || null,
+    lead_id: leadId||null,
     business_name: document.getElementById('client-business-name').value,
     owner_name: document.getElementById('client-owner-name').value,
     industry: document.getElementById('client-industry').value,
@@ -1260,381 +786,706 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
     email: document.getElementById('client-email').value,
     package_tier: document.getElementById('client-package').value,
     package_price: parseFloat(document.getElementById('client-price').value),
-    recurring_fee: parseFloat(document.getElementById('client-recurring').value) || 0,
-    status: document.getElementById('client-status').value,
+    recurring_fee: parseFloat(document.getElementById('client-recurring').value)||0,
     website_url: document.getElementById('client-website').value,
+    status: document.getElementById('client-status').value,
     notes: document.getElementById('client-notes').value,
-  };
+  }
   try {
-    if (id) {
-      const res = await API.put(`/clients/${id}`, data);
-      const idx = allClients.findIndex(c => c.id == id);
-      if (idx >= 0) allClients[idx] = res.data;
-      showToast('Client updated');
-    } else {
-      const res = await API.post('/clients', data);
-      allClients.unshift(res.data);
-      showToast('Client added!');
-    }
-    idEl.dataset.leadId = '';
-    closeModal('client-modal');
-    if (currentPage === 'clients') renderClientsUI(allClients);
-    else if (currentPage === 'leads') { const res = await API.get('/leads'); allLeads = res.data; filterLeads(); }
-  } catch(err) { showToast('Failed to save client', 'error'); }
-});
+    if(id) await api('PUT', `/clients/${id}`, data)
+    else await api('POST', '/clients', data)
+    showToast(id?'Client updated':'Client added!','success')
+    closeModal('client-modal')
+    if(currentPage==='clients') renderClients()
+    else if(currentPage==='leads') renderLeads()
+    else if(currentPage==='dashboard') renderDashboard()
+  } catch(e) {}
+})
 
-// ===== PROPOSAL MODAL =====
+async function confirmDeleteClient(id) {
+  if(!confirm('Delete this client?')) return
+  await api('DELETE', `/clients/${id}`)
+  showToast('Client deleted','info')
+  renderClients()
+}
+
+// ===== PROPOSALS =====
+let proposalsData = []
 const PACKAGES = {
   Basic: {
-    price: 700, recurring: 50,
-    features: ['5-Page Website','Mobile Responsive','Contact Form','Google Maps Integration','Click-to-Call','1 Year Hosting Included']
+    price: 650, recurring: 50,
+    features: ['5-Page Website','Mobile Responsive','Contact Form','Google Maps Integration','Click-to-Call','1 Year Domain + Hosting']
   },
   Professional: {
     price: 1500, recurring: 75,
-    features: ['Everything in Basic','SEO Optimization','Google Business Profile','Image Gallery','Social Media Links','Analytics Dashboard','Professional Email Setup']
+    features: ['Everything in Basic','SEO Optimization','Google Business Profile','Image Gallery','Social Media Links','Basic Analytics','Email Setup']
   },
   Premium: {
     price: 3000, recurring: 150,
-    features: ['Everything in Professional','Booking/Appointment System','Blog Setup','3 Months of Updates','Local SEO Campaign','Monthly Report','Priority Support']
+    features: ['Everything in Professional','Booking/Appointment System','Blog Setup','3 Months of Updates','Local SEO Campaign','Priority Support','Custom Domain Email']
   }
-};
+}
 
-async function showProposalModal(leadId = null) {
+async function renderProposals() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  proposalsData = await api('GET', '/proposals')
+  setContent(`
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="filter-bar">
+          <input type="text" id="prop-search" placeholder="Search proposals..." class="form-input w-48" oninput="filterProposals()"/>
+          <select id="prop-filter-status" class="form-input w-32" onchange="filterProposals()">
+            <option value="">All Status</option>
+            <option value="draft">Draft</option><option value="sent">Sent</option>
+            <option value="accepted">Accepted</option><option value="declined">Declined</option>
+          </select>
+        </div>
+        <button onclick="showProposalModal({})" class="btn-primary"><i class="fas fa-plus"></i> New Proposal</button>
+      </div>
+
+      <div class="card p-0 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Package</th>
+                <th>Price</th>
+                <th>Monthly</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th class="w-28">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="proposals-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `)
+  renderProposalRows(proposalsData)
+}
+
+function renderProposalRows(data) {
+  const tbody = document.getElementById('proposals-tbody')
+  if(!tbody) return
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><p class="text-lg font-semibold text-gray-500">No proposals yet</p></div></td></tr>`
+    return
+  }
+  tbody.innerHTML = data.map(p=>`
+    <tr>
+      <td>
+        <p class="font-semibold text-white">${escHtml(p.business_name)}</p>
+        ${p.owner_name?`<p class="text-xs text-gray-500">${escHtml(p.owner_name)}</p>`:''}
+      </td>
+      <td><span class="${packageColor(p.package_tier)} font-semibold text-sm">${escHtml(p.package_tier)}</span></td>
+      <td><span class="text-money">${fmt$(p.package_price)}</span></td>
+      <td>${p.recurring_fee>0?`<span class="text-emerald-400 font-semibold">${fmt$(p.recurring_fee)}<span class="text-gray-600 text-xs">/mo</span></span>`:'—'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td><span class="text-gray-500 text-xs">${fmtDate(p.created_at)}</span></td>
+      <td>
+        <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+          <button onclick="showProposalModal(null,${p.id})" class="btn-icon btn-sm" title="Edit"><i class="fas fa-edit text-blue-400"></i></button>
+          <button onclick="copyProposalById(${p.id})" class="btn-icon btn-sm" title="Copy text"><i class="fas fa-copy text-gray-400"></i></button>
+          <button onclick="confirmDeleteProposal(${p.id})" class="btn-icon btn-sm" title="Delete"><i class="fas fa-trash text-red-400"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('')
+}
+
+function filterProposals() {
+  const q=(document.getElementById('prop-search')?.value||'').toLowerCase()
+  const st=document.getElementById('prop-filter-status')?.value||''
+  let f=proposalsData
+  if(q) f=f.filter(p=>(p.business_name+p.owner_name).toLowerCase().includes(q))
+  if(st) f=f.filter(p=>p.status===st)
+  renderProposalRows(f)
+}
+
+function showProposalModal(leadData, proposalId) {
   // Reset form
-  document.getElementById('proposal-id').value = '';
-  document.getElementById('proposal-lead-id').value = leadId || '';
-  document.getElementById('proposal-package').value = 'Professional';
-  document.getElementById('proposal-price').value = 1500;
-  document.getElementById('proposal-recurring').value = 75;
-  document.getElementById('proposal-status').value = 'draft';
-  document.getElementById('proposal-message').value = '';
+  document.getElementById('proposal-id').value = ''
+  document.getElementById('proposal-lead-id').value = ''
 
-  if (leadId) {
-    const lead = allLeads.find(l => l.id === leadId);
-    if (lead) {
-      document.getElementById('proposal-business-name').value = lead.business_name;
-      document.getElementById('proposal-owner-name').value = lead.owner_name || '';
-      document.getElementById('proposal-message').value = `Hi ${lead.owner_name || lead.business_name}, I noticed your business on Google Maps and noticed you don't have a website yet. I've put together a professional proposal that I think you'll love. Would love to show you what we can build for ${lead.business_name}!`;
-    }
-  } else {
-    document.getElementById('proposal-business-name').value = '';
-    document.getElementById('proposal-owner-name').value = '';
+  if(leadData) {
+    document.getElementById('proposal-business-name').value = leadData.business_name||''
+    document.getElementById('proposal-owner-name').value = leadData.owner_name||''
+    document.getElementById('proposal-lead-id').value = leadData.lead_id||''
+    document.getElementById('proposal-package').value = 'Professional'
+    document.getElementById('proposal-price').value = 1500
+    document.getElementById('proposal-recurring').value = 75
+    document.getElementById('proposal-status').value = 'draft'
+    document.getElementById('proposal-message').value = leadData.business_name ? `Hi ${leadData.owner_name||'there'}, I noticed your business doesn't have a website yet. I've put together this proposal to help ${escHtml(leadData.business_name)} build a strong online presence and attract more customers.` : ''
   }
 
-  renderProposalFeatureChecks('Professional');
-  updateProposalPreview();
-  openModal('proposal-modal');
+  if(proposalId) {
+    const p = proposalsData.find(x=>x.id===proposalId)
+    if(p) {
+      document.getElementById('proposal-id').value = p.id
+      document.getElementById('proposal-lead-id').value = p.lead_id||''
+      document.getElementById('proposal-business-name').value = p.business_name||''
+      document.getElementById('proposal-owner-name').value = p.owner_name||''
+      document.getElementById('proposal-package').value = p.package_tier||'Professional'
+      document.getElementById('proposal-price').value = p.package_price||1500
+      document.getElementById('proposal-recurring').value = p.recurring_fee||0
+      document.getElementById('proposal-status').value = p.status||'draft'
+      document.getElementById('proposal-message').value = p.custom_message||''
+    }
+  }
+
+  renderProposalFeatures()
+  updateProposalPreview()
+  openModal('proposal-modal')
 }
 
-async function editProposal(id) {
-  try {
-    const res = await API.get(`/proposals/${id}`);
-    const p = res.data;
-    document.getElementById('proposal-id').value = p.id;
-    document.getElementById('proposal-lead-id').value = p.lead_id || '';
-    document.getElementById('proposal-business-name').value = p.business_name;
-    document.getElementById('proposal-owner-name').value = p.owner_name || '';
-    document.getElementById('proposal-package').value = p.package_tier;
-    document.getElementById('proposal-price').value = p.package_price;
-    document.getElementById('proposal-recurring').value = p.recurring_fee || 0;
-    document.getElementById('proposal-status').value = p.status;
-    document.getElementById('proposal-message').value = p.custom_message || '';
-    const selectedFeatures = p.features ? p.features.split(',').filter(Boolean) : [];
-    renderProposalFeatureChecks(p.package_tier, selectedFeatures);
-    updateProposalPreview();
-    openModal('proposal-modal');
-  } catch(e) { showToast('Failed to load proposal', 'error'); }
-}
-
-function renderProposalFeatureChecks(pkg, selected = null) {
-  const allFeatures = [
-    '5-Page Website','Mobile Responsive','Contact Form','Google Maps Integration','Click-to-Call',
-    '1 Year Hosting Included','SEO Optimization','Google Business Profile','Image Gallery',
-    'Social Media Links','Analytics Dashboard','Professional Email Setup',
-    'Booking/Appointment System','Blog Setup','3 Months of Updates','Local SEO Campaign',
-    'Monthly Report','Priority Support'
-  ];
-  const pkgFeatures = PACKAGES[pkg]?.features || [];
-  const container = document.getElementById('proposal-features');
-  const activeFeatures = selected || pkgFeatures;
-  container.innerHTML = allFeatures.map(f => `
-    <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer hover:text-white">
-      <input type="checkbox" class="feature-check rounded" value="${f}" ${activeFeatures.includes(f) ? 'checked' : ''} onchange="updateProposalPreview()"/>
-      ${f}
+function renderProposalFeatures() {
+  const pkg = document.getElementById('proposal-package').value||'Professional'
+  const pkgData = PACKAGES[pkg]||PACKAGES.Professional
+  const container = document.getElementById('proposal-features')
+  container.innerHTML = pkgData.features.map(f => `
+    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-900 rounded p-1">
+      <input type="checkbox" value="${escHtml(f)}" checked class="accent-blue-500" onchange="updateProposalPreview()"/>
+      <span class="text-sm text-gray-300">${escHtml(f)}</span>
     </label>
-  `).join('');
+  `).join('')
+  updateProposalPreview()
 }
 
 function updateProposalPackage() {
-  const pkg = document.getElementById('proposal-package').value;
-  const pkgData = PACKAGES[pkg];
-  if (pkgData) {
-    document.getElementById('proposal-price').value = pkgData.price;
-    document.getElementById('proposal-recurring').value = pkgData.recurring;
-    renderProposalFeatureChecks(pkg);
+  const pkg = document.getElementById('proposal-package').value
+  const pkgData = PACKAGES[pkg]
+  if(pkgData) {
+    document.getElementById('proposal-price').value = pkgData.price
+    document.getElementById('proposal-recurring').value = pkgData.recurring
   }
-  updateProposalPreview();
-}
-
-function getSelectedFeatures() {
-  return [...document.querySelectorAll('.feature-check:checked')].map(cb => cb.value);
+  renderProposalFeatures()
 }
 
 function updateProposalPreview() {
-  const biz = document.getElementById('proposal-business-name')?.value || '[Business Name]';
-  const owner = document.getElementById('proposal-owner-name')?.value || '';
-  const pkg = document.getElementById('proposal-package')?.value || 'Professional';
-  const price = parseFloat(document.getElementById('proposal-price')?.value) || 0;
-  const recurring = parseFloat(document.getElementById('proposal-recurring')?.value) || 0;
-  const message = document.getElementById('proposal-message')?.value || '';
-  const features = getSelectedFeatures();
+  const biz = document.getElementById('proposal-business-name').value||'[Business Name]'
+  const owner = document.getElementById('proposal-owner-name').value||'there'
+  const pkg = document.getElementById('proposal-package').value||'Professional'
+  const price = document.getElementById('proposal-price').value||0
+  const recurring = document.getElementById('proposal-recurring').value||0
+  const msg = document.getElementById('proposal-message').value||''
+  const features = [...document.querySelectorAll('#proposal-features input:checked')].map(i=>i.value)
 
-  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-  const preview = document.getElementById('proposal-preview');
-  if (!preview) return;
-
-  preview.innerHTML = `
+  document.getElementById('proposal-preview').innerHTML = `
     <div class="proposal-preview-header">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="text-blue-400 font-bold text-sm">🌐 LocalWeb Solutions</div>
-          <div class="text-gray-500 text-xs">${today}</div>
-        </div>
-        <div class="text-right">
-          <div class="text-white font-bold text-xs">${pkg} Package</div>
-          <div class="text-green-400 font-bold">$${fmt(price)}</div>
-        </div>
-      </div>
+      <p class="text-blue-400 font-bold text-sm">WEBSITE PROPOSAL</p>
+      <p class="text-white font-bold text-base mt-1">${escHtml(biz)}</p>
+      <p class="text-gray-500 text-xs">Prepared for ${escHtml(owner)} · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>
     </div>
 
-    <div class="mb-3">
-      <div class="text-gray-500 text-xs mb-1">PREPARED FOR</div>
-      <div class="text-white font-bold text-sm">${esc(biz)}</div>
-      ${owner ? `<div class="text-gray-400 text-xs">${esc(owner)}</div>` : ''}
+    ${msg?`<div class="text-gray-300 text-xs leading-relaxed bg-gray-900/50 rounded-lg p-2">${escHtml(msg)}</div>`:''}
+
+    <div class="bg-gray-900 rounded-lg p-3">
+      <p class="text-xs font-bold text-white mb-1">${pkg} Package</p>
+      <div class="flex items-end gap-2">
+        <span class="text-2xl font-bold text-green-400">${fmt$(price)}</span>
+        <span class="text-xs text-gray-500 mb-1">one-time setup</span>
+      </div>
+      ${recurring>0?`<p class="text-xs text-emerald-400 mt-1">+ ${fmt$(recurring)}/month maintenance</p>`:''}
     </div>
 
-    ${message ? `<div class="bg-blue-950 rounded-lg p-3 mb-3">
-      <p class="text-blue-200 text-xs leading-relaxed">${esc(message)}</p>
-    </div>` : ''}
-
-    <div class="mb-3">
-      <div class="text-gray-500 text-xs mb-2 font-bold">WHAT'S INCLUDED</div>
-      <div class="flex flex-wrap">
-        ${features.map(f => `<span class="proposal-feature-tag"><i class="fas fa-check"></i>${f}</span>`).join('')}
-      </div>
+    <div>
+      <p class="text-xs font-bold text-white mb-2">What's Included:</p>
+      <div class="flex flex-wrap">${features.map(f=>`<span class="proposal-feature-tag"><i class="fas fa-check text-green-400"></i>${escHtml(f)}</span>`).join('')}</div>
     </div>
 
-    <div class="bg-gray-900 rounded-lg p-3 mb-3">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-gray-400 text-xs">Website Package</span>
-        <span class="text-white font-bold text-xs">$${fmt(price)}</span>
-      </div>
-      ${recurring > 0 ? `<div class="flex justify-between items-center mb-2">
-        <span class="text-gray-400 text-xs">Monthly Maintenance</span>
-        <span class="text-green-400 text-xs font-bold">$${fmt(recurring)}/mo</span>
-      </div>` : ''}
-      <div class="divider"></div>
-      <div class="flex justify-between items-center">
-        <span class="text-white font-bold text-xs">Total Investment</span>
-        <span class="text-green-400 font-bold">$${fmt(price)}${recurring > 0 ? ` + $${fmt(recurring)}/mo` : ''}</span>
-      </div>
+    <div class="bg-gray-900 rounded-lg p-3">
+      <p class="text-xs font-bold text-white mb-1">Timeline</p>
+      <p class="text-xs text-gray-400">Your website will be ready in <span class="text-white font-semibold">3–5 business days</span> after we receive your content and 50% deposit.</p>
     </div>
 
-    <div class="text-gray-600 text-xs text-center">Ready to get started? Reply to this proposal or call us today.</div>
-  `;
+    <div class="border border-gray-700 rounded-lg p-3">
+      <p class="text-xs font-bold text-white mb-1">Next Steps</p>
+      <ol class="text-xs text-gray-400 space-y-1 list-decimal list-inside">
+        <li>Review and approve this proposal</li>
+        <li>Pay 50% deposit: ${fmt$(price/2)}</li>
+        <li>Fill out our onboarding form</li>
+        <li>We build your site — you review</li>
+        <li>Go live + pay remaining balance</li>
+      </ol>
+    </div>
+  `
 }
 
 async function saveProposal() {
-  const id = document.getElementById('proposal-id').value;
-  const leadId = document.getElementById('proposal-lead-id').value;
-  const features = getSelectedFeatures();
+  const id = document.getElementById('proposal-id').value
+  const features = [...document.querySelectorAll('#proposal-features input:checked')].map(i=>i.value)
   const data = {
-    lead_id: leadId || null,
+    lead_id: document.getElementById('proposal-lead-id').value||null,
     business_name: document.getElementById('proposal-business-name').value,
     owner_name: document.getElementById('proposal-owner-name').value,
     package_tier: document.getElementById('proposal-package').value,
     package_price: parseFloat(document.getElementById('proposal-price').value),
-    recurring_fee: parseFloat(document.getElementById('proposal-recurring').value) || 0,
-    features: features,
+    recurring_fee: parseFloat(document.getElementById('proposal-recurring').value)||0,
+    features,
     custom_message: document.getElementById('proposal-message').value,
     status: document.getElementById('proposal-status').value,
-  };
-  if (!data.business_name) { showToast('Business name required', 'error'); return; }
+  }
   try {
-    if (id) {
-      const res = await API.put(`/proposals/${id}`, data);
-      const idx = allProposals.findIndex(p => p.id == id);
-      if (idx >= 0) allProposals[idx] = res.data;
-      showToast('Proposal updated');
-    } else {
-      const res = await API.post('/proposals', data);
-      allProposals.unshift(res.data);
-      showToast('Proposal saved!');
-    }
-    closeModal('proposal-modal');
-    if (currentPage === 'proposals') renderProposalsUI(allProposals);
-  } catch(err) { showToast('Failed to save proposal', 'error'); }
+    if(id) await api('PUT',`/proposals/${id}`,data)
+    else await api('POST','/proposals',data)
+    showToast(id?'Proposal updated':'Proposal saved!','success')
+    closeModal('proposal-modal')
+    if(currentPage==='proposals') renderProposals()
+  } catch(e) {}
 }
 
 function copyProposalText() {
-  const biz = document.getElementById('proposal-business-name')?.value || '';
-  const owner = document.getElementById('proposal-owner-name')?.value || '';
-  const pkg = document.getElementById('proposal-package')?.value || '';
-  const price = document.getElementById('proposal-price')?.value || '';
-  const recurring = document.getElementById('proposal-recurring')?.value || '';
-  const message = document.getElementById('proposal-message')?.value || '';
-  const features = getSelectedFeatures();
-  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-
-  const text = `WEBSITE PROPOSAL - LocalWeb Solutions
-${today}
-
-Prepared for: ${biz}${owner ? ` (${owner})` : ''}
-
-${message ? message + '\n\n' : ''}PACKAGE: ${pkg}
-
-WHAT'S INCLUDED:
-${features.map(f => `✓ ${f}`).join('\n')}
-
-INVESTMENT:
-• Website Package: $${price}
-${parseFloat(recurring) > 0 ? `• Monthly Maintenance: $${recurring}/mo\n` : ''}
-Total: $${price}${parseFloat(recurring) > 0 ? ` + $${recurring}/month` : ''}
-
-Ready to get started? Reply to this message or give us a call!`;
-
-  copyText(text);
+  const preview = document.getElementById('proposal-preview')
+  const text = preview.innerText
+  navigator.clipboard.writeText(text).then(()=>showToast('Proposal copied to clipboard!','success')).catch(()=>showToast('Copy failed','error'))
 }
 
-// ===== TASK MODAL =====
-async function openTaskModal(id = null) {
-  document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Add Task';
-  document.getElementById('task-form').reset();
-  document.getElementById('task-id').value = id || '';
-  if (id) {
-    const t = allTasks.find(t => t.id === id);
-    if (t) {
-      document.getElementById('task-title').value = t.title;
-      document.getElementById('task-description').value = t.description || '';
-      document.getElementById('task-priority').value = t.priority;
-      document.getElementById('task-status').value = t.status;
-      document.getElementById('task-due-date').value = t.due_date ? t.due_date.slice(0,10) : '';
-    }
+async function copyProposalById(id) {
+  const p = proposalsData.find(x=>x.id===id)
+  if(!p) return
+  const features = (p.features||'').split(',').filter(Boolean)
+  const text = `WEBSITE PROPOSAL\n${p.business_name}\n\n${p.custom_message||''}\n\n${p.package_tier} Package: ${fmt$(p.package_price)}${p.recurring_fee>0?' + '+fmt$(p.recurring_fee)+'/mo':''}\n\nIncludes:\n${features.map(f=>'✓ '+f).join('\n')}\n\nTimeline: 3–5 business days\nDeposit required: ${fmt$(p.package_price/2)}`
+  navigator.clipboard.writeText(text).then(()=>showToast('Copied!','success'))
+}
+
+async function confirmDeleteProposal(id) {
+  if(!confirm('Delete this proposal?')) return
+  await api('DELETE',`/proposals/${id}`)
+  showToast('Proposal deleted','info')
+  renderProposals()
+}
+
+// ===== TASKS =====
+let tasksData = []
+async function renderTasks() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  tasksData = await api('GET', '/tasks')
+  setContent(`
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="filter-bar">
+          <div class="tab-bar" id="task-tab-bar">
+            <button class="tab-btn active" onclick="filterTasksByStatus('pending',this)">Pending <span class="ml-1 text-xs opacity-70" id="t-pending-count"></span></button>
+            <button class="tab-btn" onclick="filterTasksByStatus('in_progress',this)">In Progress</button>
+            <button class="tab-btn" onclick="filterTasksByStatus('done',this)">Done</button>
+            <button class="tab-btn" onclick="filterTasksByStatus('',this)">All</button>
+          </div>
+        </div>
+        <button onclick="showAddTaskModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Task</button>
+      </div>
+      <div id="tasks-content"></div>
+    </div>
+  `)
+  renderTasksList(tasksData.filter(t=>t.status!=='done'))
+  document.getElementById('t-pending-count').textContent = tasksData.filter(t=>t.status==='pending').length
+}
+
+function filterTasksByStatus(status, btn) {
+  document.querySelectorAll('#task-tab-bar .tab-btn').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  const filtered = status ? tasksData.filter(t=>t.status===status) : tasksData
+  renderTasksList(filtered)
+}
+
+function renderTasksList(data) {
+  const cont = document.getElementById('tasks-content')
+  if(!cont) return
+  if(!data.length) {
+    cont.innerHTML = `<div class="empty-state"><i class="fas fa-tasks"></i><p class="text-lg font-semibold text-gray-500">No tasks</p></div>`
+    return
   }
-  openModal('task-modal');
+  const now = Date.now()
+  cont.innerHTML = `<div class="space-y-2">
+    ${data.map(t => {
+      const overdue = t.due_date && new Date(t.due_date).getTime() < now && t.status!=='done'
+      return `<div class="card p-4 flex items-start gap-4 hover:border-gray-700 transition-colors">
+        <button onclick="completeTask(${t.id})" class="w-5 h-5 rounded border-2 ${t.status==='done'?'border-green-500 bg-green-500':'border-gray-600 hover:border-green-500'} flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors">
+          ${t.status==='done'?'<i class="fas fa-check text-white text-xs"></i>':''}
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="font-semibold text-white ${t.status==='done'?'line-through text-gray-500':''}">${escHtml(t.title)}</p>
+            ${priorityBadge(t.priority)}
+            ${statusBadge(t.status)}
+            ${overdue?'<span class="badge bg-red-900/50 text-red-400 border border-red-800"><i class="fas fa-exclamation-triangle mr-1"></i>Overdue</span>':''}
+          </div>
+          ${t.description?`<p class="text-sm text-gray-500 mt-1">${escHtml(t.description)}</p>`:''}
+          ${t.due_date?`<p class="text-xs mt-1 ${overdue?'text-red-400':'text-gray-600'}"><i class="fas fa-calendar mr-1"></i>${fmtDate(t.due_date)}</p>`:''}
+        </div>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <button onclick="showEditTaskModal(${JSON.stringify(t).replace(/"/g,'&quot;')})" class="btn-icon btn-sm"><i class="fas fa-edit text-blue-400"></i></button>
+          <button onclick="confirmDeleteTask(${t.id})" class="btn-icon btn-sm"><i class="fas fa-trash text-red-400"></i></button>
+        </div>
+      </div>`
+    }).join('')}
+  </div>`
+}
+
+async function completeTask(id) {
+  await api('PATCH', `/tasks/${id}/status`, { status: 'done' })
+  showToast('Task completed! ✓', 'success')
+  tasksData = tasksData.map(t => t.id===id ? {...t, status:'done'} : t)
+  const activeTab = document.querySelector('#task-tab-bar .tab-btn.active')
+  if(activeTab) activeTab.click()
+}
+
+function showAddTaskModal() {
+  document.getElementById('task-modal-title').textContent = 'Add Task'
+  document.getElementById('task-id').value = ''
+  document.getElementById('task-form').reset()
+  document.getElementById('task-priority').value = 'medium'
+  document.getElementById('task-status').value = 'pending'
+  // Set default due date to tomorrow
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1)
+  document.getElementById('task-due-date').value = tomorrow.toISOString().split('T')[0]
+  openModal('task-modal')
+}
+
+function showEditTaskModal(task) {
+  if(typeof task === 'string') task = JSON.parse(task)
+  document.getElementById('task-modal-title').textContent = 'Edit Task'
+  document.getElementById('task-id').value = task.id
+  document.getElementById('task-title').value = task.title||''
+  document.getElementById('task-description').value = task.description||''
+  document.getElementById('task-priority').value = task.priority||'medium'
+  document.getElementById('task-status').value = task.status||'pending'
+  document.getElementById('task-due-date').value = task.due_date ? task.due_date.split('T')[0] : ''
+  openModal('task-modal')
 }
 
 document.getElementById('task-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const id = document.getElementById('task-id').value;
+  e.preventDefault()
+  const id = document.getElementById('task-id').value
   const data = {
     title: document.getElementById('task-title').value,
     description: document.getElementById('task-description').value,
     priority: document.getElementById('task-priority').value,
     status: document.getElementById('task-status').value,
-    due_date: document.getElementById('task-due-date').value || null,
-  };
+    due_date: document.getElementById('task-due-date').value||null,
+  }
   try {
-    if (id) {
-      const res = await API.put(`/tasks/${id}`, data);
-      const idx = allTasks.findIndex(t => t.id == id);
-      if (idx >= 0) allTasks[idx] = res.data;
-      showToast('Task updated');
-    } else {
-      const res = await API.post('/tasks', data);
-      allTasks.unshift(res.data);
-      showToast('Task added!');
-    }
-    closeModal('task-modal');
-    if (currentPage === 'tasks') renderTasksUI(allTasks);
-    refreshBadges();
-  } catch(err) { showToast('Failed to save task', 'error'); }
-});
+    if(id) await api('PUT', `/tasks/${id}`, data)
+    else await api('POST', '/tasks', data)
+    showToast(id?'Task updated':'Task added!','success')
+    closeModal('task-modal')
+    renderTasks()
+  } catch(e) {}
+})
 
-// ===== IMPORT MODAL =====
-function showImportModal() { navigateTo('scraper'); }
-
-// =====================================================
-// HELPERS
-// =====================================================
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+async function confirmDeleteTask(id) {
+  if(!confirm('Delete this task?')) return
+  await api('DELETE', `/tasks/${id}`)
+  showToast('Task deleted','info')
+  renderTasks()
 }
 
-function fmt(num) {
-  if (num === null || num === undefined) return '0';
-  return Number(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+// ===== REVENUE REPORT =====
+async function renderRevenue() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const [summary, byMonth, byPackage, clients] = await Promise.all([
+    api('GET','/analytics/summary'),
+    api('GET','/analytics/revenue-by-month'),
+    api('GET','/analytics/clients-by-package'),
+    api('GET','/clients'),
+  ])
+
+  const totalRev = summary.revenue.total
+  const mrr = summary.revenue.monthly
+  const arr = mrr * 12
+
+  setContent(`
+    <div class="space-y-6">
+      <!-- Summary cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        ${kpiCard('Total Revenue','dollar-sign',fmt$(totalRev),'emerald','All time')}
+        ${kpiCard('MRR','sync',fmt$(mrr),'blue','Monthly recurring')}
+        ${kpiCard('ARR','chart-line',fmt$(arr),'purple','Annual recurring')}
+        ${kpiCard('Avg Deal Size','handshake',fmt$(summary.clients.total>0?totalRev/summary.clients.total:0),'green','Per client')}
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-chart-bar text-blue-400 text-sm"></i>Revenue by Month</h3>
+          <div class="chart-wrapper" style="height:240px"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-chart-pie text-indigo-400 text-sm"></i>Revenue by Package</h3>
+          <div class="chart-wrapper" style="height:240px"><canvas id="packageChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Package breakdown table -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-table text-gray-400 text-sm"></i>Package Breakdown</h3>
+        <table class="data-table">
+          <thead><tr><th>Package</th><th>Clients</th><th>Revenue</th><th>Avg Price</th><th>% of Revenue</th></tr></thead>
+          <tbody>
+            ${byPackage.map(p=>`<tr>
+              <td><span class="${packageColor(p.package_tier)} font-semibold">${escHtml(p.package_tier)}</span></td>
+              <td>${p.count}</td>
+              <td><span class="text-money">${fmt$(p.revenue)}</span></td>
+              <td><span class="text-green-300">${fmt$(p.count>0?p.revenue/p.count:0)}</span></td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="progress-bar flex-1"><div class="progress-fill bg-blue-500" style="width:${totalRev>0?Math.round(p.revenue/totalRev*100):0}%"></div></div>
+                  <span class="text-xs text-gray-400 w-8">${totalRev>0?Math.round(p.revenue/totalRev*100):0}%</span>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recurring clients -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-sync text-emerald-400 text-sm"></i>Active Recurring Revenue</h3>
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Client</th><th>Package</th><th>Monthly Fee</th><th>Annual Value</th><th>Status</th></tr></thead>
+            <tbody>
+              ${clients.filter(c=>c.recurring_fee>0 && c.status==='active').map(c=>`<tr>
+                <td><p class="font-semibold text-white">${escHtml(c.business_name)}</p><p class="text-xs text-gray-500">${escHtml(c.city)}</p></td>
+                <td><span class="${packageColor(c.package_tier)} font-semibold text-sm">${escHtml(c.package_tier)}</span></td>
+                <td><span class="text-money">${fmt$(c.recurring_fee)}/mo</span></td>
+                <td><span class="text-emerald-300">${fmt$(c.recurring_fee*12)}/yr</span></td>
+                <td>${statusBadge(c.status)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `)
+
+  // Revenue by month chart
+  if(byMonth.length) {
+    const rCtx = document.getElementById('revenueChart')
+    charts.revenue = new Chart(rCtx, {
+      type:'bar',
+      data: {
+        labels: byMonth.map(x=>x.month),
+        datasets:[{
+          label:'Revenue',
+          data: byMonth.map(x=>x.revenue||0),
+          backgroundColor:'rgba(59,130,246,0.7)',
+          borderColor:'#3b82f6',
+          borderWidth:1,
+          borderRadius:4,
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ x:{ticks:{color:'#6b7280'},grid:{color:'#1f2937'}}, y:{ticks:{color:'#6b7280',callback:v=>'$'+v.toLocaleString()},grid:{color:'#1f2937'}} }
+      }
+    })
+  }
+
+  // Package pie
+  if(byPackage.length) {
+    const pCtx = document.getElementById('packageChart')
+    charts.packages = new Chart(pCtx, {
+      type:'doughnut',
+      data:{
+        labels: byPackage.map(x=>x.package_tier),
+        datasets:[{data: byPackage.map(x=>x.revenue||0), backgroundColor:['#10b981','#3b82f6','#f59e0b'], borderWidth:0, hoverOffset:6}]
+      },
+      options:{responsive:true,maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color:'#9ca3af',boxWidth:12,padding:12,font:{size:12}}}}, cutout:'60%'}
+    })
+  }
 }
 
-function fmtDate(d) {
-  if (!d) return '—';
-  try { return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
-  catch(e) { return d; }
+// ===== LEAD FINDER (Scraper Guide) =====
+function renderScraper() {
+  setContent(`
+    <div class="space-y-6 max-w-4xl">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-indigo-900/40 to-blue-900/30 border border-indigo-800/40 rounded-2xl p-6">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-indigo-600/30 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-search-location text-indigo-400 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Lead Finder</h2>
+            <p class="text-gray-400 text-sm mt-1">Find businesses on Google Maps that don't have websites — your best prospects.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Form -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-plus-circle text-blue-400 text-sm"></i>Quickly Add a Lead from Maps</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Business Name *</label>
+            <input id="quick-biz" type="text" class="form-input w-full" placeholder="Pete's Plumbing"/>
+          </div>
+          <div>
+            <label class="form-label">Industry *</label>
+            <select id="quick-industry" class="form-input w-full">
+              <option value="">Select...</option>
+              <option>Home Services</option><option>Restaurant</option><option>Salon</option>
+              <option>Auto Repair</option><option>Retail</option><option>Healthcare</option>
+              <option>Legal</option><option>Fitness</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">City *</label>
+            <input id="quick-city" type="text" class="form-input w-full" placeholder="Austin"/>
+          </div>
+          <div>
+            <label class="form-label">Phone</label>
+            <input id="quick-phone" type="text" class="form-input w-full" placeholder="(512) 555-0101"/>
+          </div>
+          <div>
+            <label class="form-label">Google Maps URL</label>
+            <input id="quick-maps" type="text" class="form-input w-full col-span-2" placeholder="Paste Google Maps link..."/>
+          </div>
+          <div>
+            <label class="form-label">Owner Name</label>
+            <input id="quick-owner" type="text" class="form-input w-full" placeholder="Optional"/>
+          </div>
+        </div>
+        <div class="mt-4 flex gap-3">
+          <button onclick="quickAddLead()" class="btn-primary"><i class="fas fa-plus mr-1"></i>Add Lead</button>
+          <button onclick="navigateTo('leads')" class="btn-secondary"><i class="fas fa-list mr-1"></i>View All Leads</button>
+        </div>
+      </div>
+
+      <!-- How to find leads -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-map text-green-400 text-sm"></i>How to Find Leads on Google Maps</h3>
+        <div class="space-y-4">
+          ${scraperStep(1,'Open Google Maps','Go to maps.google.com or open the Google Maps app','fas fa-map-marker-alt','blue')}
+          ${scraperStep(2,'Search by Category & City','Type: "plumber in Austin TX" or "restaurant in Houston TX"','fas fa-search','indigo')}
+          ${scraperStep(3,'Look for Missing Website Button','Listings with a website show a blue "Website" button. Listings WITHOUT a website button are your targets!','fas fa-globe','purple')}
+          ${scraperStep(4,'Get Contact Info','Click the listing to find phone number, address, and business name','fas fa-phone','green')}
+          ${scraperStep(5,'Add to CRM','Use the form above to add the lead instantly','fas fa-plus-circle','emerald')}
+        </div>
+      </div>
+
+      <!-- Best niches -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-star text-yellow-400 text-sm"></i>Best Industries to Target</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          ${nicheCard('Home Services','Plumbers, electricians, HVAC — highest urgency, they need to be found fast','wrench','blue','⭐⭐⭐⭐⭐')}
+          ${nicheCard('Restaurants & Cafes','Need online menus & reservation info','utensils','orange','⭐⭐⭐⭐⭐')}
+          ${nicheCard('Salons & Barbershops','Booking systems are very valuable to them','scissors','pink','⭐⭐⭐⭐')}
+          ${nicheCard('Auto Repair','Before/after galleries drive leads','car','yellow','⭐⭐⭐⭐')}
+          ${nicheCard('Local Retail','Product showcases help sales','store','green','⭐⭐⭐')}
+          ${nicheCard('Healthcare','Dentists, chiropractors — premium pricing','heartbeat','red','⭐⭐⭐⭐')}
+        </div>
+      </div>
+
+      <!-- Scripts -->
+      <div class="card">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-comments text-purple-400 text-sm"></i>Sales Scripts</h3>
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase mb-2">📞 Phone Script</p>
+            <div class="bg-gray-900 rounded-xl p-4 text-sm text-gray-300 leading-relaxed italic border-l-4 border-blue-600">
+              "Hi, is this [Owner Name]? Great! My name is [Your Name]. I was searching for [industry] businesses in [city] and found your listing on Google Maps — it looks great! I noticed you don't have a website yet, and I actually put together a quick mockup of what yours could look like. It only takes 2 minutes to show you — would you be open to a quick call this week?"
+            </div>
+            <button onclick="copyScript('phone')" class="btn-secondary btn-sm mt-2"><i class="fas fa-copy mr-1"></i>Copy Script</button>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase mb-2">🚶 In-Person Script</p>
+            <div class="bg-gray-900 rounded-xl p-4 text-sm text-gray-300 leading-relaxed italic border-l-4 border-green-600">
+              "Hi [Owner], I'm [Name] — I help local businesses in [city] get online. I was in the area and noticed you don't have a website yet. I actually built a mockup of what yours could look like — can I show you real quick on my phone? It takes 2 minutes and there's zero obligation."
+            </div>
+            <button onclick="copyScript('inperson')" class="btn-secondary btn-sm mt-2"><i class="fas fa-copy mr-1"></i>Copy Script</button>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 uppercase mb-2">📧 Email/Text Template</p>
+            <div class="bg-gray-900 rounded-xl p-4 text-sm text-gray-300 leading-relaxed italic border-l-4 border-yellow-600">
+              "Hi [Owner], I found [Business Name] on Google Maps while searching for [industry] in [city]. I noticed you don't have a website yet — I'd love to show you a free mockup I built for you. Reply 'YES' and I'll send it over. No cost, no commitment. — [Your Name]"
+            </div>
+            <button onclick="copyScript('email')" class="btn-secondary btn-sm mt-2"><i class="fas fa-copy mr-1"></i>Copy Script</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `)
 }
 
-function timeAgo(d) {
-  if (!d) return '';
-  const diff = Date.now() - new Date(d).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const days = Math.floor(hours / 24);
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  if (mins > 0) return `${mins}m ago`;
-  return 'Just now';
+function scraperStep(n, title, desc, icon, color) {
+  const colors = { blue:'bg-blue-900/30 text-blue-400', indigo:'bg-indigo-900/30 text-indigo-400', purple:'bg-purple-900/30 text-purple-400', green:'bg-green-900/30 text-green-400', emerald:'bg-emerald-900/30 text-emerald-400' }
+  const cls = colors[color]||'bg-gray-800 text-gray-400'
+  return `<div class="flex gap-4 items-start">
+    <div class="w-10 h-10 rounded-xl ${cls} flex items-center justify-center flex-shrink-0">
+      <i class="fas fa-${icon} text-sm"></i>
+    </div>
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-gray-600">STEP ${n}</span>
+      </div>
+      <p class="font-semibold text-white text-sm">${title}</p>
+      <p class="text-sm text-gray-500 mt-0.5">${desc}</p>
+    </div>
+  </div>`
 }
 
-function detailRow(label, value) {
-  return `<div class="flex items-start gap-2 mb-2">
-    <span class="text-xs text-gray-500 w-20 flex-shrink-0 font-semibold pt-0.5">${label}</span>
-    <span class="text-sm text-gray-200">${value}</span>
-  </div>`;
+function nicheCard(title, desc, icon, color, stars) {
+  const bg = { blue:'bg-blue-900/20 border-blue-800/30', orange:'bg-orange-900/20 border-orange-800/30', pink:'bg-pink-900/20 border-pink-800/30', yellow:'bg-yellow-900/20 border-yellow-800/30', green:'bg-green-900/20 border-green-800/30', red:'bg-red-900/20 border-red-800/30' }
+  const tc = { blue:'text-blue-400', orange:'text-orange-400', pink:'text-pink-400', yellow:'text-yellow-400', green:'text-green-400', red:'text-red-400' }
+  return `<div class="border rounded-xl p-4 ${bg[color]||'bg-gray-900/20 border-gray-800/30'}">
+    <i class="fas fa-${icon} ${tc[color]||'text-gray-400'} text-lg mb-2"></i>
+    <p class="font-semibold text-white text-sm">${title}</p>
+    <p class="text-xs text-gray-500 mt-1">${desc}</p>
+    <p class="text-xs mt-2">${stars}</p>
+  </div>`
 }
 
-function emptyState(icon, title, sub) {
-  return `<div class="empty-state">
-    <i class="fas fa-${icon}"></i>
-    <p class="font-semibold text-gray-400 mb-1">${title}</p>
-    <p class="text-xs text-gray-600">${sub}</p>
-  </div>`;
+async function quickAddLead() {
+  const biz = document.getElementById('quick-biz').value.trim()
+  const ind = document.getElementById('quick-industry').value
+  const city = document.getElementById('quick-city').value.trim()
+  const phone = document.getElementById('quick-phone').value.trim()
+  const maps = document.getElementById('quick-maps').value.trim()
+  const owner = document.getElementById('quick-owner').value.trim()
+  if(!biz || !ind || !city) { showToast('Business name, industry, and city are required','error'); return }
+  try {
+    await api('POST', '/leads', { business_name:biz, industry:ind, city, phone:phone||null, google_maps_url:maps||null, owner_name:owner||null, status:'new', source:'google_maps' })
+    showToast(`Lead "${biz}" added!`, 'success')
+    document.getElementById('quick-biz').value=''
+    document.getElementById('quick-phone').value=''
+    document.getElementById('quick-maps').value=''
+    document.getElementById('quick-owner').value=''
+  } catch(e) {}
 }
 
-function errorState(msg) {
-  return `<div class="empty-state">
-    <i class="fas fa-exclamation-triangle text-red-500"></i>
-    <p class="font-semibold text-red-400 mb-1">${msg}</p>
-    <button onclick="navigateTo(currentPage)" class="btn-secondary btn-sm mt-2">Retry</button>
-  </div>`;
+function copyScript(type) {
+  const scripts = {
+    phone: `Hi, is this [Owner Name]? Great! My name is [Your Name]. I was searching for [industry] businesses in [city] and found your listing on Google Maps — it looks great! I noticed you don't have a website yet, and I actually put together a quick mockup of what yours could look like. It only takes 2 minutes to show you — would you be open to a quick call this week?`,
+    inperson: `Hi [Owner], I'm [Name] — I help local businesses in [city] get online. I was in the area and noticed you don't have a website yet. I actually built a mockup of what yours could look like — can I show you real quick on my phone? It takes 2 minutes and there's zero obligation.`,
+    email: `Hi [Owner], I found [Business Name] on Google Maps while searching for [industry] in [city]. I noticed you don't have a website yet — I'd love to show you a free mockup I built for you. Reply 'YES' and I'll send it over. No cost, no commitment. — [Your Name]`
+  }
+  navigator.clipboard.writeText(scripts[type]||'').then(()=>showToast('Script copied!','success'))
 }
 
-function copyText(text) {
-  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'info'));
-}
+// ===== GLOBAL SEARCH =====
+document.getElementById('global-search').addEventListener('input', async function() {
+  const q = this.value.trim()
+  if(!q) return
+  if(currentPage==='leads') {
+    document.getElementById('lead-search') && (document.getElementById('lead-search').value=q)
+    filterLeads()
+  } else if(currentPage==='clients') {
+    document.getElementById('client-search') && (document.getElementById('client-search').value=q)
+    filterClients()
+  }
+})
 
-// ===== TOAST =====
-let toastTimer;
-function showToast(msg, type = 'success') {
-  const toast = document.getElementById('toast');
-  const inner = document.getElementById('toast-inner');
-  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-  inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium border toast-${type}`;
-  inner.innerHTML = `<i class="fas ${icons[type]||'fa-check-circle'}"></i>${msg}`;
-  toast.classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
-}
-
-// ===== CLOSE MODAL ON OVERLAY CLICK =====
+// Close modals on backdrop click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.classList.add('hidden');
-  });
-});
+    if(e.target === overlay) {
+      const id = overlay.id
+      closeModal(id)
+    }
+  })
+})
 
-// ===== ESC KEY TO CLOSE MODALS =====
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => m.classList.add('hidden'));
-  }
-});
+// ===== INIT =====
+navigateTo('dashboard')
