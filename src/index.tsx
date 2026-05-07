@@ -489,13 +489,28 @@ async function runScheduledProspecting(env: CronEnv) {
   const apiKey = apiKeyRow?.value || env.GOOGLE_MAPS_API_KEY || ''
   if (!apiKey) return
 
-  // Fake a Request to reuse the Hono handler
+  // Step 1: Run prospecting (finds new leads, auto-queues builds)
   const req = new Request('https://localhost/api/prospector/run-now', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ api_key: apiKey }),
   })
   await app.fetch(req, env)
+
+  // Step 2: Process queued website builds (research → Lovable → outreach)
+  try {
+    const builderEnabledRow = await env.DB.prepare("SELECT value FROM builder_config WHERE key='auto_research_on_discover'").first() as any
+    const autoResearch = builderEnabledRow?.value === '1'
+
+    if (autoResearch) {
+      const buildReq = new Request('https://localhost/api/builder/process-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batch_size: 5 }),
+      })
+      await app.fetch(buildReq, env)
+    }
+  } catch (_) { /* builder not configured — skip */ }
 }
 
 export default {

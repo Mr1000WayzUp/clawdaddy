@@ -974,6 +974,132 @@ builderRouter.put('/builds/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// POST /api/builder/bulk-build  – build sites for multiple leads at once
+builderRouter.post('/bulk-build', async (c) => {
+  const body = await c.req.json().catch(() => ({} as any))
+  const { limit, package_tier } = body
+
+  // Find eligible leads (no website, not terminal, no existing active build)
+  const { results } = await c.env.DB.prepare(`
+    SELECT l.* FROM leads l
+    LEFT JOIN website_builds wb ON wb.lead_id=l.id AND wb.build_status NOT IN ('failed','cancelled')
+    WHERE wb.id IS NULL AND l.has_website=0
+      AND l.status NOT IN ('won','lost','not_interested','already_has_website','do_not_contact')
+    ORDER BY l.created_at DESC LIMIT ?`).bind(parseInt(limit || '10')).all()
+
+  const cfg = await getCfg(c.env.DB)
+  const pkg = package_tier || cfg.default_package || 'Professional'
+  let queued = 0
+
+  for (const lead of results as any[]) {
+    try {
+      await c.env.DB.prepare(
+        `INSERT OR IGNORE INTO website_builds (lead_id,business_name,industry,city,phone,address,package_tier,build_status,lovable_prompt) VALUES (?,?,?,?,?,?,?,'queued','[Bulk queued — pending research + build]')`
+      ).bind(lead.id, lead.business_name, lead.industry, lead.city, lead.phone||null, lead.address||null, pkg).run()
+      queued++
+    } catch {}
+  }
+
+  return c.json({ queued_count: queued, package: pkg, message: `${queued} websites queued for build` })
+})
+
+// POST /api/builder/process-queue  – process one queued build from the queue (for cron or manual trigger)
+builderRouter.post('/process-queue', async (c) => {
+  const body = await c.req.json().catch(() => ({} as any))
+  const batchSize = parseInt(body.batch_size || '3')
+
+  const { results } = await c.env.DB.prepare(
+    `SELECT wb.*, l.phone as lead_phone, l.email as lead_email FROM website_builds wb
+     LEFT JOIN leads l ON l.id=wb.lead_id
+     WHERE wb.build_status='queued'
+     ORDER BY wb.created_at ASC LIMIT ?`).bind(batchSize).all()
+
+  if (!results.length) return c.json({ message: 'No queued builds to process', processed: 0 })
+
+  const cfg = await getCfg(c.env.DB)
+  const processed: any[] = []
+
+  for (const queuedBuild of results as any[]) {
+    try {
+      // Mark as generating
+      await c.env.DB.prepare("UPDATE website_builds SET build_status='generating',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(queuedBuild.id).run()
+
+      const lead = await c.env.DB.prepare('SELECT * FROM leads WHERE id=?').bind(queuedBuild.lead_id).first() as any
+      if (!lead) continue
+
+      // Step 1: Deep Research
+      let research: any = null
+      let reportId: number | null = null
+      const autoResearch = cfg.auto_research_on_discover !== '0'
+
+      if (autoResearch) {
+        const existingResearch = await c.env.DB.prepare(
+          "SELECT * FROM research_reports WHERE lead_id=? AND research_status='completed' ORDER BY created_at DESC LIMIT 1"
+        ).bind(lead.id).first() as any
+
+        if (existingResearch) {
+          research = existingResearch
+          reportId = existingResearch.id
+        } else {
+          try {
+            const result = await runDeepResearch(c.env.DB, lead, cfg, c.env)
+            research = result.report
+            reportId = result.reportId
+          } catch {}
+        }
+      }
+
+      // Step 2: Generate Lovable prompt
+      const prompt = buildLovablePrompt(lead, research, queuedBuild.package_tier || 'Professional')
+
+      // Step 3: Update build with research and prompt
+      await c.env.DB.prepare(
+        `UPDATE website_builds SET research_id=?,lovable_prompt=?,phone=?,email=?,address=?,google_rating=?,google_review_count=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`
+      ).bind(
+        reportId,
+        prompt,
+        lead.phone || research?.google_phone || null,
+        lead.email || null,
+        lead.address || research?.google_address || null,
+        research?.google_rating || null,
+        research?.google_review_count || 0,
+        queuedBuild.id
+      ).run()
+
+      // Step 4: Launch Lovable
+      const lovableKey = cfg.lovable_api_key?.includes('••') ? (c.env.LOVABLE_API_KEY || '') : (cfg.lovable_api_key || c.env.LOVABLE_API_KEY || '')
+      const lovable = await launchLovable(prompt, lead.business_name, lovableKey)
+
+      if (lovable.error) {
+        await c.env.DB.prepare("UPDATE website_builds SET build_status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.error, queuedBuild.id).run()
+        processed.push({ id: queuedBuild.id, business: lead.business_name, status: 'failed', error: lovable.error })
+        continue
+      }
+
+      await c.env.DB.prepare("UPDATE website_builds SET build_status='generated',lovable_project_url=?,preview_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.url, lovable.url, queuedBuild.id).run()
+      await c.env.DB.prepare(`INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'website_built','Auto-built ${queuedBuild.package_tier} website via queue — ${lovable.url}')`).bind(lead.id).run()
+
+      // Update lead status
+      await c.env.DB.prepare("UPDATE leads SET status='demo_sent',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status IN ('new','contacted')").bind(lead.id).run()
+
+      // Step 5: Auto-outreach
+      if (cfg.auto_outreach === '1' && (lead.email || lead.phone)) {
+        const buildRow = { preview_url: lovable.url, lovable_project_url: lovable.url, package_tier: queuedBuild.package_tier }
+        await doOutreach(c.env.DB, queuedBuild.id, lead, buildRow, research, cfg, c.env)
+      }
+
+      await setCfg(c.env.DB, 'total_builds', String(parseInt(cfg.total_builds || '0') + 1))
+      processed.push({ id: queuedBuild.id, business: lead.business_name, status: 'generated', preview_url: lovable.url })
+
+    } catch (err: any) {
+      await c.env.DB.prepare("UPDATE website_builds SET build_status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(err.message, queuedBuild.id).run()
+      processed.push({ id: queuedBuild.id, status: 'error', error: err.message })
+    }
+  }
+
+  return c.json({ processed: processed.length, results: processed })
+})
+
 // DELETE /api/builder/builds/:id
 builderRouter.delete('/builds/:id', async (c) => {
   await c.env.DB.prepare("UPDATE website_builds SET build_status='cancelled' WHERE id=?").bind(c.req.param('id')).run()
