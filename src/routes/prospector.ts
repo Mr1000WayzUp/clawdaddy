@@ -274,6 +274,21 @@ prospectorRouter.post('/run-now', async (c) => {
 
         await c.env.DB.prepare('UPDATE discovered_places SET status=?, lead_id=? WHERE place_id=?').bind('added_as_lead', leadInsert.meta.last_row_id, place.place_id).run()
         await c.env.DB.prepare(`INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'auto_discovered','Auto-discovered by prospector in ZIP ' || ?)`).bind(leadInsert.meta.last_row_id, activeZipRow.zip).run()
+
+        // Auto-queue website build if enabled
+        try {
+          const builderCfgRow = await c.env.DB.prepare("SELECT value FROM builder_config WHERE key='auto_build_on_discover'").first() as any
+          if (builderCfgRow?.value === '1') {
+            const defPkgRow = await c.env.DB.prepare("SELECT value FROM builder_config WHERE key='default_package'").first() as any
+            const buildPkg = defPkgRow?.value || 'Professional'
+            // Generate a minimal prompt inline (full prompt built by builder route on process)
+            const leadData = { ...place, city: activeZipRow.city, state: activeZipRow.state, address: addr, phone: details.formatted_phone_number || null, industry, google_rating: place.rating, google_review_count: place.user_ratings_total || 0 }
+            await c.env.DB.prepare(
+              `INSERT OR IGNORE INTO website_builds (lead_id,business_name,industry,city,phone,address,package_tier,build_status,lovable_prompt) VALUES (?,?,?,?,?,?,?,'queued','[Auto-queued — process via /api/builder/process-queue]')`
+            ).bind(leadInsert.meta.last_row_id, place.name, industry, activeZipRow.city, details.formatted_phone_number||null, addr, buildPkg).run()
+          }
+        } catch (_) { /* builder tables may not exist yet — ignore */ }
+
         added++
         totalAdded++
       }

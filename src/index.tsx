@@ -8,10 +8,16 @@ import { tasksRouter } from './routes/tasks'
 import { analyticsRouter } from './routes/analytics'
 import { activitiesRouter } from './routes/activities'
 import { prospectorRouter } from './routes/prospector'
+import { builderRouter } from './routes/builder'
 
 type Bindings = {
   DB: D1Database
   GOOGLE_MAPS_API_KEY?: string
+  SENDGRID_API_KEY?: string
+  TWILIO_ACCOUNT_SID?: string
+  TWILIO_AUTH_TOKEN?: string
+  TWILIO_FROM_NUMBER?: string
+  LOVABLE_API_KEY?: string
 }
 
 type CronEnv = Bindings
@@ -28,6 +34,7 @@ app.route('/api/tasks', tasksRouter)
 app.route('/api/analytics', analyticsRouter)
 app.route('/api/activities', activitiesRouter)
 app.route('/api/prospector', prospectorRouter)
+app.route('/api/builder', builderRouter)
 
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
@@ -120,6 +127,11 @@ app.get('*', (c) => {
         <i class="fas fa-robot w-4 text-center flex-shrink-0"></i>
         <span class="sidebar-label whitespace-nowrap overflow-hidden">Auto-Prospector</span>
         <span id="nav-prospector-pulse" class="sidebar-label ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse hidden"></span>
+      </button>
+      <button onclick="navigateTo('builder')" id="nav-builder" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Website Builder">
+        <i class="fas fa-magic w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Website Builder</span>
+        <span id="nav-builder-count" class="sidebar-label ml-auto text-xs bg-pink-600 text-white rounded-full px-1.5 py-0.5 hidden"></span>
       </button>
     </nav>
 
