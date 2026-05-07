@@ -44,14 +44,21 @@ app.get('*', (c) => {
 <body class="bg-gray-950 text-gray-100 min-h-screen flex">
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-gray-900 border-r border-gray-800 flex flex-col z-50 transition-transform duration-300">
+  <aside id="sidebar" class="sidebar-expanded fixed top-0 left-0 h-full bg-gray-900 border-r border-gray-800 flex flex-col z-50">
+
+    <!-- Minimize toggle button -->
+    <button id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar"
+      class="sidebar-toggle-btn absolute -right-3.5 top-6 w-7 h-7 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 hover:border-blue-500 transition-all z-10 group">
+      <i id="sidebar-toggle-icon" class="fas fa-chevron-left text-gray-400 group-hover:text-white text-xs transition-transform duration-300"></i>
+    </button>
+
     <!-- Logo -->
-    <div class="p-6 border-b border-gray-800">
+    <div class="sidebar-logo p-5 border-b border-gray-800 overflow-hidden">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
           <i class="fas fa-globe text-white text-sm"></i>
         </div>
-        <div>
+        <div class="sidebar-label overflow-hidden whitespace-nowrap">
           <h1 class="font-bold text-white text-sm leading-tight">LocalWeb CRM</h1>
           <p class="text-xs text-gray-500">Business Platform</p>
         </div>
@@ -59,61 +66,62 @@ app.get('*', (c) => {
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-      <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all active">
-        <i class="fas fa-chart-pie w-4 text-center"></i>
-        <span>Dashboard</span>
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+      <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all active" title="Dashboard">
+        <i class="fas fa-chart-pie w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Dashboard</span>
       </button>
-      <button onclick="navigateTo('leads')" id="nav-leads" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-map-marker-alt w-4 text-center"></i>
-        <span>Leads</span>
-        <span id="nav-leads-count" class="ml-auto text-xs bg-blue-600 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+      <button onclick="navigateTo('leads')" id="nav-leads" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Leads">
+        <i class="fas fa-map-marker-alt w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Leads</span>
+        <span id="nav-leads-count" class="sidebar-label ml-auto text-xs bg-blue-600 text-white rounded-full px-1.5 py-0.5 hidden"></span>
       </button>
-      <button onclick="navigateTo('pipeline')" id="nav-pipeline" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-stream w-4 text-center"></i>
-        <span>Pipeline</span>
+      <button onclick="navigateTo('pipeline')" id="nav-pipeline" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Pipeline">
+        <i class="fas fa-stream w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Pipeline</span>
       </button>
-      <button onclick="navigateTo('clients')" id="nav-clients" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-users w-4 text-center"></i>
-        <span>Clients</span>
+      <button onclick="navigateTo('clients')" id="nav-clients" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Clients">
+        <i class="fas fa-users w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Clients</span>
       </button>
-      <button onclick="navigateTo('proposals')" id="nav-proposals" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-file-invoice-dollar w-4 text-center"></i>
-        <span>Proposals</span>
+      <button onclick="navigateTo('proposals')" id="nav-proposals" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Proposals">
+        <i class="fas fa-file-invoice-dollar w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Proposals</span>
       </button>
-      <button onclick="navigateTo('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-tasks w-4 text-center"></i>
-        <span>Tasks</span>
-        <span id="nav-tasks-count" class="ml-auto text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5 hidden"></span>
+      <button onclick="navigateTo('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Tasks">
+        <i class="fas fa-tasks w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Tasks</span>
+        <span id="nav-tasks-count" class="sidebar-label ml-auto text-xs bg-orange-500 text-white rounded-full px-1.5 py-0.5 hidden"></span>
       </button>
 
-      <div class="pt-4 pb-1">
-        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Reports</p>
+      <div class="pt-3 pb-1 sidebar-label overflow-hidden">
+        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3 whitespace-nowrap">Reports</p>
       </div>
-      <button onclick="navigateTo('revenue')" id="nav-revenue" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-dollar-sign w-4 text-center"></i>
-        <span>Revenue</span>
+      <div class="sidebar-collapsed-divider hidden"><div class="h-px bg-gray-800 mx-2 my-2"></div></div>
+      <button onclick="navigateTo('revenue')" id="nav-revenue" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Revenue">
+        <i class="fas fa-dollar-sign w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Revenue</span>
       </button>
-      <button onclick="navigateTo('scraper')" id="nav-scraper" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all">
-        <i class="fas fa-search-location w-4 text-center"></i>
-        <span>Lead Finder</span>
+      <button onclick="navigateTo('scraper')" id="nav-scraper" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Lead Finder">
+        <i class="fas fa-search-location w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Lead Finder</span>
       </button>
     </nav>
 
     <!-- User -->
-    <div class="p-4 border-t border-gray-800">
-      <div class="flex items-center gap-3 px-3 py-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white">YB</div>
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-white truncate">Your Business</p>
-          <p class="text-xs text-gray-500 truncate">Admin</p>
+    <div class="border-t border-gray-800 overflow-hidden">
+      <div class="sidebar-user-expanded flex items-center gap-3 px-4 py-3">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">YB</div>
+        <div class="sidebar-label min-w-0 overflow-hidden">
+          <p class="text-sm font-medium text-white truncate whitespace-nowrap">Your Business</p>
+          <p class="text-xs text-gray-500 truncate whitespace-nowrap">Admin</p>
         </div>
       </div>
     </div>
   </aside>
 
   <!-- Main content -->
-  <div class="ml-64 flex-1 flex flex-col min-h-screen">
+  <div id="main-wrapper" class="sidebar-main-expanded flex-1 flex flex-col min-h-screen">
     <!-- Top bar -->
     <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
       <div class="flex items-center gap-4">

@@ -5,6 +5,38 @@
 const API = '/api'
 let currentPage = 'dashboard'
 let charts = {}
+let sidebarCollapsed = false
+
+// ===== SIDEBAR TOGGLE =====
+function toggleSidebar() {
+  const sidebar     = document.getElementById('sidebar')
+  const mainWrapper = document.getElementById('main-wrapper')
+  const icon        = document.getElementById('sidebar-toggle-icon')
+
+  sidebarCollapsed = !sidebarCollapsed
+
+  if (sidebarCollapsed) {
+    sidebar.classList.remove('sidebar-expanded')
+    sidebar.classList.add('sidebar-collapsed')
+    mainWrapper.classList.remove('sidebar-main-expanded')
+    mainWrapper.classList.add('sidebar-main-collapsed')
+  } else {
+    sidebar.classList.remove('sidebar-collapsed')
+    sidebar.classList.add('sidebar-expanded')
+    mainWrapper.classList.remove('sidebar-main-collapsed')
+    mainWrapper.classList.add('sidebar-main-expanded')
+  }
+
+  // persist preference
+  try { localStorage.setItem('sidebar_collapsed', sidebarCollapsed ? '1' : '0') } catch(e) {}
+}
+
+function initSidebar() {
+  try {
+    const saved = localStorage.getItem('sidebar_collapsed')
+    if (saved === '1') toggleSidebar()
+  } catch(e) {}
+}
 
 // ===== NAVIGATION =====
 function navigateTo(page) {
@@ -1488,4 +1520,5 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 })
 
 // ===== INIT =====
+initSidebar()
 navigateTo('dashboard')

@@ -417,3 +417,107 @@ textarea.form-input { resize: vertical; }
 /* hover action buttons in table rows */
 .row-actions { opacity: 0; transition: opacity 0.15s; }
 tr:hover .row-actions { opacity: 1; }
+
+/* ===== SIDEBAR COLLAPSE ===== */
+#sidebar {
+  transition: width 0.28s cubic-bezier(0.4,0,0.2,1);
+  overflow: visible;
+}
+
+/* Expanded state */
+.sidebar-expanded { width: 256px; }
+
+/* Collapsed state */
+.sidebar-collapsed { width: 64px; }
+
+/* Labels fade out on collapse */
+#sidebar .sidebar-label {
+  transition: opacity 0.2s ease, max-width 0.28s ease, transform 0.2s ease;
+  opacity: 1;
+  max-width: 200px;
+  transform: translateX(0);
+}
+.sidebar-collapsed .sidebar-label {
+  opacity: 0;
+  max-width: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+}
+
+/* Nav items center their icon when collapsed */
+#sidebar .nav-item {
+  justify-content: flex-start;
+  transition: background 0.15s, color 0.15s, padding 0.28s, justify-content 0.28s;
+}
+.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Logo area */
+.sidebar-logo {
+  transition: padding 0.28s;
+}
+.sidebar-collapsed .sidebar-logo {
+  padding: 1.1rem 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* User section */
+.sidebar-user-expanded {
+  transition: padding 0.28s;
+}
+.sidebar-collapsed .sidebar-user-expanded {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+/* Collapsed divider (replaces text heading) */
+.sidebar-collapsed .sidebar-collapsed-divider { display: block !important; }
+
+/* Toggle button flip arrow on collapse */
+.sidebar-collapsed #sidebar-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Toggle button position */
+.sidebar-toggle-btn {
+  cursor: pointer;
+}
+
+/* Main content margin transition */
+#main-wrapper {
+  transition: margin-left 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+.sidebar-main-expanded  { margin-left: 256px; }
+.sidebar-main-collapsed { margin-left: 64px; }
+
+/* Tooltip for collapsed nav items */
+.sidebar-collapsed .nav-item {
+  position: relative;
+}
+.sidebar-collapsed .nav-item::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1f2937;
+  color: #f9fafb;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.sidebar-collapsed .nav-item:hover::after {
+  opacity: 1;
+}
