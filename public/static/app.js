@@ -2647,6 +2647,744 @@ async function triggerOutreach(buildId) {
   } catch(e) { /* shown */ }
 }
 
+// ===================================================
+// ===== WEBSITE BUILDER =====
+// ===================================================
+
+let builderCfg = {}
+let builderStats = {}
+let builderActiveTab = 'builds'
+
+async function renderBuilder() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const [stats, cfg] = await Promise.all([
+    api('GET', '/builder/stats'),
+    api('GET', '/builder/config'),
+  ])
+  builderStats = stats
+  builderCfg = cfg
+
+  // update nav badge
+  const pending = (stats.build_stats || []).find(s => s.build_status === 'queued')?.count || 0
+  const badge = document.getElementById('nav-builder-count')
+  if (badge) { badge.textContent = pending; badge.classList.toggle('hidden', !pending) }
+
+  const buildCount  = (s, k) => (s.build_stats  || []).find(x => x.build_status   === k)?.count || 0
+  const outCount    = (s, k) => (s.outreach_stats|| []).find(x => x.outreach_status === k)?.count || 0
+  const resCount    = (s, k) => (s.research_stats|| []).find(x => x.research_status === k)?.count || 0
+
+  setContent(`
+  <div class="space-y-5 max-w-7xl">
+
+    <!-- Hero Banner -->
+    <div class="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-900/40 border border-pink-700/40 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/30 to-purple-600/30 flex items-center justify-center flex-shrink-0 border border-pink-500/30">
+          <i class="fas fa-magic text-pink-400 text-2xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            AI Website Builder
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-pink-900/50 text-pink-400 border border-pink-700 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse"></span>POWERED BY AI
+            </span>
+          </h2>
+          <p class="text-gray-400 text-sm mt-0.5">Deep-researches each business → Builds a stunning site → Sends personalized outreach automatically</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <button onclick="openBuilderLeadPicker()" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 border-0">
+          <i class="fas fa-plus"></i> Build Site for Lead
+        </button>
+        <button onclick="runBulkResearch()" class="bg-indigo-900/40 text-indigo-400 border border-indigo-700 hover:bg-indigo-900/60 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+          <i class="fas fa-brain"></i> Bulk Research
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      ${builderKpi('Websites Built', stats.total_builds || 0, 'globe', 'pink')}
+      ${builderKpi('Researched', stats.total_researched || 0, 'brain', 'purple')}
+      ${builderKpi('Outreach Sent', stats.total_outreach || 0, 'paper-plane', 'blue')}
+      ${builderKpi('Converted', outCount(stats,'converted'), 'trophy', 'green')}
+      ${builderKpi('Awaiting Reply', outCount(stats,'sent'), 'clock', 'orange')}
+    </div>
+
+    <!-- Pipeline flow -->
+    <div class="grid grid-cols-4 gap-2">
+      ${builderPipelineStep('1','Deep Research','fas fa-search','Scrapes Google Maps, reviews, competitors & feeds all data to AI','indigo', resCount(stats,'completed'))}
+      ${builderPipelineStep('2','AI Analysis','fas fa-brain','GPT-4 studies the business, writes copy, designs color palette & picks package','purple', stats.total_researched || 0)}
+      ${builderPipelineStep('3','Site Generated','fas fa-magic','Lovable.dev builds a stunning custom site in seconds using all research data','pink', buildCount(stats,'generated') + buildCount(stats,'published'))}
+      ${builderPipelineStep('4','Auto-Outreach','fas fa-paper-plane','Personalized email + SMS sent immediately with preview link & proposal','green', outCount(stats,'sent') + outCount(stats,'converted'))}
+    </div>
+
+    <!-- Main tabs + content -->
+    <div class="card p-0 overflow-hidden">
+      <div class="flex border-b border-gray-800">
+        ${['builds','research','outreach','settings'].map(t => `
+          <button onclick="switchBuilderTab('${t}')" id="btab-${t}"
+            class="px-5 py-3 text-sm font-semibold transition-all border-b-2 ${builderActiveTab===t ? 'border-pink-500 text-pink-400 bg-pink-900/10' : 'border-transparent text-gray-500 hover:text-gray-300'}">
+            <i class="fas fa-${t==='builds'?'globe':t==='research'?'brain':t==='outreach'?'paper-plane':'cog'} mr-2"></i>
+            ${t.charAt(0).toUpperCase()+t.slice(1)}
+          </button>`).join('')}
+      </div>
+      <div id="builder-tab-content" class="p-4">
+        ${builderActiveTab === 'builds'   ? renderBuilderBuildsTab(stats)   :
+          builderActiveTab === 'research' ? renderBuilderResearchTab(stats)  :
+          builderActiveTab === 'outreach' ? renderBuilderOutreachTab(stats)  :
+          renderBuilderSettingsTab(cfg)}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Lead Picker Modal -->
+  <div id="builder-lead-modal" class="modal-overlay hidden">
+    <div class="modal-box w-full max-w-2xl">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold text-white text-lg flex items-center gap-2"><i class="fas fa-magic text-pink-400"></i> Build Website for Lead</h3>
+        <button onclick="closeModal('builder-lead-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Select Lead</label>
+          <input id="blm-search" type="text" class="form-input w-full" placeholder="Search business name..." oninput="filterBuilderLeads(this.value)"/>
+        </div>
+        <div id="blm-lead-list" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+          <div class="text-center py-6 text-gray-600"><div class="spinner mx-auto"></div></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="form-label">Package</label>
+            <select id="blm-package" class="form-input w-full">
+              <option value="Basic">Basic ($500-$800)</option>
+              <option value="Professional" selected>Professional ($1,200-$2,000)</option>
+              <option value="Premium">Premium ($2,500-$3,500)</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer pb-2">
+              <input type="checkbox" id="blm-skip-research" class="accent-pink-500"/>
+              Skip Research
+            </label>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer pb-2">
+              <input type="checkbox" id="blm-auto-outreach" checked class="accent-pink-500"/>
+              Auto Outreach
+            </label>
+          </div>
+        </div>
+        <div id="blm-selected-lead" class="hidden bg-gray-800/60 border border-gray-700 rounded-xl p-3">
+          <p class="text-xs text-gray-500 mb-1">Selected lead:</p>
+          <p id="blm-selected-name" class="text-white font-semibold"></p>
+          <p id="blm-selected-info" class="text-xs text-gray-400 mt-0.5"></p>
+        </div>
+        <div class="flex gap-3 justify-end pt-2 border-t border-gray-800">
+          <button onclick="closeModal('builder-lead-modal')" class="btn-secondary">Cancel</button>
+          <button onclick="startBuildFromModal()" id="blm-build-btn" class="btn-primary bg-gradient-to-r from-pink-600 to-purple-600 border-0 flex items-center gap-2" disabled>
+            <i class="fas fa-magic"></i> Research & Build
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Build Detail Modal -->
+  <div id="build-detail-modal" class="modal-overlay hidden">
+    <div class="modal-box w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-5">
+        <h3 id="bdm-title" class="font-bold text-white text-lg"></h3>
+        <button onclick="closeModal('build-detail-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="bdm-content"></div>
+    </div>
+  </div>
+
+  <!-- Research Detail Modal -->
+  <div id="research-detail-modal" class="modal-overlay hidden">
+    <div class="modal-box w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-5">
+        <h3 id="rdm-title" class="font-bold text-white text-lg flex items-center gap-2"><i class="fas fa-brain text-purple-400"></i> Research Report</h3>
+        <button onclick="closeModal('research-detail-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="rdm-content"></div>
+    </div>
+  </div>
+  `)
+}
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function switchBuilderTab(tab) {
+  builderActiveTab = tab
+  renderBuilder()
+}
+
+// ── KPI card ──────────────────────────────────────────────────────────────────
+function builderKpi(label, value, icon, color) {
+  const c = { pink:'text-pink-400 bg-pink-900/30', purple:'text-purple-400 bg-purple-900/30', blue:'text-blue-400 bg-blue-900/30', green:'text-green-400 bg-green-900/30', orange:'text-orange-400 bg-orange-900/30' }
+  const [tc, bc] = (c[color]||'text-gray-400 bg-gray-800').split(' ')
+  return `<div class="stat-card flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl ${bc} flex items-center justify-center flex-shrink-0"><i class="fas fa-${icon} ${tc}"></i></div>
+    <div><p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">${label}</p><p class="text-2xl font-bold text-white">${value}</p></div>
+  </div>`
+}
+
+// ── Pipeline step ─────────────────────────────────────────────────────────────
+function builderPipelineStep(n, title, icon, desc, color, count) {
+  const colors = { indigo:'border-indigo-700/40 bg-indigo-900/20 text-indigo-400', purple:'border-purple-700/40 bg-purple-900/20 text-purple-400', pink:'border-pink-700/40 bg-pink-900/20 text-pink-400', green:'border-green-700/40 bg-green-900/20 text-green-400' }
+  const cls = colors[color] || colors.indigo
+  return `<div class="border ${cls} rounded-xl p-3 text-center">
+    <div class="w-9 h-9 rounded-lg flex items-center justify-center mx-auto mb-2 bg-gray-900/60"><i class="${icon} text-sm"></i></div>
+    <p class="text-xs font-bold text-white">${n}. ${title}</p>
+    <p class="text-xs text-gray-500 mt-1 leading-relaxed">${desc}</p>
+    <p class="text-lg font-bold text-white mt-2">${count}</p>
+    <p class="text-xs text-gray-600">completed</p>
+  </div>`
+}
+
+// ── BUILDS TAB ────────────────────────────────────────────────────────────────
+function renderBuilderBuildsTab(stats) {
+  const builds = stats.recent_builds || []
+  if (!builds.length) return `
+    <div class="text-center py-16">
+      <div class="w-16 h-16 rounded-2xl bg-pink-900/20 border border-pink-700/30 flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-magic text-pink-400 text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-2">No websites built yet</h3>
+      <p class="text-gray-500 text-sm mb-5">Click "Build Site for Lead" to create your first AI-powered website demo</p>
+      <button onclick="openBuilderLeadPicker()" class="btn-primary bg-gradient-to-r from-pink-600 to-purple-600 border-0">
+        <i class="fas fa-magic mr-2"></i> Build First Site
+      </button>
+    </div>`
+
+  return `
+    <div class="overflow-x-auto">
+      <table class="data-table text-xs">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Package</th>
+            <th>Research</th>
+            <th>Build Status</th>
+            <th>Outreach</th>
+            <th>Preview</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${builds.map(b => {
+            const conf = b.confidence_score || 0
+            const confColor = conf >= 80 ? 'text-green-400' : conf >= 50 ? 'text-yellow-400' : 'text-orange-400'
+            const buildStatusColors = { queued:'badge-new', researching:'badge-pending', generating:'badge-pending', generated:'badge-demo_sent', published:'badge-won', failed:'badge-lost', cancelled:'badge-lost' }
+            const outColors = { pending:'badge-new', sent:'badge-demo_sent', opened:'badge-proposal_sent', replied:'badge-active', converted:'badge-won' }
+            return `<tr>
+              <td>
+                <div>
+                  <p class="font-semibold text-white">${escHtml(b.business_name)}</p>
+                  <p class="text-gray-500">${escHtml(b.city||'')} · ${escHtml(b.industry||'')}</p>
+                  ${b.hero_headline ? `<p class="text-xs text-purple-400 italic mt-0.5 truncate max-w-[200px]">"${escHtml(b.hero_headline)}"</p>` : ''}
+                </div>
+              </td>
+              <td><span class="font-semibold ${b.package_tier==='Premium'?'text-yellow-400':b.package_tier==='Professional'?'text-blue-400':'text-green-400'}">${escHtml(b.package_tier||'')}</span></td>
+              <td>
+                ${conf ? `<span class="font-bold ${confColor}">${conf}%</span><span class="text-gray-600 ml-1">conf.</span>` : '<span class="text-gray-600">No research</span>'}
+                ${b.market_demand_score ? `<br><span class="text-xs text-gray-500">Demand: ${b.market_demand_score}/100</span>` : ''}
+              </td>
+              <td><span class="badge ${buildStatusColors[b.build_status]||'badge-new'}">${(b.build_status||'').replace(/_/g,' ')}</span></td>
+              <td><span class="badge ${outColors[b.outreach_status]||'badge-new'}">${(b.outreach_status||'pending').replace(/_/g,' ')}</span></td>
+              <td>
+                ${b.preview_url ? `<a href="${escHtml(b.preview_url)}" target="_blank" class="text-pink-400 hover:text-pink-300 text-xs flex items-center gap-1"><i class="fas fa-external-link-alt"></i> View</a>` : '<span class="text-gray-600">—</span>'}
+              </td>
+              <td><span class="text-gray-500">${timeAgo(b.created_at)}</span></td>
+              <td>
+                <div class="flex items-center gap-1">
+                  <button onclick="viewBuildDetail(${b.id})" class="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-gray-800 hover:bg-gray-700" title="View Details"><i class="fas fa-eye"></i></button>
+                  ${!b.outreach_email_sent && !b.outreach_sms_sent ? `<button onclick="triggerOutreach(${b.id})" class="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50" title="Send Outreach"><i class="fas fa-paper-plane"></i></button>` : ''}
+                  ${b.research_id ? `<button onclick="viewResearch(${b.research_id})" class="text-xs text-purple-400 hover:text-purple-300 px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50" title="View Research"><i class="fas fa-brain"></i></button>` : ''}
+                </div>
+              </td>
+            </tr>`}).join('')}
+        </tbody>
+      </table>
+    </div>`
+}
+
+// ── RESEARCH TAB ──────────────────────────────────────────────────────────────
+function renderBuilderResearchTab(stats) {
+  return `
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- What deep research does -->
+        <div class="md:col-span-2 bg-gradient-to-br from-indigo-900/20 to-purple-900/10 border border-indigo-700/30 rounded-xl p-4">
+          <h3 class="font-bold text-white mb-3 flex items-center gap-2"><i class="fas fa-brain text-purple-400"></i>What Deep Research Does</h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            ${[
+              ['fas fa-map-marker-alt text-red-400',    'Google Places Full Data',    'Rating, reviews, hours, photos, phone, address, price level, business types'],
+              ['fas fa-star text-yellow-400',           'Real Customer Reviews',       'Top 5 reviews analyzed for themes, sentiment & testimonials to embed in site'],
+              ['fas fa-users text-blue-400',            'Competitor Landscape',        'Scans 3km radius for up to 8 competitors — finds the gap your client can fill'],
+              ['fas fa-robot text-green-400',           'GPT-4 Business Analysis',    'AI writes hero copy, about us, service descriptions, picks colors & brand tone'],
+              ['fas fa-palette text-pink-400',          'Custom Color Palette',        'Industry-appropriate brand colors generated from competitor & style research'],
+              ['fas fa-chart-line text-orange-400',     'Market Demand Score',         '0–100 demand score based on reviews, competitor density & local search data'],
+              ['fas fa-bullseye text-purple-400',       'Target Customer Profile',     'Identifies exactly who their customers are so the site speaks directly to them'],
+              ['fas fa-lightbulb text-cyan-400',        'Pain Point Discovery',        'Finds the exact reasons this business NEEDS a website right now'],
+            ].map(([ic,title,desc]) => `
+              <div class="flex gap-2">
+                <i class="${ic} mt-0.5 flex-shrink-0 w-4"></i>
+                <div><p class="font-semibold text-white">${title}</p><p class="text-gray-500 leading-relaxed">${desc}</p></div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <!-- Quick research trigger -->
+        <div class="bg-gray-900/60 border border-gray-700 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-white mb-2">Research a Lead</h3>
+            <p class="text-xs text-gray-500 mb-3">Run deep research on a specific lead without building a site yet.</p>
+            <div class="space-y-2">
+              <input id="research-lead-search" type="text" class="form-input w-full text-sm" placeholder="Search lead name..." oninput="filterResearchLeads(this.value)"/>
+              <div id="research-lead-results" class="space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-800">
+            <button onclick="runBulkResearch()" class="btn-secondary w-full justify-center text-sm">
+              <i class="fas fa-layer-group mr-1 text-purple-400"></i> Bulk Research (5 Leads)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Research quality guide -->
+      <div class="bg-gray-900/40 border border-gray-800 rounded-xl p-4">
+        <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fas fa-shield-alt text-green-400"></i>Research Confidence Score Guide</h3>
+        <div class="grid grid-cols-4 gap-3 text-xs text-center">
+          ${[['95%+','Google + AI','Full data, AI-generated copy, competitors','text-green-400'],
+             ['70-94%','Google Only','Full Places data, no AI copy','text-yellow-400'],
+             ['40-69%','AI Only','AI analysis, no Places data','text-orange-400'],
+             ['<40%','Basic','Fallback templates only','text-red-400'],
+          ].map(([score,sources,desc,color]) => `
+            <div class="bg-gray-800/60 rounded-lg p-3">
+              <p class="text-lg font-bold ${color}">${score}</p>
+              <p class="font-semibold text-white mt-1">${sources}</p>
+              <p class="text-gray-500 mt-1">${desc}</p>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`
+}
+
+// ── OUTREACH TAB ──────────────────────────────────────────────────────────────
+function renderBuilderOutreachTab(stats) {
+  const builds = (stats.recent_builds || []).filter(b => b.outreach_status !== 'pending')
+  return `
+    <div class="space-y-4">
+      <div class="grid grid-cols-4 gap-3 text-center">
+        ${[['Sent','sent','paper-plane','blue'],['Opened','opened','eye','purple'],['Replied','replied','reply','yellow'],['Converted','converted','trophy','green']].map(([label,key,icon,c])=>{
+          const cnt = (stats.outreach_stats||[]).find(x=>x.outreach_status===key)?.count||0
+          const colors={blue:'text-blue-400 bg-blue-900/20 border-blue-700/40',purple:'text-purple-400 bg-purple-900/20 border-purple-700/40',yellow:'text-yellow-400 bg-yellow-900/20 border-yellow-700/40',green:'text-green-400 bg-green-900/20 border-green-700/40'}
+          return `<div class="border ${colors[c]} rounded-xl p-3"><i class="fas fa-${icon} text-lg mb-1 block"></i><p class="text-2xl font-bold text-white">${cnt}</p><p class="text-xs text-gray-500">${label}</p></div>`
+        }).join('')}
+      </div>
+
+      <!-- Outreach message preview -->
+      <div class="bg-gray-900/40 border border-gray-800 rounded-xl p-4">
+        <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fas fa-envelope text-blue-400"></i>Sample Email Template (Personalized Per Business)</h3>
+        <div class="bg-gray-950 rounded-lg p-3 text-xs text-gray-300 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto font-mono">Hi [Owner First Name],
+
+My name is Eric Thompson, and I'm a local web developer in the [City] area.
+
+I noticed [Business Name] doesn't have a website yet — so I built you a FREE demo:
+👉 [PREVIEW LINK — unique per business]
+
+✅ Custom design for your business  ✅ Real phone/address/services
+✅ Click-to-call button             ✅ Google Maps embedded
+✅ Mobile-friendly                  ✅ Professional copywriting
+
+Packages from $500. Call/text me: (985)860-7891
+— Eric Developing Thompson</div>
+      </div>
+
+      ${builds.length ? `
+      <div class="overflow-x-auto">
+        <table class="data-table text-xs">
+          <thead><tr><th>Business</th><th>Channel</th><th>Status</th><th>Sent</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${builds.map(b=>`<tr>
+              <td><p class="font-semibold text-white">${escHtml(b.business_name)}</p><p class="text-gray-500">${escHtml(b.industry||'')}</p></td>
+              <td>
+                ${b.outreach_email_sent ? '<span class="text-blue-400 text-xs mr-1"><i class="fas fa-envelope mr-1"></i>Email</span>' : ''}
+                ${b.outreach_sms_sent   ? '<span class="text-green-400 text-xs"><i class="fas fa-sms mr-1"></i>SMS</span>' : ''}
+              </td>
+              <td><span class="badge ${b.outreach_status==='converted'?'badge-won':b.outreach_status==='replied'?'badge-proposal_sent':b.outreach_status==='opened'?'badge-demo_sent':'badge-contacted'}">${(b.outreach_status||'').replace(/_/g,' ')}</span></td>
+              <td><span class="text-gray-500">${b.outreach_sent_at ? timeAgo(b.outreach_sent_at) : '—'}</span></td>
+              <td>
+                <button onclick="updateOutreachStatus(${b.id})" class="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-gray-800 hover:bg-gray-700">Update Status</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : '<div class="text-center py-8 text-gray-600"><i class="fas fa-paper-plane text-2xl mb-2 block"></i>No outreach sent yet</div>'}
+    </div>`
+}
+
+// ── SETTINGS TAB ──────────────────────────────────────────────────────────────
+function renderBuilderSettingsTab(cfg) {
+  return `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <!-- Contact Info -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white flex items-center gap-2 text-sm"><i class="fas fa-user-circle text-pink-400"></i>Your Contact Info (Appears in all outreach)</h3>
+        <div>
+          <label class="form-label">Your Name</label>
+          <input id="bcfg-owner-name" type="text" class="form-input w-full" value="${escHtml(cfg.owner_name||'Eric Developing Thompson')}"/>
+        </div>
+        <div>
+          <label class="form-label">Your Phone</label>
+          <input id="bcfg-owner-phone" type="text" class="form-input w-full" value="${escHtml(cfg.owner_phone||'(985)860-7891')}"/>
+        </div>
+        <div>
+          <label class="form-label">Your Email</label>
+          <input id="bcfg-owner-email" type="email" class="form-input w-full" value="${escHtml(cfg.owner_email||'e.w.Thompson10.10@gmail.com')}"/>
+        </div>
+        <div>
+          <label class="form-label">Default Package Tier</label>
+          <select id="bcfg-default-pkg" class="form-input w-full">
+            <option value="Basic" ${cfg.default_package==='Basic'?'selected':''}>Basic ($500–$800)</option>
+            <option value="Professional" ${cfg.default_package==='Professional'||!cfg.default_package?'selected':''}>Professional ($1,200–$2,000)</option>
+            <option value="Premium" ${cfg.default_package==='Premium'?'selected':''}>Premium ($2,500–$3,500)</option>
+          </select>
+        </div>
+        <button onclick="saveBuilderContactInfo()" class="btn-primary w-full justify-center"><i class="fas fa-save mr-2"></i>Save Contact Info</button>
+      </div>
+
+      <!-- API Keys -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white flex items-center gap-2 text-sm"><i class="fas fa-key text-yellow-400"></i>API Integrations</h3>
+
+        <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
+          <p class="text-xs font-bold text-purple-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-brain"></i> OpenAI (GPT-4 Business Analysis)</p>
+          <div class="flex gap-2">
+            <input id="bcfg-openai" type="password" class="form-input flex-1 text-xs" value="${escHtml(cfg.openai_api_key||'')}" placeholder="sk-..."/>
+            <button onclick="saveBuilderKey('openai_api_key','bcfg-openai')" class="btn-secondary btn-sm flex-shrink-0">Save</button>
+          </div>
+          <p class="text-xs text-gray-600">Powers AI copywriting & business intelligence. <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-500">Get key →</a></p>
+        </div>
+
+        <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
+          <p class="text-xs font-bold text-pink-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-magic"></i> Lovable.dev (Website Builder)</p>
+          <div class="flex gap-2">
+            <input id="bcfg-lovable" type="password" class="form-input flex-1 text-xs" value="${escHtml(cfg.lovable_api_key||'')}" placeholder="lvbl_..."/>
+            <button onclick="saveBuilderKey('lovable_api_key','bcfg-lovable')" class="btn-secondary btn-sm flex-shrink-0">Save</button>
+          </div>
+          <p class="text-xs text-gray-600">Creates the actual website. <a href="https://lovable.dev" target="_blank" class="text-blue-500">Get key →</a> (Without key: generates Lovable-ready prompts)</p>
+        </div>
+
+        <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
+          <p class="text-xs font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-envelope"></i> SendGrid (Email Outreach)</p>
+          <div class="flex gap-2">
+            <input id="bcfg-sendgrid" type="password" class="form-input flex-1 text-xs" value="${escHtml(cfg.sendgrid_api_key||'')}" placeholder="SG...."/>
+            <button onclick="saveBuilderKey('sendgrid_api_key','bcfg-sendgrid')" class="btn-secondary btn-sm flex-shrink-0">Save</button>
+          </div>
+          <p class="text-xs text-gray-600">Sends outreach emails. <a href="https://sendgrid.com" target="_blank" class="text-blue-500">Free 100/day →</a></p>
+        </div>
+
+        <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
+          <p class="text-xs font-bold text-green-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-sms"></i> Twilio (SMS Outreach)</p>
+          <div class="space-y-2">
+            <input id="bcfg-twilio-sid"   type="text"     class="form-input w-full text-xs" value="${escHtml(cfg.twilio_account_sid||'')}"  placeholder="Account SID: ACxxx..."/>
+            <input id="bcfg-twilio-token" type="password" class="form-input w-full text-xs" value="${escHtml(cfg.twilio_auth_token||'')}"   placeholder="Auth Token"/>
+            <input id="bcfg-twilio-from"  type="text"     class="form-input w-full text-xs" value="${escHtml(cfg.twilio_from_number||'')}"  placeholder="From number: +19851234567"/>
+            <button onclick="saveTwilio()" class="btn-secondary w-full justify-center text-xs"><i class="fas fa-save mr-1"></i>Save Twilio</button>
+          </div>
+          <p class="text-xs text-gray-600">Sends SMS texts. <a href="https://twilio.com" target="_blank" class="text-blue-500">Get free trial →</a></p>
+        </div>
+      </div>
+
+      <!-- Automation toggles -->
+      <div class="md:col-span-2 space-y-3 border-t border-gray-800 pt-4">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fas fa-robot text-green-400"></i>Automation Settings</h3>
+        <div class="grid grid-cols-3 gap-3">
+          ${[
+            ['auto_research_on_discover','Auto-Research on Discover','When prospector finds a new lead, instantly run deep research'],
+            ['auto_build_after_research','Auto-Build After Research','Automatically build site after research completes'],
+            ['auto_outreach','Auto-Send Outreach','Send email + SMS the moment a site is built'],
+          ].map(([key,label,desc]) => `
+            <div class="flex items-start justify-between bg-gray-800/40 rounded-xl p-3 gap-3">
+              <div>
+                <p class="text-sm font-semibold text-white">${label}</p>
+                <p class="text-xs text-gray-500 mt-0.5">${desc}</p>
+              </div>
+              <button onclick="toggleBuilderSetting('${key}')" class="relative w-11 h-6 rounded-full flex-shrink-0 transition-colors mt-0.5 ${cfg[key]!=='0'?'bg-pink-600':'bg-gray-700'}">
+                <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${cfg[key]!=='0'?'translate-x-5':'translate-x-0'}"></span>
+              </button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`
+}
+
+// ── Lead picker ───────────────────────────────────────────────────────────────
+let blmLeads = []
+let blmSelectedLeadId = null
+
+async function openBuilderLeadPicker() {
+  blmSelectedLeadId = null
+  openModal('builder-lead-modal')
+  document.getElementById('blm-selected-lead').classList.add('hidden')
+  document.getElementById('blm-build-btn').disabled = true
+  const data = await api('GET', '/leads?limit=200')
+  blmLeads = (Array.isArray(data) ? data : data.leads || []).filter(l => !l.has_website && !['won','already_has_website','do_not_contact'].includes(l.status))
+  renderBlmList(blmLeads)
+}
+
+function renderBlmList(list) {
+  const el = document.getElementById('blm-lead-list')
+  if (!list.length) { el.innerHTML = `<p class="text-center text-gray-600 text-sm py-4">No eligible leads found</p>`; return }
+  el.innerHTML = list.slice(0, 30).map(l => `
+    <button onclick="selectBuilderLead(${l.id},'${escHtml(l.business_name)}','${escHtml(l.industry||'')} · ${escHtml(l.city||'')}${l.phone?' · '+escHtml(l.phone):''}')"
+      class="w-full text-left flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-800 border border-transparent hover:border-gray-700 transition-all group">
+      <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-900/30">
+        <i class="fas fa-${industryIcon(l.industry)} text-gray-500 group-hover:text-pink-400 text-xs"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold text-white truncate">${escHtml(l.business_name)}</p>
+        <p class="text-xs text-gray-500 truncate">${escHtml(l.industry||'')} · ${escHtml(l.city||'')}${l.phone ? ' · '+escHtml(l.phone) : ''}${l.email ? ' · '+escHtml(l.email) : ''}</p>
+      </div>
+      <span class="badge badge-${l.status} text-xs ml-auto flex-shrink-0">${l.status.replace(/_/g,' ')}</span>
+    </button>`).join('')
+}
+
+function filterBuilderLeads(q) {
+  const filtered = q ? blmLeads.filter(l => (l.business_name+l.city+l.industry).toLowerCase().includes(q.toLowerCase())) : blmLeads
+  renderBlmList(filtered)
+}
+
+function selectBuilderLead(id, name, info) {
+  blmSelectedLeadId = id
+  document.getElementById('blm-selected-name').textContent = name
+  document.getElementById('blm-selected-info').textContent = info
+  document.getElementById('blm-selected-lead').classList.remove('hidden')
+  document.getElementById('blm-build-btn').disabled = false
+  document.getElementById('blm-build-btn').innerHTML = `<i class="fas fa-magic"></i> Research & Build: ${name}`
+}
+
+async function startBuildFromModal() {
+  if (!blmSelectedLeadId) return
+  const pkg = document.getElementById('blm-package').value
+  const skipResearch = document.getElementById('blm-skip-research').checked
+  const autoOutreach = document.getElementById('blm-auto-outreach').checked
+  const btn = document.getElementById('blm-build-btn')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span> Researching & Building...'
+  try {
+    const result = await api('POST', '/builder/build', { lead_id: blmSelectedLeadId, package_tier: pkg, skip_research: skipResearch, auto_outreach: autoOutreach })
+    closeModal('builder-lead-modal')
+    const advMsg = result.preview_url ? `<br><a href="${result.preview_url}" target="_blank" class="text-pink-400 underline">View Preview →</a>` : ''
+    showToast(`✓ Site built! Package: ${result.package}. ${autoOutreach ? 'Outreach sent.' : ''}`, 'success')
+    builderActiveTab = 'builds'
+    renderBuilder()
+  } catch(e) {
+    // error shown by api()
+    btn.disabled = false
+    btn.innerHTML = '<i class="fas fa-magic"></i> Research & Build'
+  }
+}
+
+// ── View build detail ─────────────────────────────────────────────────────────
+async function viewBuildDetail(id) {
+  openModal('build-detail-modal')
+  document.getElementById('bdm-content').innerHTML = '<div class="flex justify-center py-12"><div class="spinner"></div></div>'
+  const { build, outreach_log } = await api('GET', `/builder/builds/${id}`)
+  document.getElementById('bdm-title').innerHTML = `<i class="fas fa-magic text-pink-400 mr-2"></i>${escHtml(build.business_name)} — ${escHtml(build.package_tier)} Site`
+
+  let servicesHtml = ''
+  try { const s = JSON.parse(build.services_copy||'[]'); servicesHtml = s.map(sv=>`<li><strong>${escHtml(sv.name)}</strong>: ${escHtml(sv.description)}</li>`).join('') } catch {}
+
+  let uspHtml = ''
+  try { const u = JSON.parse(build.unique_selling_points||'[]'); uspHtml = u.map(x=>`<li>${escHtml(x)}</li>`).join('') } catch {}
+
+  let reviewsHtml = ''
+  try { const r = JSON.parse(build.google_reviews||'[]'); reviewsHtml = r.map(rv=>`<div class="bg-gray-800/60 rounded-lg p-2 text-xs"><p class="text-yellow-400">${'★'.repeat(rv.rating||5)}</p><p class="text-gray-300 mt-1 italic">"${escHtml(rv.text?.slice(0,180))}"</p><p class="text-gray-500 mt-1">— ${escHtml(rv.author||'Customer')}</p></div>`).join('') } catch {}
+
+  document.getElementById('bdm-content').innerHTML = `
+    <div class="space-y-4">
+
+      <!-- Status + Links -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-gray-800/60 rounded-xl p-3 text-center">
+          <p class="text-xs text-gray-500 mb-1">Build Status</p>
+          <span class="badge badge-${build.build_status==='generated'||build.build_status==='published'?'won':build.build_status==='failed'?'lost':'new'}">${(build.build_status||'').replace(/_/g,' ')}</span>
+        </div>
+        <div class="bg-gray-800/60 rounded-xl p-3 text-center">
+          <p class="text-xs text-gray-500 mb-1">Package</p>
+          <p class="font-bold ${build.package_tier==='Premium'?'text-yellow-400':build.package_tier==='Professional'?'text-blue-400':'text-green-400'}">${escHtml(build.package_tier||'')}</p>
+        </div>
+        <div class="bg-gray-800/60 rounded-xl p-3 text-center">
+          <p class="text-xs text-gray-500 mb-1">Research Confidence</p>
+          <p class="font-bold ${(build.confidence_score||0)>=80?'text-green-400':(build.confidence_score||0)>=50?'text-yellow-400':'text-orange-400'}">${build.confidence_score||0}%</p>
+        </div>
+      </div>
+
+      ${build.preview_url ? `
+      <div class="bg-pink-900/20 border border-pink-700/40 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-xs text-pink-400 font-semibold uppercase tracking-wide mb-1">Preview URL</p>
+          <a href="${escHtml(build.preview_url)}" target="_blank" class="text-white hover:text-pink-300 text-sm font-semibold break-all">${escHtml(build.preview_url)}</a>
+        </div>
+        <a href="${escHtml(build.preview_url)}" target="_blank" class="btn-primary flex-shrink-0 bg-gradient-to-r from-pink-600 to-purple-600 border-0 text-sm">
+          <i class="fas fa-external-link-alt mr-1"></i> Open Site
+        </a>
+      </div>` : ''}
+
+      <!-- Research Intel -->
+      ${build.hero_headline ? `
+      <div class="border border-gray-700 rounded-xl p-4">
+        <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="fas fa-brain text-purple-400"></i>AI Research Intelligence</h4>
+        <div class="space-y-3 text-sm">
+          <div><p class="text-xs text-gray-500">Hero Headline</p><p class="text-white font-semibold italic">"${escHtml(build.hero_headline)}"</p></div>
+          ${build.hero_subheadline ? `<div><p class="text-xs text-gray-500">Subheadline</p><p class="text-gray-300">"${escHtml(build.hero_subheadline)}"</p></div>` : ''}
+          ${build.business_description ? `<div><p class="text-xs text-gray-500">Business Description</p><p class="text-gray-300">${escHtml(build.business_description)}</p></div>` : ''}
+          ${uspHtml ? `<div><p class="text-xs text-gray-500">Unique Selling Points</p><ul class="list-disc pl-4 text-gray-300 text-xs space-y-1">${uspHtml}</ul></div>` : ''}
+          ${servicesHtml ? `<div><p class="text-xs text-gray-500">Services</p><ul class="list-disc pl-4 text-gray-300 text-xs space-y-1">${servicesHtml}</ul></div>` : ''}
+          ${reviewsHtml ? `<div><p class="text-xs text-gray-500">Customer Reviews Used</p><div class="grid grid-cols-2 gap-2 mt-1">${reviewsHtml}</div></div>` : ''}
+        </div>
+      </div>` : ''}
+
+      <!-- Outreach log -->
+      <div class="border border-gray-700 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2"><i class="fas fa-paper-plane text-blue-400"></i>Outreach Log</h4>
+          ${!build.outreach_email_sent && !build.outreach_sms_sent ? `<button onclick="triggerOutreach(${build.id})" class="btn-primary text-xs">Send Outreach Now</button>` : ''}
+        </div>
+        ${outreach_log.length ? outreach_log.map(log=>`
+          <div class="bg-gray-800/60 rounded-lg p-3 mb-2">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-${log.channel==='email'?'envelope':'sms'} ${log.channel==='email'?'text-blue-400':'text-green-400'} text-xs"></i>
+              <span class="text-xs font-semibold text-white">${log.channel.toUpperCase()} → ${escHtml(log.recipient)}</span>
+              <span class="badge badge-${log.status==='sent'?'active':log.status==='failed'?'lost':'won'} text-xs ml-auto">${log.status}</span>
+            </div>
+            ${log.subject ? `<p class="text-xs text-gray-400 font-semibold mb-1">Subject: ${escHtml(log.subject)}</p>` : ''}
+            <p class="text-xs text-gray-500 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto">${escHtml(log.message?.slice(0, 500))}${(log.message?.length||0)>500?'…':''}</p>
+          </div>`).join('') : `<p class="text-xs text-gray-600 text-center py-4">No outreach sent yet</p>`}
+      </div>
+
+      <!-- Lovable Prompt -->
+      <details class="border border-gray-700 rounded-xl overflow-hidden">
+        <summary class="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:text-white flex items-center gap-2">
+          <i class="fas fa-code text-gray-600"></i> View Lovable Prompt (sent to website builder)
+        </summary>
+        <div class="p-3 bg-gray-950/60">
+          <pre class="text-xs text-gray-400 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto font-mono">${escHtml(build.lovable_prompt||'No prompt saved')}</pre>
+          <button onclick="navigator.clipboard.writeText(${JSON.stringify(build.lovable_prompt||'')}); showToast('Prompt copied!','success')" class="btn-secondary btn-sm mt-2">
+            <i class="fas fa-copy mr-1"></i> Copy Prompt
+          </button>
+        </div>
+      </details>
+    </div>`
+}
+
+// ── View research detail ──────────────────────────────────────────────────────
+async function viewResearch(reportId) {
+  openModal('research-detail-modal')
+  document.getElementById('rdm-content').innerHTML = '<div class="flex justify-center py-12"><div class="spinner"></div></div>'
+  // fetch research directly via builds endpoint that joins research
+  const data = await api('GET', `/builder/builds/0`).catch(() => null)
+  // Fallback: show a placeholder
+  document.getElementById('rdm-content').innerHTML = `<p class="text-gray-400 text-sm">Research report #${reportId} — open a build's details to view full research inline.</p>`
+}
+
+// ── Research a single lead from the research tab ──────────────────────────────
+let researchLeads = []
+async function filterResearchLeads(q) {
+  if (!researchLeads.length) {
+    const d = await api('GET', '/leads?limit=200')
+    researchLeads = Array.isArray(d) ? d : d.leads || []
+  }
+  const el = document.getElementById('research-lead-results')
+  const list = q ? researchLeads.filter(l => (l.business_name+l.city).toLowerCase().includes(q.toLowerCase())) : researchLeads.slice(0, 8)
+  el.innerHTML = list.slice(0,8).map(l => `
+    <button onclick="runSingleResearch(${l.id},'${escHtml(l.business_name)}')" class="w-full text-left flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-gray-800 transition-all text-xs group">
+      <span class="text-white font-medium">${escHtml(l.business_name)}</span>
+      <span class="text-gray-500">${escHtml(l.city||'')} · ${escHtml(l.industry||'')}</span>
+      <span class="text-purple-400 opacity-0 group-hover:opacity-100 flex-shrink-0"><i class="fas fa-brain mr-1"></i>Research</span>
+    </button>`).join('')
+}
+
+async function runSingleResearch(leadId, name) {
+  showToast(`Starting deep research on ${name}...`, 'info')
+  try {
+    await api('POST', '/builder/research', { lead_id: leadId })
+    showToast(`✓ Research complete for ${name}!`, 'success')
+    renderBuilder()
+  } catch {}
+}
+
+async function runBulkResearch() {
+  showToast('Starting bulk research on 5 leads...', 'info')
+  try {
+    const r = await api('POST', '/builder/bulk-research', { limit: 5 })
+    showToast(`✓ Research complete for ${r.started} leads!`, 'success')
+    renderBuilder()
+  } catch {}
+}
+
+// ── Outreach trigger ──────────────────────────────────────────────────────────
+async function triggerOutreach(buildId) {
+  showToast('Sending outreach...', 'info')
+  try {
+    await api('POST', `/builder/outreach/${buildId}`)
+    showToast('Outreach sent!', 'success')
+    renderBuilder()
+  } catch {}
+}
+
+// ── Update outreach status ─────────────────────────────────────────────────────
+async function updateOutreachStatus(buildId) {
+  const status = prompt('Update outreach status:\nOptions: pending, sent, opened, replied, converted', 'replied')
+  if (!status) return
+  await api('PUT', `/builder/builds/${buildId}`, { outreach_status: status })
+  showToast('Status updated', 'success')
+  renderBuilder()
+}
+
+// ── Settings savers ───────────────────────────────────────────────────────────
+async function saveBuilderContactInfo() {
+  const payload = {
+    owner_name:  document.getElementById('bcfg-owner-name').value.trim(),
+    owner_phone: document.getElementById('bcfg-owner-phone').value.trim(),
+    owner_email: document.getElementById('bcfg-owner-email').value.trim(),
+    default_package: document.getElementById('bcfg-default-pkg').value,
+  }
+  await api('PUT', '/builder/config', payload)
+  showToast('Contact info saved ✓', 'success')
+}
+
+async function saveBuilderKey(key, inputId) {
+  const val = document.getElementById(inputId).value.trim()
+  if (!val || val.includes('••')) { showToast('Enter a valid key', 'error'); return }
+  await api('PUT', '/builder/config', { [key]: val })
+  showToast('API key saved ✓', 'success')
+}
+
+async function saveTwilio() {
+  const payload = {
+    twilio_account_sid:  document.getElementById('bcfg-twilio-sid').value.trim(),
+    twilio_auth_token:   document.getElementById('bcfg-twilio-token').value.trim(),
+    twilio_from_number:  document.getElementById('bcfg-twilio-from').value.trim(),
+  }
+  await api('PUT', '/builder/config', payload)
+  showToast('Twilio settings saved ✓', 'success')
+}
+
+async function toggleBuilderSetting(key) {
+  const current = builderCfg[key]
+  await api('PUT', '/builder/config', { [key]: current === '0' ? '1' : '0' })
+  showToast('Setting updated', 'success')
+  renderBuilder()
+}
+
 // ===== INIT =====
 initSidebar()
 navigateTo('dashboard')
