@@ -10,5 +10,8 @@
       "database_name": "webapp-production",
       "database_id": "local-db"
     }
-  ]
+  ],
+  "triggers": {
+    "crons": ["0 6 * * *"]
+  }
 }

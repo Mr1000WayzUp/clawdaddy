@@ -7,10 +7,14 @@ import { proposalsRouter } from './routes/proposals'
 import { tasksRouter } from './routes/tasks'
 import { analyticsRouter } from './routes/analytics'
 import { activitiesRouter } from './routes/activities'
+import { prospectorRouter } from './routes/prospector'
 
 type Bindings = {
   DB: D1Database
+  GOOGLE_MAPS_API_KEY?: string
 }
+
+type CronEnv = Bindings
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -23,6 +27,7 @@ app.route('/api/proposals', proposalsRouter)
 app.route('/api/tasks', tasksRouter)
 app.route('/api/analytics', analyticsRouter)
 app.route('/api/activities', activitiesRouter)
+app.route('/api/prospector', prospectorRouter)
 
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
@@ -105,6 +110,16 @@ app.get('*', (c) => {
       <button onclick="navigateTo('scraper')" id="nav-scraper" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Lead Finder">
         <i class="fas fa-search-location w-4 text-center flex-shrink-0"></i>
         <span class="sidebar-label whitespace-nowrap overflow-hidden">Lead Finder</span>
+      </button>
+
+      <div class="pt-3 pb-1 sidebar-label overflow-hidden">
+        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3 whitespace-nowrap">Automation</p>
+      </div>
+      <div class="sidebar-collapsed-divider hidden"><div class="h-px bg-gray-800 mx-2 my-2"></div></div>
+      <button onclick="navigateTo('prospector')" id="nav-prospector" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" title="Auto-Prospector">
+        <i class="fas fa-robot w-4 text-center flex-shrink-0"></i>
+        <span class="sidebar-label whitespace-nowrap overflow-hidden">Auto-Prospector</span>
+        <span id="nav-prospector-pulse" class="sidebar-label ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse hidden"></span>
       </button>
     </nav>
 
@@ -450,4 +465,30 @@ app.get('*', (c) => {
 </html>`)
 })
 
-export default app
+// ── Cloudflare Cron Trigger (runs daily at 6am UTC) ─────────────────────────
+async function runScheduledProspecting(env: CronEnv) {
+  // Check if enabled
+  const cfgRow = await env.DB.prepare("SELECT value FROM prospector_config WHERE key='enabled'").first() as any
+  if (!cfgRow || cfgRow.value !== '1') return
+
+  // Build an internal fetch to /api/prospector/run-now
+  // We call it programmatically so we reuse all the same logic
+  const apiKeyRow = await env.DB.prepare("SELECT value FROM prospector_config WHERE key='google_maps_api_key'").first() as any
+  const apiKey = apiKeyRow?.value || env.GOOGLE_MAPS_API_KEY || ''
+  if (!apiKey) return
+
+  // Fake a Request to reuse the Hono handler
+  const req = new Request('https://localhost/api/prospector/run-now', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey }),
+  })
+  await app.fetch(req, env)
+}
+
+export default {
+  fetch: app.fetch.bind(app),
+  async scheduled(event: ScheduledEvent, env: CronEnv, ctx: ExecutionContext) {
+    ctx.waitUntil(runScheduledProspecting(env))
+  },
+}

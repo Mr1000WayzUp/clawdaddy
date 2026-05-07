@@ -48,7 +48,7 @@ function navigateTo(page) {
   const titles = {
     dashboard: 'Dashboard', leads: 'Leads', pipeline: 'Pipeline',
     clients: 'Clients', proposals: 'Proposals', tasks: 'Tasks',
-    revenue: 'Revenue Report', scraper: 'Lead Finder'
+    revenue: 'Revenue Report', scraper: 'Lead Finder', prospector: '🤖 Auto-Prospector'
   }
   document.getElementById('page-title').textContent = titles[page] || page
 
@@ -65,6 +65,7 @@ function navigateTo(page) {
     tasks: renderTasks,
     revenue: renderRevenue,
     scraper: renderScraper,
+    prospector: renderProspector,
   }
   if (pages[page]) pages[page]()
 }
@@ -1518,6 +1519,456 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     }
   })
 })
+
+// ===================================================
+// ===== AUTO-PROSPECTOR =====
+// ===================================================
+
+let prospectorConfig = {}
+let prospectorStatus = {}
+let prospectorRunning = false
+
+async function renderProspector() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const [status, cfg] = await Promise.all([
+    api('GET', '/prospector/status'),
+    api('GET', '/prospector/config'),
+  ])
+  prospectorStatus = status
+  prospectorConfig = cfg
+
+  // show pulse on nav if enabled
+  const pulse = document.getElementById('nav-prospector-pulse')
+  if (pulse) pulse.classList.toggle('hidden', cfg.enabled !== '1')
+
+  const zipStats = {}
+  ;(status.zip_stats || []).forEach(s => { zipStats[s.status] = s.count })
+
+  setContent(`
+    <div class="space-y-5 max-w-6xl">
+
+      <!-- Header banner -->
+      <div class="bg-gradient-to-r from-violet-900/40 to-indigo-900/30 border border-violet-700/40 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-violet-600/30 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-robot text-violet-400 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              Auto-Prospector
+              <span id="engine-status-badge" class="${cfg.enabled==='1' ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-gray-800 text-gray-500 border border-gray-700'} text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full ${cfg.enabled==='1' ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}"></span>
+                ${cfg.enabled==='1' ? 'ACTIVE' : 'PAUSED'}
+              </span>
+            </h2>
+            <p class="text-gray-400 text-sm mt-0.5">Searches for new leads daily at <strong class="text-white">${cfg.cron_time || '06:00'} UTC</strong> · Advances ZIPs automatically · Runs forever</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <button onclick="toggleProspectorEnabled()" class="${cfg.enabled==='1' ? 'bg-red-900/40 text-red-400 border border-red-700 hover:bg-red-900/60' : 'bg-green-900/40 text-green-400 border border-green-700 hover:bg-green-900/60'} px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+            <i class="fas fa-${cfg.enabled==='1' ? 'pause' : 'play'}"></i>
+            ${cfg.enabled==='1' ? 'Pause Engine' : 'Enable Engine'}
+          </button>
+          <button onclick="runProspectorNow()" id="run-now-btn" class="btn-primary flex items-center gap-2">
+            <i class="fas fa-bolt"></i> Run Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        ${prospectorKpi('Total Leads Found', status.run_stats?.total_leads || 0, 'user-plus', 'blue')}
+        ${prospectorKpi('ZIPs Worked', status.total_zips_worked || 0, 'map-pin', 'indigo')}
+        ${prospectorKpi('ZIPs Queued', zipStats['pending'] || 0, 'list', 'violet')}
+        ${prospectorKpi('ZIPs Exhausted', zipStats['exhausted'] || 0, 'check-double', 'green')}
+        ${prospectorKpi('Open Leads', status.open_leads || 0, 'inbox', 'orange')}
+      </div>
+
+      <!-- Main grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- LEFT: Current ZIP + Settings -->
+        <div class="space-y-4">
+
+          <!-- Active ZIP card -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-crosshairs text-violet-400 text-sm"></i>Currently Working</h3>
+              <button onclick="openZipAdvanceModal()" class="text-xs text-violet-400 hover:text-violet-300 font-semibold">Change ZIP →</button>
+            </div>
+            ${status.active_zip ? `
+              <div class="bg-gradient-to-br from-violet-900/30 to-indigo-900/20 border border-violet-800/40 rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-lg bg-violet-700/40 flex items-center justify-center">
+                    <i class="fas fa-map-marker-alt text-violet-300"></i>
+                  </div>
+                  <div>
+                    <p class="text-2xl font-bold text-white">${escHtml(status.active_zip.zip)}</p>
+                    <p class="text-sm text-violet-300">${escHtml(status.active_zip.city)}, ${escHtml(status.active_zip.state)}</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="bg-gray-900/60 rounded-lg p-2 text-center">
+                    <p class="text-xl font-bold text-white">${status.active_zip.leads_found || 0}</p>
+                    <p class="text-gray-500">Leads Found</p>
+                  </div>
+                  <div class="bg-gray-900/60 rounded-lg p-2 text-center">
+                    <p class="text-xl font-bold text-white">${status.open_leads || 0}</p>
+                    <p class="text-gray-500">Still Open</p>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-500">ZIP completion</span>
+                    <span class="text-white">${calcZipCompletion(status)}%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-fill bg-gradient-to-r from-violet-600 to-indigo-500" style="width:${calcZipCompletion(status)}%"></div></div>
+                </div>
+                <p class="text-xs text-gray-600 mt-2">Last searched: ${status.active_zip.last_searched_at ? timeAgo(status.active_zip.last_searched_at) : 'Never'}</p>
+              </div>
+            ` : `<div class="text-center py-6 text-gray-600"><i class="fas fa-map-marker-alt text-3xl mb-2 block"></i><p class="text-sm">No active ZIP — configure one below</p></div>`}
+
+            <button onclick="manualAdvanceZip()" class="btn-secondary w-full mt-3 text-sm justify-center">
+              <i class="fas fa-forward mr-1 text-violet-400"></i>Mark Exhausted & Advance to Next ZIP
+            </button>
+          </div>
+
+          <!-- Settings card -->
+          <div class="card">
+            <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-cog text-gray-400 text-sm"></i>Engine Settings</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="form-label">Google Maps API Key</label>
+                <div class="flex gap-2">
+                  <input id="cfg-api-key" type="password" class="form-input flex-1 text-xs" value="${escHtml(cfg.google_maps_api_key||'')}" placeholder="AIza..."/>
+                  <button onclick="saveApiKey()" class="btn-secondary btn-sm flex-shrink-0">Save</button>
+                </div>
+                <p class="text-xs text-gray-600 mt-1">Required for live searches. <a href="https://developers.google.com/maps/documentation/places/web-service/get-api-key" target="_blank" class="text-blue-500 hover:text-blue-400">Get API key →</a></p>
+              </div>
+              <div>
+                <label class="form-label">Daily Run Time (UTC)</label>
+                <select id="cfg-cron" class="form-input w-full text-sm" onchange="saveProspectorSetting('cron_time', this.value)">
+                  ${['00:00','01:00','02:00','03:00','04:00','05:00','06:00','07:00','08:00','09:00','10:00','11:00','12:00'].map(t=>`<option value="${t}" ${cfg.cron_time===t?'selected':''}>${t} UTC</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Target Industries</label>
+                <div class="grid grid-cols-2 gap-1 mt-1" id="industry-checkboxes">
+                  ${['Home Services','Restaurant','Salon','Auto Repair','Retail','Healthcare','Legal','Fitness'].map(ind => {
+                    const checked = (cfg.target_industries||'').includes(ind)
+                    return `<label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer hover:text-white p-1 rounded hover:bg-gray-800">
+                      <input type="checkbox" value="${ind}" ${checked?'checked':''} class="accent-violet-500" onchange="saveIndustries()"/>
+                      ${ind}
+                    </label>`
+                  }).join('')}
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">Max Results/ZIP</label>
+                  <input id="cfg-max-results" type="number" class="form-input w-full text-sm" value="${cfg.max_results_per_zip||20}" onchange="saveProspectorSetting('max_results_per_zip', this.value)"/>
+                </div>
+                <div>
+                  <label class="form-label">ZIPs Per Run</label>
+                  <input id="cfg-max-zips" type="number" class="form-input w-full text-sm" value="${cfg.max_zips_per_run||3}" onchange="saveProspectorSetting('max_zips_per_run', this.value)"/>
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-2 border-t border-gray-800">
+                <div>
+                  <p class="text-sm text-white font-medium">Skip businesses with websites</p>
+                  <p class="text-xs text-gray-500">Only add leads with no website</p>
+                </div>
+                <button onclick="toggleSetting('skip_has_website')" class="relative w-11 h-6 rounded-full transition-colors ${cfg.skip_has_website!=='0' ? 'bg-violet-600' : 'bg-gray-700'}" id="toggle-skip-website">
+                  <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${cfg.skip_has_website!=='0' ? 'translate-x-5' : 'translate-x-0'}"></span>
+                </button>
+              </div>
+              <div class="flex items-center justify-between py-2 border-t border-gray-800">
+                <div>
+                  <p class="text-sm text-white font-medium">Auto-advance ZIP</p>
+                  <p class="text-xs text-gray-500">Move to next ZIP when current is exhausted</p>
+                </div>
+                <button onclick="toggleSetting('auto_advance_zip')" class="relative w-11 h-6 rounded-full transition-colors ${cfg.auto_advance_zip!=='0' ? 'bg-violet-600' : 'bg-gray-700'}" id="toggle-auto-advance">
+                  <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${cfg.auto_advance_zip!=='0' ? 'translate-x-5' : 'translate-x-0'}"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER: Run log + discovered leads -->
+        <div class="lg:col-span-2 space-y-4">
+
+          <!-- How it works -->
+          <div class="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fas fa-info-circle text-blue-400"></i>How the Infinite Loop Works</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              ${howItWorksStep('1','Search','Every day at 6am, searches Google Maps in current ZIP for businesses with no website','search','blue')}
+              ${howItWorksStep('2','Add Leads','New businesses are auto-added to your CRM instantly','plus-circle','green')}
+              ${howItWorksStep('3','Monitor','When ALL leads in ZIP reach a terminal status (won/lost/not interested/etc.)…','eye','yellow')}
+              ${howItWorksStep('4','Advance','…it automatically moves to the nearest next ZIP and repeats forever','forward','violet')}
+            </div>
+          </div>
+
+          <!-- Terminal status explainer -->
+          <div class="card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fas fa-flag-checkered text-orange-400"></i>Terminal Statuses — ZIP advances when ALL leads reach one</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${['won','lost','not_interested','already_has_website','do_not_contact','already_done'].map(s=>`
+                <span class="badge badge-${s==='won'?'won':s==='lost'||s==='do_not_contact'?'lost':s==='not_interested'||s==='already_done'?'completed':'demo_sent'} text-xs px-3 py-1">
+                  <i class="fas fa-${s==='won'?'trophy':s==='lost'?'times':s==='not_interested'?'hand-paper':s==='already_has_website'?'globe':s==='do_not_contact'?'ban':'check'} mr-1"></i>${s.replace(/_/g,' ')}
+                </span>`).join('')}
+            </div>
+            <p class="text-xs text-gray-600 mt-3"><i class="fas fa-lightbulb mr-1 text-yellow-600"></i>Mark leads with these statuses from the Leads page → row options, or use the quick-action below</p>
+          </div>
+
+          <!-- Recent run log -->
+          <div class="card p-0 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fas fa-history text-gray-400"></i>Recent Search Runs</h3>
+              <button onclick="renderProspector()" class="text-xs text-gray-500 hover:text-gray-300"><i class="fas fa-sync mr-1"></i>Refresh</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="data-table text-xs">
+                <thead>
+                  <tr>
+                    <th>ZIP / City</th>
+                    <th>Industry</th>
+                    <th>Discovered</th>
+                    <th>Added</th>
+                    <th>Skipped</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(status.recent_runs||[]).length ? (status.recent_runs||[]).map(r=>`
+                    <tr>
+                      <td><span class="font-semibold text-white">${escHtml(r.zip)}</span><span class="text-gray-500 ml-1">${escHtml(r.city||'')}</span></td>
+                      <td><span class="text-gray-400">${escHtml(r.industry)}</span></td>
+                      <td><span class="text-blue-400 font-semibold">${r.leads_discovered||0}</span></td>
+                      <td><span class="text-green-400 font-semibold">${r.leads_added||0}</span></td>
+                      <td><span class="text-gray-500">${r.leads_skipped||0}</span></td>
+                      <td>${r.status==='completed'?'<span class="badge badge-active">done</span>':r.status==='failed'?'<span class="badge badge-lost">failed</span>':'<span class="badge badge-pending">running</span>'}</td>
+                      <td><span class="text-gray-600">${timeAgo(r.started_at)}</span></td>
+                    </tr>
+                  `).join('') : `<tr><td colspan="7" class="text-center py-8 text-gray-600">No runs yet — click "Run Now" to start</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ZIP Queue -->
+          <div class="card p-0 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fas fa-list-ol text-indigo-400"></i>ZIP Queue</h3>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">${(zipStats['pending']||0)} pending · ${(zipStats['active']||0)} active · ${(zipStats['exhausted']||0)} exhausted</span>
+                <button onclick="openAddZipModal()" class="btn-secondary btn-sm"><i class="fas fa-plus mr-1"></i>Add ZIP</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto max-h-64 overflow-y-auto">
+              <table class="data-table text-xs">
+                <thead class="sticky top-0">
+                  <tr>
+                    <th>ZIP</th>
+                    <th>City, State</th>
+                    <th>Status</th>
+                    <th>Leads</th>
+                    <th>Distance</th>
+                    <th>Last Searched</th>
+                  </tr>
+                </thead>
+                <tbody id="zip-queue-tbody">
+                  <tr><td colspan="6" class="text-center py-4 text-gray-600"><div class="spinner mx-auto"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Add ZIP Modal -->
+    <div id="add-zip-modal" class="modal-overlay hidden">
+      <div class="modal-box w-full max-w-md">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-bold text-white text-lg">Add ZIP to Queue</h3>
+          <button onclick="closeModal('add-zip-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="form-label">ZIP Code *</label>
+              <input id="new-zip-code" type="text" class="form-input w-full" placeholder="90210" maxlength="5"/>
+            </div>
+            <div>
+              <label class="form-label">City</label>
+              <input id="new-zip-city" type="text" class="form-input w-full" placeholder="Beverly Hills"/>
+            </div>
+            <div>
+              <label class="form-label">State</label>
+              <input id="new-zip-state" type="text" class="form-input w-full" placeholder="CA" maxlength="2"/>
+            </div>
+            <div>
+              <label class="form-label">Latitude</label>
+              <input id="new-zip-lat" type="number" class="form-input w-full" placeholder="34.0901" step="0.0001"/>
+            </div>
+            <div>
+              <label class="form-label">Longitude</label>
+              <input id="new-zip-lng" type="number" class="form-input w-full" placeholder="-118.4065" step="0.0001"/>
+            </div>
+          </div>
+          <p class="text-xs text-gray-600"><i class="fas fa-info-circle mr-1"></i>Lat/Lng is used for nearest-neighbor distance calculation. <a href="https://www.latlong.net" target="_blank" class="text-blue-500">Look up here →</a></p>
+          <div class="flex gap-3 justify-end pt-2">
+            <button onclick="closeModal('add-zip-modal')" class="btn-secondary">Cancel</button>
+            <button onclick="addZipToQueue()" class="btn-primary">Add ZIP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `)
+
+  // load ZIP queue async
+  loadZipQueue()
+}
+
+function prospectorKpi(label, value, icon, color) {
+  const colors = { blue:'text-blue-400 bg-blue-900/30', indigo:'text-indigo-400 bg-indigo-900/30', violet:'text-violet-400 bg-violet-900/30', green:'text-green-400 bg-green-900/30', orange:'text-orange-400 bg-orange-900/30' }
+  const [tc, bc] = (colors[color]||'text-gray-400 bg-gray-800').split(' ')
+  return `<div class="stat-card flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl ${bc} flex items-center justify-center flex-shrink-0"><i class="fas fa-${icon} ${tc} text-base"></i></div>
+    <div><p class="text-xs text-gray-500 font-semibold uppercase tracking-wide leading-tight">${label}</p><p class="text-2xl font-bold text-white">${value}</p></div>
+  </div>`
+}
+
+function howItWorksStep(n, title, desc, icon, color) {
+  const tc = { blue:'text-blue-400', green:'text-green-400', yellow:'text-yellow-400', violet:'text-violet-400' }
+  return `<div class="text-center">
+    <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center mx-auto mb-2"><i class="fas fa-${icon} ${tc[color]||'text-gray-400'}"></i></div>
+    <p class="text-xs font-bold text-white">${n}. ${title}</p>
+    <p class="text-xs text-gray-500 mt-1 leading-relaxed">${desc}</p>
+  </div>`
+}
+
+function calcZipCompletion(status) {
+  const total = (status.active_zip?.leads_found || 0)
+  if (!total) return 0
+  const open = status.open_leads || 0
+  const terminal = Math.max(0, total - open)
+  return Math.min(100, Math.round(terminal / total * 100))
+}
+
+async function loadZipQueue() {
+  const tbody = document.getElementById('zip-queue-tbody')
+  if (!tbody) return
+  const zips = await api('GET', '/prospector/zip-queue?limit=100')
+  if (!zips.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-600">No ZIPs in queue</td></tr>`; return }
+  const statusColors = { active:'badge-proposal_sent', pending:'badge-new', exhausted:'badge-won', skipped:'badge-lost' }
+  tbody.innerHTML = zips.map(z => `
+    <tr class="${z.status==='active'?'bg-violet-900/10':''}">
+      <td><span class="font-bold ${z.status==='active'?'text-violet-300':'text-white'}">${escHtml(z.zip)}</span></td>
+      <td><span class="text-gray-400">${escHtml(z.city||'')}, ${escHtml(z.state||'')}</span></td>
+      <td><span class="badge ${statusColors[z.status]||'badge-new'}">${z.status==='active'?'🎯 active':z.status}</span></td>
+      <td><span class="text-green-400">${z.leads_found||0}</span></td>
+      <td><span class="text-gray-500 text-xs">${z.distance_from_seed ? Math.round(z.distance_from_seed)+'mi' : '—'}</span></td>
+      <td><span class="text-gray-600">${z.last_searched_at ? timeAgo(z.last_searched_at) : 'Never'}</span></td>
+    </tr>
+  `).join('')
+}
+
+async function toggleProspectorEnabled() {
+  const newVal = prospectorConfig.enabled === '1' ? '0' : '1'
+  await api('PUT', '/prospector/config', { enabled: newVal })
+  showToast(newVal === '1' ? 'Auto-Prospector enabled ✓' : 'Auto-Prospector paused', newVal==='1'?'success':'info')
+  renderProspector()
+}
+
+async function saveApiKey() {
+  const key = document.getElementById('cfg-api-key').value.trim()
+  if (!key) { showToast('Enter your API key first', 'error'); return }
+  await api('PUT', '/prospector/config', { google_maps_api_key: key })
+  showToast('API key saved ✓', 'success')
+}
+
+async function saveProspectorSetting(key, value) {
+  await api('PUT', '/prospector/config', { [key]: value })
+}
+
+async function saveIndustries() {
+  const checked = [...document.querySelectorAll('#industry-checkboxes input:checked')].map(i=>i.value)
+  await api('PUT', '/prospector/config', { target_industries: checked.join(',') })
+  showToast('Industries saved', 'success')
+}
+
+async function toggleSetting(key) {
+  const current = prospectorConfig[key]
+  const newVal = current === '0' ? '1' : '0'
+  await api('PUT', '/prospector/config', { [key]: newVal })
+  showToast(`Setting updated`, 'success')
+  renderProspector()
+}
+
+async function runProspectorNow() {
+  if (prospectorRunning) return
+  const apiKey = document.getElementById('cfg-api-key')?.value.trim() || prospectorConfig.google_maps_api_key
+  if (!apiKey) { showToast('Add your Google Maps API key first!', 'error'); return }
+
+  prospectorRunning = true
+  const btn = document.getElementById('run-now-btn')
+  if (btn) { btn.innerHTML = '<span class="spinner"></span> Searching...'; btn.disabled = true }
+  showToast('Starting prospecting run — searching Google Maps...', 'info')
+
+  try {
+    const result = await api('POST', '/prospector/run-now', { api_key: apiKey })
+    const added = result.total_added || 0
+    const advMsg = result.advanced_to ? ` → Advanced to ZIP ${result.advanced_to.zip} (${result.advanced_to.city})` : ''
+    showToast(`✓ Run complete! ${added} new leads added.${advMsg}`, 'success')
+    renderProspector()
+  } catch(e) {
+    // error already shown by api()
+  } finally {
+    prospectorRunning = false
+    if (btn) { btn.innerHTML = '<i class="fas fa-bolt"></i> Run Now'; btn.disabled = false }
+  }
+}
+
+async function manualAdvanceZip() {
+  if (!confirm('Mark the current ZIP as exhausted and advance to the next nearest ZIP?')) return
+  const result = await api('POST', '/prospector/mark-zip-exhausted', {})
+  if (result.success) {
+    showToast('Advanced to next ZIP!', 'success')
+    renderProspector()
+  }
+}
+
+function openAddZipModal() {
+  document.getElementById('new-zip-code').value = ''
+  document.getElementById('new-zip-city').value = ''
+  document.getElementById('new-zip-state').value = ''
+  document.getElementById('new-zip-lat').value = ''
+  document.getElementById('new-zip-lng').value = ''
+  openModal('add-zip-modal')
+}
+
+async function addZipToQueue() {
+  const zip   = document.getElementById('new-zip-code').value.trim()
+  const city  = document.getElementById('new-zip-city').value.trim()
+  const state = document.getElementById('new-zip-state').value.trim()
+  const lat   = parseFloat(document.getElementById('new-zip-lat').value) || null
+  const lng   = parseFloat(document.getElementById('new-zip-lng').value) || null
+  if (!zip || zip.length < 5) { showToast('Enter a valid 5-digit ZIP', 'error'); return }
+  await api('POST', '/prospector/zip-queue', { zip, city, state, lat, lng })
+  showToast(`ZIP ${zip} added to queue!`, 'success')
+  closeModal('add-zip-modal')
+  renderProspector()
+}
+
+function openZipAdvanceModal() {
+  openAddZipModal()
+}
 
 // ===== INIT =====
 initSidebar()
