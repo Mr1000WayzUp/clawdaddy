@@ -2041,7 +2041,7 @@ async function renderBuilder() {
     <div class="grid grid-cols-4 gap-2">
       ${builderPipelineStep('1','Deep Research','fas fa-search','Scrapes Google Maps, reviews, competitors & feeds all data to AI','indigo', resCount(stats,'completed'))}
       ${builderPipelineStep('2','AI Analysis','fas fa-brain','GPT-4 studies the business, writes copy, designs color palette & picks package','purple', stats.total_researched || 0)}
-      ${builderPipelineStep('3','Site Generated','fas fa-magic','Lovable.dev builds a stunning custom site in seconds using all research data','pink', buildCount(stats,'generated') + buildCount(stats,'published'))}
+      ${builderPipelineStep('3','Lovable URL Ready','fas fa-magic','One-click Lovable Build URL generated — click to auto-start site building (no API key needed)','pink', buildCount(stats,'prompt_ready') + buildCount(stats,'published'))}
       ${builderPipelineStep('4','Auto-Outreach','fas fa-paper-plane','Personalized email + SMS sent immediately with preview link & proposal','green', outCount(stats,'sent') + outCount(stats,'converted'))}
     </div>
 
@@ -2204,7 +2204,7 @@ function renderBuilderBuildsTab(stats) {
           ${builds.map(b => {
             const conf = b.confidence_score || 0
             const confColor = conf >= 80 ? 'text-green-400' : conf >= 50 ? 'text-yellow-400' : 'text-orange-400'
-            const buildStatusColors = { queued:'badge-new', researching:'badge-pending', generating:'badge-pending', generated:'badge-demo_sent', published:'badge-won', failed:'badge-lost', cancelled:'badge-lost' }
+            const buildStatusColors = { queued:'badge-new', researching:'badge-pending', generating:'badge-pending', prompt_ready:'badge-demo_sent', generated:'badge-demo_sent', published:'badge-won', failed:'badge-lost', cancelled:'badge-lost' }
             const outColors = { pending:'badge-new', sent:'badge-demo_sent', opened:'badge-proposal_sent', replied:'badge-active', converted:'badge-won' }
             return `<tr>
               <td>
@@ -2222,7 +2222,7 @@ function renderBuilderBuildsTab(stats) {
               <td><span class="badge ${buildStatusColors[b.build_status]||'badge-new'}">${(b.build_status||'').replace(/_/g,' ')}</span></td>
               <td><span class="badge ${outColors[b.outreach_status]||'badge-new'}">${(b.outreach_status||'pending').replace(/_/g,' ')}</span></td>
               <td>
-                ${b.preview_url ? `<a href="${escHtml(b.preview_url)}" target="_blank" class="text-pink-400 hover:text-pink-300 text-xs flex items-center gap-1"><i class="fas fa-external-link-alt"></i> View</a>` : '<span class="text-gray-600">—</span>'}
+                ${b.preview_url ? `<a href="${escHtml(b.preview_url)}" target="_blank" class="text-pink-400 hover:text-pink-300 text-xs flex items-center gap-1 font-semibold"><i class="fas fa-magic mr-1"></i>Open in Lovable</a>` : '<span class="text-gray-600">—</span>'}
               </td>
               <td><span class="text-gray-500">${timeAgo(b.created_at)}</span></td>
               <td>
@@ -2398,13 +2398,17 @@ function renderBuilderSettingsTab(cfg) {
           <p class="text-xs text-gray-600">Powers AI copywriting & business intelligence. <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-500">Get key →</a></p>
         </div>
 
-        <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
-          <p class="text-xs font-bold text-pink-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-magic"></i> Lovable.dev (Website Builder)</p>
-          <div class="flex gap-2">
-            <input id="bcfg-lovable" type="password" class="form-input flex-1 text-xs" value="${escHtml(cfg.lovable_api_key||'')}" placeholder="lvbl_..."/>
-            <button onclick="saveBuilderKey('lovable_api_key','bcfg-lovable')" class="btn-secondary btn-sm flex-shrink-0">Save</button>
+        <div class="bg-pink-900/20 border border-pink-700/40 rounded-xl p-3 space-y-2">
+          <p class="text-xs font-bold text-pink-400 uppercase tracking-wide flex items-center gap-2"><i class="fas fa-magic"></i> Lovable.dev — Build with URL</p>
+          <div class="flex items-start gap-2">
+            <div class="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-check text-white text-xs"></i></div>
+            <div>
+              <p class="text-xs text-green-400 font-semibold">No API key needed — it's FREE</p>
+              <p class="text-xs text-gray-400 mt-1">We use Lovable's public <strong class="text-white">Build with URL</strong> feature. Every build generates a one-click link that opens Lovable with your full prompt pre-filled and starts building <em>automatically</em>.</p>
+            </div>
           </div>
-          <p class="text-xs text-gray-600">Creates the actual website. <a href="https://lovable.dev" target="_blank" class="text-blue-500">Get key →</a> (Without key: generates Lovable-ready prompts)</p>
+          <div class="bg-gray-950/60 rounded-lg p-2 text-xs font-mono text-gray-500 break-all">lovable.dev/?autosubmit=true#prompt=<span class="text-pink-400">[full AI prompt]</span></div>
+          <a href="https://lovable.dev" target="_blank" class="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300"><i class="fas fa-external-link-alt"></i> Open Lovable.dev (free account required)</a>
         </div>
 
         <div class="bg-gray-800/60 rounded-xl p-3 space-y-3">
@@ -2507,12 +2511,13 @@ async function startBuildFromModal() {
   try {
     const result = await api('POST', '/builder/build', { lead_id: blmSelectedLeadId, package_tier: pkg, skip_research: skipResearch, auto_outreach: autoOutreach })
     closeModal('builder-lead-modal')
-    const advMsg = result.preview_url ? `<br><a href="${result.preview_url}" target="_blank" class="text-pink-400 underline">View Preview →</a>` : ''
-    showToast(`✓ Site built! Package: ${result.package}. ${autoOutreach ? 'Outreach sent.' : ''}`, 'success')
+    const lovableUrl = result.lovable_url || result.preview_url
+    showToast(`✓ Prompt ready! Opening Lovable to auto-build…`, 'success')
+    // Auto-open Lovable with the prompt pre-filled — it starts building immediately
+    if (lovableUrl) setTimeout(() => window.open(lovableUrl, '_blank'), 600)
     builderActiveTab = 'builds'
     renderBuilder()
   } catch(e) {
-    // error shown by api()
     btn.disabled = false
     btn.innerHTML = '<i class="fas fa-magic"></i> Research & Build'
   }
@@ -2541,7 +2546,7 @@ async function viewBuildDetail(id) {
       <div class="grid grid-cols-3 gap-3">
         <div class="bg-gray-800/60 rounded-xl p-3 text-center">
           <p class="text-xs text-gray-500 mb-1">Build Status</p>
-          <span class="badge badge-${build.build_status==='generated'||build.build_status==='published'?'won':build.build_status==='failed'?'lost':'new'}">${(build.build_status||'').replace(/_/g,' ')}</span>
+          <span class="badge badge-${build.build_status==='prompt_ready'||build.build_status==='generated'||build.build_status==='published'?'won':build.build_status==='failed'?'lost':'new'}">${(build.build_status||'').replace(/_/g,' ')}</span>
         </div>
         <div class="bg-gray-800/60 rounded-xl p-3 text-center">
           <p class="text-xs text-gray-500 mb-1">Package</p>
@@ -2554,14 +2559,17 @@ async function viewBuildDetail(id) {
       </div>
 
       ${build.preview_url ? `
-      <div class="bg-pink-900/20 border border-pink-700/40 rounded-xl p-4 flex items-center justify-between gap-3">
-        <div>
-          <p class="text-xs text-pink-400 font-semibold uppercase tracking-wide mb-1">Preview URL</p>
-          <a href="${escHtml(build.preview_url)}" target="_blank" class="text-white hover:text-pink-300 text-sm font-semibold break-all">${escHtml(build.preview_url)}</a>
+      <div class="bg-pink-900/20 border border-pink-700/40 rounded-xl p-4">
+        <p class="text-xs text-pink-400 font-semibold uppercase tracking-wide mb-2 flex items-center gap-2"><i class="fas fa-magic"></i>Lovable Build URL — Click to Auto-Build Site</p>
+        <p class="text-xs text-gray-400 mb-3">Opens Lovable.dev with the full AI prompt pre-filled. Once logged in, Lovable starts building the site automatically.</p>
+        <div class="flex items-center gap-2">
+          <a href="${escHtml(build.preview_url)}" target="_blank" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 border-0">
+            <i class="fas fa-magic"></i> Open in Lovable → Auto-Build
+          </a>
+          <button onclick="navigator.clipboard.writeText('${escHtml(build.preview_url)}').then(()=>showToast('URL copied!','success'))" class="btn-secondary text-sm">
+            <i class="fas fa-copy mr-1"></i>Copy URL
+          </button>
         </div>
-        <a href="${escHtml(build.preview_url)}" target="_blank" class="btn-primary flex-shrink-0 bg-gradient-to-r from-pink-600 to-purple-600 border-0 text-sm">
-          <i class="fas fa-external-link-alt mr-1"></i> Open Site
-        </a>
       </div>` : ''}
 
       <!-- Research Intel -->

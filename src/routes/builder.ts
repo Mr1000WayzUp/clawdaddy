@@ -679,22 +679,38 @@ async function sendSMS(to: string, body: string, sid: string, token: string, fro
   } catch (e: any) { return { success: false, error: e.message } }
 }
 
-// ── Launch Lovable project ────────────────────────────────────────────────────
-async function launchLovable(prompt: string, businessName: string, apiKey: string): Promise<{ url?: string; error?: string }> {
-  if (!apiKey) {
-    const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    return { url: `https://lovable.app/projects/${slug}-${Date.now().toString(36)}` }
+// ── Build with URL (Lovable's public integration — no API key needed) ─────────
+// Docs: https://docs.lovable.dev/integrations/build-with-url
+// Format: https://lovable.dev/?autosubmit=true#prompt=URL_ENCODED_PROMPT
+// When clicked: logged-in users get an auto-building project instantly.
+// The prompt is URL-encoded and placed in the hash fragment (max 50,000 chars).
+function buildLovableUrl(prompt: string): { url: string; truncated: boolean } {
+  // Lovable's Build with URL uses the hash fragment — base URL + params
+  const base = 'https://lovable.dev/?autosubmit=true#prompt='
+
+  // URL-encode the full prompt
+  let encoded = encodeURIComponent(prompt)
+  let truncated = false
+
+  // Browser URL limit ~65,000 chars total; keep prompt encoded under 60,000
+  const MAX_ENCODED = 60000
+  if (encoded.length > MAX_ENCODED) {
+    // Truncate the raw prompt at a safe boundary then re-encode
+    let raw = prompt
+    while (encodeURIComponent(raw).length > MAX_ENCODED) {
+      raw = raw.slice(0, Math.floor(raw.length * 0.9))
+    }
+    encoded = encodeURIComponent(raw + '\n\n[Note: prompt truncated to fit URL limits — core business data preserved above]')
+    truncated = true
   }
-  try {
-    const res = await fetch('https://api.lovable.app/v1/projects', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: businessName, prompt }),
-    })
-    if (!res.ok) return { error: `Lovable API ${res.status}: ${await res.text()}` }
-    const data: any = await res.json()
-    return { url: data.url || data.project_url }
-  } catch (e: any) { return { error: e.message } }
+
+  return { url: base + encoded, truncated }
+}
+
+// Wrapper used by the build pipeline — always succeeds (no network call needed)
+async function launchLovable(prompt: string, businessName: string, _apiKey: string): Promise<{ url?: string; error?: string; truncated?: boolean }> {
+  const { url, truncated } = buildLovableUrl(prompt)
+  return { url, truncated }
 }
 
 // ── Perform outreach (email + SMS) ────────────────────────────────────────────
@@ -875,34 +891,46 @@ builderRouter.post('/build', async (c) => {
   // Step 2: Generate Lovable prompt using research
   const prompt = buildLovablePrompt(lead, research, pkg)
 
-  // Step 3: Insert build record
+  // Step 3: Insert build record (14 columns = 14 bind params)
   const ins = await c.env.DB.prepare(
-    `INSERT INTO website_builds (lead_id,research_id,business_name,industry,city,phone,email,address,owner_name,google_rating,google_review_count,package_tier,build_status,lovable_prompt) VALUES (?,?,?,?,?,?,?,?,?,?,?,'generating',?)`
+    `INSERT INTO website_builds (lead_id,research_id,business_name,industry,city,phone,email,address,owner_name,google_rating,google_review_count,package_tier,build_status,lovable_prompt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'generating',?)`
   ).bind(
-    lead_id, reportId, lead.business_name, lead.industry, lead.city,
-    lead.phone || research?.google_phone || null,
-    lead.email || null, lead.address || research?.google_address || null,
-    lead.owner_name || null, research?.google_rating || null,
-    research?.google_review_count || 0, pkg, prompt
+    lead_id,                                      // lead_id
+    reportId,                                     // research_id
+    lead.business_name,                           // business_name
+    lead.industry,                                // industry
+    lead.city,                                    // city
+    lead.phone || research?.google_phone || null, // phone
+    lead.email || null,                           // email
+    lead.address || research?.google_address || null, // address
+    lead.owner_name || null,                      // owner_name
+    research?.google_rating || null,              // google_rating
+    research?.google_review_count || 0,           // google_review_count
+    pkg,                                          // package_tier
+    prompt                                        // lovable_prompt
   ).run()
   const buildId = ins.meta.last_row_id as number
 
-  // Step 4: Launch Lovable
-  const lovableKey = cfg.lovable_api_key?.includes('••') ? (c.env.LOVABLE_API_KEY || '') : (cfg.lovable_api_key || c.env.LOVABLE_API_KEY || '')
-  const lovable = await launchLovable(prompt, lead.business_name, lovableKey)
+  // Step 4: Build the Lovable "Build with URL" link (no API key, no network call)
+  // This URL opens lovable.dev with autosubmit=true and the full prompt pre-filled.
+  // When Eric or the client clicks it, Lovable auto-starts building the site.
+  const lovable = await launchLovable(prompt, lead.business_name, '')
 
-  if (lovable.error) {
-    await c.env.DB.prepare("UPDATE website_builds SET build_status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.error, buildId).run()
-    return c.json({ error: lovable.error, build_id: buildId }, 500)
-  }
+  // status = 'prompt_ready' means: prompt crafted + Lovable URL generated, ready to open
+  await c.env.DB.prepare(
+    "UPDATE website_builds SET build_status='prompt_ready',lovable_project_url=?,preview_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
+  ).bind(lovable.url, lovable.url, buildId).run()
 
-  await c.env.DB.prepare("UPDATE website_builds SET build_status='generated',lovable_project_url=?,preview_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.url, lovable.url, buildId).run()
-  await c.env.DB.prepare(`INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'website_built','${pkg} website built using deep research — ${lovable.url}')`).bind(lead_id).run()
+  await c.env.DB.prepare(
+    `INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'lovable_url_ready','${pkg} Lovable Build URL generated — click to auto-build: ${(lovable.url||'').slice(0,80)}…')`
+  ).bind(lead_id).run()
 
   // Update lead status
-  await c.env.DB.prepare("UPDATE leads SET status='demo_sent',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status IN ('new','contacted')").bind(lead_id).run()
+  await c.env.DB.prepare(
+    "UPDATE leads SET status='demo_sent',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status IN ('new','contacted')"
+  ).bind(lead_id).run()
 
-  // Step 5: Outreach
+  // Step 5: Outreach (include the Lovable Build URL as the preview link)
   let outreachResult: any = null
   const shouldOutreach = auto_outreach !== undefined ? auto_outreach : cfg.auto_outreach === '1'
   if (shouldOutreach && (lead.email || lead.phone)) {
@@ -913,7 +941,16 @@ builderRouter.post('/build', async (c) => {
   // Update stats
   await setCfg(c.env.DB, 'total_builds', String(parseInt(cfg.total_builds || '0') + 1))
 
-  return c.json({ success: true, build_id: buildId, preview_url: lovable.url, package: pkg, research_id: reportId, outreach: outreachResult })
+  return c.json({
+    success: true,
+    build_id: buildId,
+    lovable_url: lovable.url,
+    package: pkg,
+    research_id: reportId,
+    outreach: outreachResult,
+    truncated: lovable.truncated || false,
+    note: 'Click lovable_url to open Lovable with your prompt pre-filled — it will auto-start building the site.'
+  })
 })
 
 // POST /api/builder/outreach/:buildId  – manual outreach trigger
@@ -1066,30 +1103,30 @@ builderRouter.post('/process-queue', async (c) => {
         queuedBuild.id
       ).run()
 
-      // Step 4: Launch Lovable
-      const lovableKey = cfg.lovable_api_key?.includes('••') ? (c.env.LOVABLE_API_KEY || '') : (cfg.lovable_api_key || c.env.LOVABLE_API_KEY || '')
-      const lovable = await launchLovable(prompt, lead.business_name, lovableKey)
+      // Step 4: Generate Lovable Build-with-URL link (no API key needed)
+      const lovable = await launchLovable(prompt, lead.business_name, '')
 
-      if (lovable.error) {
-        await c.env.DB.prepare("UPDATE website_builds SET build_status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.error, queuedBuild.id).run()
-        processed.push({ id: queuedBuild.id, business: lead.business_name, status: 'failed', error: lovable.error })
-        continue
-      }
+      await c.env.DB.prepare(
+        "UPDATE website_builds SET build_status='prompt_ready',lovable_project_url=?,preview_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
+      ).bind(lovable.url, lovable.url, queuedBuild.id).run()
 
-      await c.env.DB.prepare("UPDATE website_builds SET build_status='generated',lovable_project_url=?,preview_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(lovable.url, lovable.url, queuedBuild.id).run()
-      await c.env.DB.prepare(`INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'website_built','Auto-built ${queuedBuild.package_tier} website via queue — ${lovable.url}')`).bind(lead.id).run()
+      await c.env.DB.prepare(
+        `INSERT INTO activities (entity_type,entity_id,action,description) VALUES ('lead',?,'lovable_url_ready','Lovable Build URL ready for ${queuedBuild.package_tier} package — click to auto-build')`
+      ).bind(lead.id).run()
 
       // Update lead status
-      await c.env.DB.prepare("UPDATE leads SET status='demo_sent',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status IN ('new','contacted')").bind(lead.id).run()
+      await c.env.DB.prepare(
+        "UPDATE leads SET status='demo_sent',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status IN ('new','contacted')"
+      ).bind(lead.id).run()
 
-      // Step 5: Auto-outreach
+      // Step 5: Auto-outreach (Lovable URL serves as the preview/intro link)
       if (cfg.auto_outreach === '1' && (lead.email || lead.phone)) {
         const buildRow = { preview_url: lovable.url, lovable_project_url: lovable.url, package_tier: queuedBuild.package_tier }
         await doOutreach(c.env.DB, queuedBuild.id, lead, buildRow, research, cfg, c.env)
       }
 
       await setCfg(c.env.DB, 'total_builds', String(parseInt(cfg.total_builds || '0') + 1))
-      processed.push({ id: queuedBuild.id, business: lead.business_name, status: 'generated', preview_url: lovable.url })
+      processed.push({ id: queuedBuild.id, business: lead.business_name, status: 'prompt_ready', lovable_url: lovable.url })
 
     } catch (err: any) {
       await c.env.DB.prepare("UPDATE website_builds SET build_status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(err.message, queuedBuild.id).run()
