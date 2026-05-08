@@ -306,9 +306,10 @@ app.get('*', (c) => {
           <label class="form-label">Package Tier *</label>
           <select id="client-package" class="form-input w-full" onchange="updateClientPrice()" required>
             <option value="">Select package...</option>
-            <option value="Basic">Basic ($500–$800)</option>
-            <option value="Professional">Professional ($1,200–$2,000)</option>
-            <option value="Premium">Premium ($2,500–$3,500)</option>
+            <option value="Starter">Starter ($799)</option>
+            <option value="Professional">⭐ Professional ($1,497) — Most Popular</option>
+            <option value="Premium">Premium ($2,997)</option>
+            <option value="Enterprise">Enterprise ($5,997) — Price Anchor</option>
           </select>
         </div>
         <div>
@@ -367,9 +368,10 @@ app.get('*', (c) => {
           <div>
             <label class="form-label">Package *</label>
             <select id="proposal-package" class="form-input w-full" onchange="updateProposalPackage()">
-              <option value="Basic">Basic ($500–$800)</option>
-              <option value="Professional" selected>Professional ($1,200–$2,000)</option>
-              <option value="Premium">Premium ($2,500–$3,500)</option>
+              <option value="Starter">Starter ($799)</option>
+              <option value="Professional" selected>⭐ Professional ($1,497) — Most Popular</option>
+              <option value="Premium">Premium ($2,997)</option>
+              <option value="Enterprise">Enterprise ($5,997) — Price Anchor</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-3">

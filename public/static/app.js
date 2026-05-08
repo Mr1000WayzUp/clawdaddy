@@ -90,6 +90,7 @@ function industryIcon(ind) {
   return icons[ind] || 'building'
 }
 function packageColor(tier) {
+  if(tier==='Enterprise') return 'text-red-400'
   if(tier==='Premium') return 'text-yellow-400'
   if(tier==='Professional') return 'text-blue-400'
   return 'text-green-400'
@@ -801,8 +802,8 @@ async function showEditClientModal(id) {
 
 function updateClientPrice() {
   const pkg = document.getElementById('client-package').value
-  const defaults = { Basic:650, Professional:1500, Premium:3000 }
-  const recurring = { Basic:50, Professional:75, Premium:150 }
+  const defaults = { Starter:799, Professional:1497, Premium:2997, Enterprise:5997 }
+  const recurring = { Starter:49, Professional:97, Premium:197, Enterprise:397 }
   if(defaults[pkg]) {
     document.getElementById('client-price').value = defaults[pkg]
     document.getElementById('client-recurring').value = recurring[pkg]
@@ -849,17 +850,21 @@ async function confirmDeleteClient(id) {
 // ===== PROPOSALS =====
 let proposalsData = []
 const PACKAGES = {
-  Basic: {
-    price: 650, recurring: 50,
+  Starter: {
+    price: 799, recurring: 49,
     features: ['5-Page Website','Mobile Responsive','Contact Form','Google Maps Integration','Click-to-Call','1 Year Domain + Hosting']
   },
   Professional: {
-    price: 1500, recurring: 75,
-    features: ['Everything in Basic','SEO Optimization','Google Business Profile','Image Gallery','Social Media Links','Basic Analytics','Email Setup']
+    price: 1497, recurring: 97,
+    features: ['Everything in Starter','SEO Optimization','Google Business Profile','Image Gallery','Social Media Links','Analytics Dashboard','Professional Copywriting']
   },
   Premium: {
-    price: 3000, recurring: 150,
-    features: ['Everything in Professional','Booking/Appointment System','Blog Setup','3 Months of Updates','Local SEO Campaign','Priority Support','Custom Domain Email']
+    price: 2997, recurring: 197,
+    features: ['Everything in Professional','Online Booking System','Blog + Content Marketing','3 Months Free Updates','Local SEO Campaign','Priority Support','Custom Domain Email']
+  },
+  Enterprise: {
+    price: 5997, recurring: 397,
+    features: ['Everything in Premium','E-Commerce / Online Store','Custom Web Application','12 Months of Updates','Dedicated Account Manager','Monthly SEO Reports','Google Ads Management']
   }
 }
 
@@ -1014,51 +1019,100 @@ function updateProposalPackage() {
 }
 
 function updateProposalPreview() {
-  const biz = document.getElementById('proposal-business-name').value||'[Business Name]'
-  const owner = document.getElementById('proposal-owner-name').value||'there'
-  const pkg = document.getElementById('proposal-package').value||'Professional'
-  const price = document.getElementById('proposal-price').value||0
-  const recurring = document.getElementById('proposal-recurring').value||0
-  const msg = document.getElementById('proposal-message').value||''
+  const biz      = document.getElementById('proposal-business-name').value||'[Business Name]'
+  const owner    = document.getElementById('proposal-owner-name').value||'there'
+  const pkg      = document.getElementById('proposal-package').value||'Professional'
+  const price    = parseFloat(document.getElementById('proposal-price').value)||0
+  const recurring= parseFloat(document.getElementById('proposal-recurring').value)||0
+  const msg      = document.getElementById('proposal-message').value||''
   const features = [...document.querySelectorAll('#proposal-features input:checked')].map(i=>i.value)
 
+  // --- Loss Aversion + ROI Calculations ---
+  const industryROI = { Starter:4.2, Professional:6.8, Premium:9.5, Enterprise:14 }
+  const roi12mo     = price > 0 ? (industryROI[pkg]||6.8) * price : 0
+  const breakEven   = price > 0 ? Math.ceil(price / (roi12mo / 12 / 30)) : 0
+  const anchor      = pkg === 'Starter' ? 1497 : pkg === 'Professional' ? 2997 : pkg === 'Premium' ? 5997 : 9997
+  const savings     = anchor - price
+
+  // Expiry: 7 days from now
+  const expiry   = new Date(Date.now() + 7*24*60*60*1000)
+  const expiryStr= expiry.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+
   document.getElementById('proposal-preview').innerHTML = `
-    <div class="proposal-preview-header">
-      <p class="text-blue-400 font-bold text-sm">WEBSITE PROPOSAL</p>
-      <p class="text-white font-bold text-base mt-1">${escHtml(biz)}</p>
-      <p class="text-gray-500 text-xs">Prepared for ${escHtml(owner)} · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>
+    <!-- PROPOSAL HEADER -->
+    <div class="proposal-preview-header relative overflow-hidden">
+      <div class="absolute top-0 right-0 bg-amber-500 text-black text-xs font-black px-3 py-1 rounded-bl-lg">EXPIRES ${expiryStr}</div>
+      <p class="text-blue-400 font-black text-xs tracking-widest uppercase">Exclusive Website Proposal</p>
+      <p class="text-white font-bold text-lg mt-1">${escHtml(biz)}</p>
+      <p class="text-gray-400 text-xs mt-0.5">Prepared personally for ${escHtml(owner)} · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>
     </div>
 
-    ${msg?`<div class="text-gray-300 text-xs leading-relaxed bg-gray-900/50 rounded-lg p-2">${escHtml(msg)}</div>`:''}
-
-    <div class="bg-gray-900 rounded-lg p-3">
-      <p class="text-xs font-bold text-white mb-1">${pkg} Package</p>
-      <div class="flex items-end gap-2">
-        <span class="text-2xl font-bold text-green-400">${fmt$(price)}</span>
-        <span class="text-xs text-gray-500 mb-1">one-time setup</span>
+    <!-- LOSS AVERSION OPENER -->
+    <div class="bg-red-950/40 border border-red-800/40 rounded-xl p-3">
+      <p class="text-red-300 font-bold text-xs flex items-center gap-2 mb-1"><i class="fas fa-exclamation-triangle"></i> What's Happening Right Now Without a Website</p>
+      <p class="text-gray-300 text-xs leading-relaxed">Every week, <span class="text-white font-bold">hundreds of people</span> in your area search Google for your type of business. Without a website, <span class="text-red-400 font-bold">100% of them go to your competitors</span> — not because they're better, but because they show up online and you don't.</p>
+      <div class="flex items-center gap-4 mt-2">
+        <div class="text-center"><p class="text-red-400 font-black text-lg">${fmt$(Math.round(price * 0.6))}</p><p class="text-gray-500 text-xs">Est. monthly loss</p></div>
+        <div class="text-center"><p class="text-red-400 font-black text-lg">${fmt$(Math.round(price * 7.2))}</p><p class="text-gray-500 text-xs">Est. annual loss</p></div>
+        <div class="text-center"><p class="text-emerald-400 font-black text-lg">${breakEven}d</p><p class="text-gray-500 text-xs">Break-even</p></div>
       </div>
-      ${recurring>0?`<p class="text-xs text-emerald-400 mt-1">+ ${fmt$(recurring)}/month maintenance</p>`:''}
     </div>
 
+    ${msg?`<div class="text-gray-300 text-xs leading-relaxed bg-blue-950/30 border border-blue-800/30 rounded-xl p-3 italic">"${escHtml(msg)}"</div>`:''}
+
+    <!-- PRICING ANCHOR + PACKAGE -->
+    <div class="bg-gray-900 rounded-xl p-4 border-2 border-blue-500/50 relative">
+      ${pkg==='Professional'?'<div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-black px-4 py-1 rounded-full">⭐ MOST POPULAR</div>':''}
+      ${savings>0?`<p class="text-xs text-gray-500 line-through mb-0.5">Regular price: ${fmt$(anchor)}</p>`:''}
+      <p class="text-xs font-bold text-blue-400 uppercase tracking-wide">${escHtml(pkg)} Package</p>
+      <div class="flex items-end gap-2 mt-1">
+        <span class="text-3xl font-black text-emerald-400">${fmt$(price)}</span>
+        <span class="text-xs text-gray-400 mb-1">one-time · professional website</span>
+      </div>
+      ${savings>0?`<p class="text-xs text-amber-400 font-semibold mt-1">🎉 You save ${fmt$(savings)} today</p>`:''}
+      ${recurring>0?`<p class="text-xs text-gray-400 mt-1">+ ${fmt$(recurring)}/month hosting &amp; maintenance</p>`:''}
+    </div>
+
+    <!-- ROI SECTION -->
+    <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-3">
+      <p class="text-emerald-400 font-bold text-xs mb-2"><i class="fas fa-chart-line mr-1"></i> Your Projected Return on Investment</p>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div><p class="text-white font-black text-sm">${fmt$(Math.round(roi12mo * 0.25))}</p><p class="text-gray-500 text-xs">3-Month ROI</p></div>
+        <div><p class="text-emerald-400 font-black text-sm">${fmt$(Math.round(roi12mo * 0.5))}</p><p class="text-gray-500 text-xs">6-Month ROI</p></div>
+        <div><p class="text-emerald-400 font-black text-base">${fmt$(Math.round(roi12mo))}</p><p class="text-gray-500 text-xs">12-Month ROI</p></div>
+      </div>
+      <p class="text-gray-500 text-xs mt-2 text-center">Based on average conversion rates for ${escHtml(pkg)} websites in your industry.</p>
+    </div>
+
+    <!-- FEATURES -->
     <div>
-      <p class="text-xs font-bold text-white mb-2">What's Included:</p>
+      <p class="text-xs font-bold text-white mb-2">Everything You Get:</p>
       <div class="flex flex-wrap">${features.map(f=>`<span class="proposal-feature-tag"><i class="fas fa-check text-green-400"></i>${escHtml(f)}</span>`).join('')}</div>
     </div>
 
-    <div class="bg-gray-900 rounded-lg p-3">
-      <p class="text-xs font-bold text-white mb-1">Timeline</p>
-      <p class="text-xs text-gray-400">Your website will be ready in <span class="text-white font-semibold">3–5 business days</span> after we receive your content and 50% deposit.</p>
+    <!-- GUARANTEE -->
+    <div class="bg-gray-900 border border-gray-700 rounded-xl p-3 flex items-start gap-3">
+      <i class="fas fa-shield-alt text-2xl text-emerald-400 mt-0.5"></i>
+      <div>
+        <p class="text-white font-bold text-xs">100% Satisfaction Guarantee</p>
+        <p class="text-gray-400 text-xs mt-0.5">If you're not completely happy with your website after the first revision, we'll refund your deposit — no questions, no hassle. Zero risk to you.</p>
+      </div>
     </div>
 
-    <div class="border border-gray-700 rounded-lg p-3">
-      <p class="text-xs font-bold text-white mb-1">Next Steps</p>
-      <ol class="text-xs text-gray-400 space-y-1 list-decimal list-inside">
-        <li>Review and approve this proposal</li>
-        <li>Pay 50% deposit: ${fmt$(price/2)}</li>
-        <li>Fill out our onboarding form</li>
-        <li>We build your site — you review</li>
-        <li>Go live + pay remaining balance</li>
-      </ol>
+    <!-- SCARCITY + TIMELINE -->
+    <div class="bg-amber-950/40 border border-amber-700/40 rounded-xl p-3">
+      <p class="text-amber-300 font-bold text-xs flex items-center gap-2"><i class="fas fa-clock"></i> Limited Availability</p>
+      <p class="text-gray-300 text-xs mt-1">We only take <span class="text-white font-bold">3 new website clients per month</span> to ensure every site gets our full attention. This proposal expires <span class="text-amber-400 font-bold">${expiryStr}</span>.</p>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <div class="border border-gray-700 rounded-xl p-3">
+      <p class="text-xs font-bold text-white mb-2">How It Works — 3 Simple Steps</p>
+      <div class="space-y-1">
+        <div class="flex items-center gap-2"><span class="w-5 h-5 bg-blue-600 rounded-full text-white text-xs flex items-center justify-center font-bold flex-shrink-0">1</span><p class="text-xs text-gray-300"><span class="text-white font-semibold">Accept &amp; pay deposit</span> (50% = ${fmt$(price/2)}) — locks in your spot &amp; your price</p></div>
+        <div class="flex items-center gap-2"><span class="w-5 h-5 bg-blue-600 rounded-full text-white text-xs flex items-center justify-center font-bold flex-shrink-0">2</span><p class="text-xs text-gray-300"><span class="text-white font-semibold">We build in 3–5 days</span> — you review, request changes, approve</p></div>
+        <div class="flex items-center gap-2"><span class="w-5 h-5 bg-emerald-600 rounded-full text-white text-xs flex items-center justify-center font-bold flex-shrink-0">3</span><p class="text-xs text-gray-300"><span class="text-white font-semibold">Go live &amp; start winning customers</span> — pay remaining balance on launch day</p></div>
+      </div>
     </div>
   `
 }
@@ -2062,18 +2116,24 @@ async function renderBuilder() {
 
     <!-- Main tabs + content -->
     <div class="card p-0 overflow-hidden">
-      <div class="flex border-b border-gray-800">
-        ${['builds','research','outreach','settings'].map(t => `
-          <button onclick="switchBuilderTab('${t}')" id="btab-${t}"
-            class="px-5 py-3 text-sm font-semibold transition-all border-b-2 ${builderActiveTab===t ? 'border-pink-500 text-pink-400 bg-pink-900/10' : 'border-transparent text-gray-500 hover:text-gray-300'}">
-            <i class="fas fa-${t==='builds'?'globe':t==='research'?'brain':t==='outreach'?'paper-plane':'cog'} mr-2"></i>
-            ${t.charAt(0).toUpperCase()+t.slice(1)}
+      <div class="flex border-b border-gray-800 overflow-x-auto">
+        ${[
+          {k:'builds',   icon:'globe',        label:'Builds'},
+          {k:'research', icon:'brain',         label:'Research'},
+          {k:'outreach', icon:'paper-plane',   label:'Outreach'},
+          {k:'followup', icon:'calendar-alt',  label:'Follow-Up'},
+          {k:'settings', icon:'cog',           label:'Settings'},
+        ].map(t => `
+          <button onclick="switchBuilderTab('${t.k}')" id="btab-${t.k}"
+            class="whitespace-nowrap px-5 py-3 text-sm font-semibold transition-all border-b-2 ${builderActiveTab===t.k ? 'border-pink-500 text-pink-400 bg-pink-900/10' : 'border-transparent text-gray-500 hover:text-gray-300'}">
+            <i class="fas fa-${t.icon} mr-2"></i>${t.label}
           </button>`).join('')}
       </div>
       <div id="builder-tab-content" class="p-4">
         ${builderActiveTab === 'builds'   ? renderBuilderBuildsTab(stats)   :
           builderActiveTab === 'research' ? renderBuilderResearchTab(stats)  :
           builderActiveTab === 'outreach' ? renderBuilderOutreachTab(stats)  :
+          builderActiveTab === 'followup' ? renderBuilderFollowupTab()       :
           renderBuilderSettingsTab(cfg)}
       </div>
     </div>
@@ -2099,9 +2159,10 @@ async function renderBuilder() {
           <div>
             <label class="form-label">Package</label>
             <select id="blm-package" class="form-input w-full">
-              <option value="Basic">Basic ($500-$800)</option>
-              <option value="Professional" selected>Professional ($1,200-$2,000)</option>
-              <option value="Premium">Premium ($2,500-$3,500)</option>
+              <option value="Starter">Starter ($799)</option>
+              <option value="Professional" selected>⭐ Professional ($1,497) — Most Popular</option>
+              <option value="Premium">Premium ($2,997)</option>
+              <option value="Enterprise">Enterprise ($5,997) — Price Anchor</option>
             </select>
           </div>
           <div class="flex items-end">
@@ -2243,8 +2304,10 @@ function renderBuilderBuildsTab(stats) {
               <td>
                 <div class="flex items-center gap-1">
                   <button onclick="viewBuildDetail(${b.id})" class="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-gray-800 hover:bg-gray-700" title="View Details"><i class="fas fa-eye"></i></button>
-                  ${!b.outreach_email_sent && !b.outreach_sms_sent ? `<button onclick="triggerOutreach(${b.id})" class="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50" title="Send Outreach"><i class="fas fa-paper-plane"></i></button>` : ''}
-                  ${b.research_id ? `<button onclick="viewResearch(${b.research_id})" class="text-xs text-purple-400 hover:text-purple-300 px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50" title="View Research"><i class="fas fa-brain"></i></button>` : ''}
+                  <button onclick="showOutreachPreview(${b.lead_id}, '${b.package_tier||'Professional'}')" class="text-xs text-pink-400 hover:text-pink-300 px-2 py-1 rounded bg-pink-900/30 hover:bg-pink-900/50" title="Preview All Outreach Variants"><i class="fas fa-search-plus"></i></button>
+                  ${!b.outreach_email_sent && !b.outreach_sms_sent ? `<button onclick="triggerOutreach(${b.id})" class="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded bg-blue-900/30 hover:bg-blue-900/50" title="Send Outreach Now"><i class="fas fa-paper-plane"></i></button>` : ''}
+                  <button onclick="startFollowupSequence(${b.lead_id}, ${b.id})" class="text-xs text-purple-400 hover:text-purple-300 px-2 py-1 rounded bg-purple-900/30 hover:bg-purple-900/50" title="Start 14-Day Follow-Up"><i class="fas fa-calendar-plus"></i></button>
+                  ${b.research_id ? `<button onclick="viewResearch(${b.research_id})" class="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded bg-indigo-900/30 hover:bg-indigo-900/50" title="View Research"><i class="fas fa-brain"></i></button>` : ''}
                 </div>
               </td>
             </tr>`}).join('')}
@@ -2369,6 +2432,213 @@ Packages from $500. Call/text me: (985)860-7891
     </div>`
 }
 
+// ── FOLLOW-UP TAB ─────────────────────────────────────────────────────────────
+function renderBuilderFollowupTab() {
+  const el = document.getElementById('builder-tab-content')
+  el.innerHTML = '<div class="flex justify-center py-12"><div class="spinner"></div></div>'
+  api('GET', '/builder/followup-list').then(data => {
+    const seqs = data.sequences || []
+    el.innerHTML = `
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-white text-sm">14-Day Follow-Up Sequences</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Automated nurture sequences for every outreach lead</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="showStartSequenceModal()" class="btn-primary btn-sm"><i class="fas fa-play mr-1"></i>Start New Sequence</button>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-4 gap-3">
+          ${[
+            ['Active', seqs.filter(s=>s.status==='active').length, 'play-circle', 'green'],
+            ['Completed', seqs.filter(s=>s.status==='completed').length, 'check-circle', 'blue'],
+            ['Cancelled', seqs.filter(s=>s.status==='cancelled').length, 'times-circle', 'red'],
+            ['Total Sent', seqs.reduce((a,s)=>a+(s.sent_count||0),0), 'paper-plane', 'purple']
+          ].map(([label,val,icon,c])=>`
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 text-center">
+              <i class="fas fa-${icon} text-${c}-400 text-lg mb-1 block"></i>
+              <p class="text-2xl font-bold text-white">${val}</p>
+              <p class="text-xs text-gray-500">${label}</p>
+            </div>`).join('')}
+        </div>
+
+        <!-- Sequence list -->
+        ${seqs.length ? `
+        <div class="space-y-2">
+          ${seqs.map(s => {
+            const stepDays = ['','Day 3','Day 7','Day 10','Day 14']
+            const statusColors = {active:'text-green-400 bg-green-900/20 border-green-700/30', completed:'text-blue-400 bg-blue-900/20 border-blue-700/30', cancelled:'text-red-400 bg-red-900/20 border-red-700/30'}
+            const sc = statusColors[s.status] || 'text-gray-400 bg-gray-800 border-gray-700'
+            return `
+            <div class="bg-gray-900/60 border border-gray-800 rounded-xl p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="font-semibold text-white text-sm truncate">${escHtml(s.business_name)}</p>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 border rounded-full text-xs font-semibold ${sc}">${s.status}</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">${escHtml(s.email||s.phone||'No contact info')}</p>
+
+                  <!-- Step progress bar -->
+                  <div class="flex items-center gap-1 mt-3">
+                    ${[1,2,3,4].map(step => {
+                      const completed = s.current_step >= step
+                      const active    = s.status === 'active' && s.current_step === step - 1
+                      return `<div class="flex-1 text-center">
+                        <div class="h-1.5 rounded-full ${completed ? 'bg-emerald-500' : active ? 'bg-amber-500 animate-pulse' : 'bg-gray-700'} mb-1"></div>
+                        <p class="text-xs ${completed ? 'text-emerald-400' : active ? 'text-amber-400' : 'text-gray-600'}">${stepDays[step]}</p>
+                      </div>`
+                    }).join('<div class="w-1"></div>')}
+                  </div>
+
+                  <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                    <span><i class="fas fa-paper-plane mr-1"></i>${s.sent_count||0} sent</span>
+                    <span><i class="fas fa-clock mr-1"></i>${s.pending_count||0} pending</span>
+                    ${s.next_send_at ? `<span><i class="fas fa-calendar mr-1"></i>Next: ${fmtDate(s.next_send_at)}</span>` : ''}
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-1.5 flex-shrink-0">
+                  <button onclick="viewSequenceDetail(${s.id})" class="btn-sm text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg">
+                    <i class="fas fa-eye mr-1"></i>View
+                  </button>
+                  ${s.status === 'active' && s.current_step < 4 ? `
+                  <button onclick="sendNextStep(${s.id}, ${s.current_step + 1})" class="btn-sm text-xs px-3 py-1.5 bg-blue-900/50 hover:bg-blue-900 text-blue-300 border border-blue-700/40 rounded-lg">
+                    <i class="fas fa-paper-plane mr-1"></i>Send Step ${s.current_step + 1}
+                  </button>` : ''}
+                  ${s.status === 'active' ? `
+                  <button onclick="cancelSequence(${s.id})" class="btn-sm text-xs px-3 py-1.5 bg-red-900/30 hover:bg-red-900/60 text-red-400 border border-red-800/30 rounded-lg">
+                    <i class="fas fa-times mr-1"></i>Cancel
+                  </button>` : ''}
+                </div>
+              </div>
+            </div>`
+          }).join('')}
+        </div>` : `
+        <div class="text-center py-16 text-gray-600">
+          <i class="fas fa-calendar-alt text-4xl mb-3 block"></i>
+          <p class="text-lg font-semibold">No sequences running yet</p>
+          <p class="text-sm mt-1">Start a follow-up sequence after sending outreach to a lead</p>
+          <button onclick="showStartSequenceModal()" class="btn-primary mt-4"><i class="fas fa-play mr-2"></i>Start First Sequence</button>
+        </div>`}
+      </div>
+    `
+  }).catch(err => {
+    el.innerHTML = `<p class="text-red-400 text-sm text-center py-8">Failed to load sequences: ${err.message}</p>`
+  })
+  return '' // content rendered async
+}
+
+// ── Follow-up helpers ─────────────────────────────────────────────────────────
+function showStartSequenceModal() {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'start-seq-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-md">
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white">Start Follow-Up Sequence</h3>
+          <button onclick="document.getElementById('start-seq-modal').remove()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <p class="text-xs text-gray-400">Select a lead to begin the 14-day nurture sequence (Day 3, 7, 10, 14 touchpoints).</p>
+        <div>
+          <label class="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1 block">Lead ID or Business Name</label>
+          <input id="seq-lead-search" type="text" class="form-input w-full" placeholder="Enter Lead ID number…" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button onclick="startSequenceFromModal()" class="btn-primary flex-1"><i class="fas fa-play mr-2"></i>Start Sequence</button>
+          <button onclick="document.getElementById('start-seq-modal').remove()" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>`
+  document.body.appendChild(modal)
+}
+
+async function startSequenceFromModal() {
+  const leadId = document.getElementById('seq-lead-search').value.trim()
+  if (!leadId) { showToast('Enter a Lead ID', 'error'); return }
+  try {
+    const res = await api('POST', '/builder/followup/start', { lead_id: parseInt(leadId) })
+    document.getElementById('start-seq-modal')?.remove()
+    showToast(`✓ Sequence started! ${res.total_steps} steps scheduled over 14 days.`, 'success')
+    switchBuilderTab('followup')
+  } catch(e) { showToast(e.message || 'Failed to start sequence', 'error') }
+}
+
+async function sendNextStep(seqId, stepNum) {
+  if (!confirm(`Send follow-up step ${stepNum} now? This will send email and/or SMS.`)) return
+  showToast(`Sending step ${stepNum}...`, 'info')
+  try {
+    const res = await api('POST', '/builder/followup/send-step', { sequence_id: seqId, step_number: stepNum })
+    showToast(`✓ Step ${stepNum} sent! ${res.sent} messages delivered.`, 'success')
+    switchBuilderTab('followup')
+  } catch(e) { showToast(e.message || 'Send failed', 'error') }
+}
+
+async function cancelSequence(seqId) {
+  if (!confirm('Cancel this follow-up sequence? Remaining messages will be cancelled.')) return
+  await api('POST', '/builder/followup/cancel', { sequence_id: seqId })
+  showToast('Sequence cancelled', 'info')
+  switchBuilderTab('followup')
+}
+
+async function viewSequenceDetail(seqId) {
+  // Find sequence data inline
+  const res = await api('GET', '/builder/followup-list')
+  const seq = (res.sequences||[]).find(s=>s.id===seqId)
+  if (!seq) { showToast('Not found', 'error'); return }
+
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.innerHTML = `
+    <div class="modal-content max-w-2xl">
+      <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white">${escHtml(seq.business_name)} — Follow-Up Sequence</h3>
+            <p class="text-xs text-gray-500">Status: ${seq.status} · ${seq.sent_count||0} sent · ${seq.pending_count||0} pending</p>
+          </div>
+          <button onclick="this.closest('.modal-overlay').remove()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="space-y-2">
+          ${[1,2,3,4].map(step => {
+            const stepDays = {1:'Day 3',2:'Day 7',3:'Day 10',4:'Day 14'}
+            const stepLabels = {1:'First Follow-Up — Check In',2:'Value Add — Competitor Alert',3:'Urgency — Spot Expiring',4:'Final Farewell — Break-Up Email'}
+            const done = seq.current_step >= step
+            return `
+            <div class="border ${done ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-gray-700 bg-gray-900/40'} rounded-xl p-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center ${done ? 'bg-emerald-600' : 'bg-gray-700'} text-white text-sm font-bold">${done ? '✓' : step}</div>
+                  <div>
+                    <p class="text-sm font-semibold text-white">${stepLabels[step]}</p>
+                    <p class="text-xs text-gray-500">${stepDays[step]} after initial outreach</p>
+                  </div>
+                </div>
+                ${seq.status === 'active' && !done ? `
+                <button onclick="sendNextStep(${seqId}, ${step}); this.closest('.modal-overlay').remove()" class="btn-sm text-xs px-3 py-1.5 bg-blue-900/50 hover:bg-blue-900 text-blue-300 border border-blue-700/40 rounded-lg">
+                  <i class="fas fa-paper-plane mr-1"></i>Send Now
+                </button>` : ''}
+              </div>
+            </div>`
+          }).join('')}
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          ${seq.status === 'active' ? `<button onclick="cancelSequence(${seqId}); this.closest('.modal-overlay').remove()" class="btn-secondary text-red-400 border-red-800/40">Cancel Sequence</button>` : ''}
+          <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary ml-auto">Close</button>
+        </div>
+      </div>
+    </div>`
+  document.body.appendChild(modal)
+}
+
 // ── SETTINGS TAB ──────────────────────────────────────────────────────────────
 function renderBuilderSettingsTab(cfg) {
   return `
@@ -2392,9 +2662,10 @@ function renderBuilderSettingsTab(cfg) {
         <div>
           <label class="form-label">Default Package Tier</label>
           <select id="bcfg-default-pkg" class="form-input w-full">
-            <option value="Basic" ${cfg.default_package==='Basic'?'selected':''}>Basic ($500–$800)</option>
-            <option value="Professional" ${cfg.default_package==='Professional'||!cfg.default_package?'selected':''}>Professional ($1,200–$2,000)</option>
-            <option value="Premium" ${cfg.default_package==='Premium'?'selected':''}>Premium ($2,500–$3,500)</option>
+            <option value="Starter" ${cfg.default_package==='Starter'?'selected':''}>Starter ($799)</option>
+            <option value="Professional" ${cfg.default_package==='Professional'||!cfg.default_package?'selected':''}>⭐ Professional ($1,497)</option>
+            <option value="Premium" ${cfg.default_package==='Premium'?'selected':''}>Premium ($2,997)</option>
+            <option value="Enterprise" ${cfg.default_package==='Enterprise'?'selected':''}>Enterprise ($5,997)</option>
           </select>
         </div>
         <button onclick="saveBuilderContactInfo()" class="btn-primary w-full justify-center"><i class="fas fa-save mr-2"></i>Save Contact Info</button>
@@ -2449,17 +2720,31 @@ function renderBuilderSettingsTab(cfg) {
         <div class="bg-emerald-900/20 border border-emerald-700/40 rounded-xl p-3 space-y-3">
           <p class="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-credit-card"></i> Stripe Payment Links</p>
           <div class="space-y-2">
-            <input id="bcfg-stripe-starter" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_starter_link||'')}" placeholder="Starter link: https://buy.stripe.com/..."/>
-            <input id="bcfg-stripe-professional" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_professional_link||'')}" placeholder="Professional link: https://buy.stripe.com/..."/>
-            <input id="bcfg-stripe-premium" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_premium_link||'')}" placeholder="Premium link: https://buy.stripe.com/..."/>
-            <button onclick="saveStripeLinks()" class="btn-secondary w-full justify-center text-xs"><i class="fas fa-save mr-1"></i>Save Payment Links</button>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-green-400 w-24 flex-shrink-0">Starter $799</span>
+              <input id="bcfg-stripe-starter" type="text" class="form-input flex-1 text-xs" value="${escHtml(cfg.stripe_starter_link||'')}" placeholder="https://buy.stripe.com/..."/>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-blue-400 w-24 flex-shrink-0">⭐ Pro $1,497</span>
+              <input id="bcfg-stripe-professional" type="text" class="form-input flex-1 text-xs" value="${escHtml(cfg.stripe_professional_link||'')}" placeholder="https://buy.stripe.com/..."/>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-yellow-400 w-24 flex-shrink-0">Premium $2,997</span>
+              <input id="bcfg-stripe-premium" type="text" class="form-input flex-1 text-xs" value="${escHtml(cfg.stripe_premium_link||'')}" placeholder="https://buy.stripe.com/..."/>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-red-400 w-24 flex-shrink-0">Ent. $5,997</span>
+              <input id="bcfg-stripe-enterprise" type="text" class="form-input flex-1 text-xs" value="${escHtml(cfg.stripe_enterprise_link||'')}" placeholder="https://buy.stripe.com/..."/>
+            </div>
+            <button onclick="saveStripeLinks()" class="btn-secondary w-full justify-center text-xs"><i class="fas fa-save mr-1"></i>Save All Payment Links</button>
           </div>
-          <p class="text-xs text-gray-600">Create payment links at <a href="https://dashboard.stripe.com/payment-links" target="_blank" class="text-emerald-400 hover:text-emerald-300">Stripe Dashboard →</a></p>
-          <div class="bg-gray-950/60 rounded-lg p-2 text-xs text-gray-400">
-            <p class="font-semibold text-emerald-400 mb-1">Quick Setup:</p>
-            <p>1. Go to <a href="https://dashboard.stripe.com/payment-links/create" target="_blank" class="text-blue-400 hover:underline">Create Payment Link</a></p>
-            <p>2. Create 3 links: Starter ($299), Professional ($599), Premium ($999)</p>
-            <p>3. Copy each link and paste above</p>
+          <p class="text-xs text-gray-600">Create links at <a href="https://dashboard.stripe.com/payment-links" target="_blank" class="text-emerald-400 hover:text-emerald-300">Stripe Dashboard →</a></p>
+          <div class="bg-gray-950/60 rounded-lg p-2 text-xs text-gray-400 space-y-1">
+            <p class="font-semibold text-emerald-400">4-Tier Pricing Psychology:</p>
+            <p>🟢 Starter ($799) — Entry point, reduces friction</p>
+            <p>🔵 Professional ($1,497) — "Most Popular" anchors perception</p>
+            <p>🟡 Premium ($2,997) — Makes Pro feel like a deal</p>
+            <p>🔴 Enterprise ($5,997) — Decoy anchor, almost never sold</p>
           </div>
         </div>
       </div>
@@ -2622,7 +2907,15 @@ async function viewBuildDetail(id) {
       <div class="border border-gray-700 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-sm font-bold text-white flex items-center gap-2"><i class="fas fa-paper-plane text-blue-400"></i>Outreach Log</h4>
-          ${!build.outreach_email_sent && !build.outreach_sms_sent ? `<button onclick="triggerOutreach(${build.id})" class="btn-primary text-xs">Send Outreach Now</button>` : ''}
+          <div class="flex gap-2">
+            <button onclick="showOutreachPreview(${build.lead_id}, '${build.package_tier||'Professional'}')" class="btn-secondary text-xs">
+              <i class="fas fa-search-plus mr-1"></i>Preview Outreach
+            </button>
+            <button onclick="startFollowupSequence(${build.lead_id}, ${build.id})" class="btn-secondary text-xs text-purple-400">
+              <i class="fas fa-calendar-plus mr-1"></i>Start Follow-Up
+            </button>
+            ${!build.outreach_email_sent && !build.outreach_sms_sent ? `<button onclick="triggerOutreach(${build.id})" class="btn-primary text-xs">Send Outreach Now</button>` : ''}
+          </div>
         </div>
         ${outreach_log.length ? outreach_log.map(log=>`
           <div class="bg-gray-800/60 rounded-lg p-3 mb-2">
@@ -2696,14 +2989,400 @@ async function runBulkResearch() {
   } catch {}
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FOLLOW-UP TAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+let followupData = { sequences: [] }
+
+async function renderBuilderFollowupTab() {
+  const el = document.getElementById('builder-tab-content')
+  if (el) el.innerHTML = '<div class="flex justify-center py-12"><div class="spinner"></div></div>'
+  try {
+    followupData = await api('GET', '/builder/followup-list')
+  } catch { followupData = { sequences: [] } }
+
+  const seqs = followupData.sequences || []
+  const statusColor = { active: 'text-emerald-400', completed: 'text-blue-400', cancelled: 'text-gray-500', paused: 'text-amber-400' }
+  const dayLabels = ['—', 'Day 3', 'Day 7', 'Day 10', 'Day 14']
+
+  const html = `
+    <div class="space-y-4">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-calendar-alt text-purple-400"></i> 14-Day Follow-Up Sequences</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Automated nurture campaigns — psychology-optimized messages at days 3, 7, 10, 14</p>
+        </div>
+        <button onclick="renderBuilder()" class="btn-secondary btn-sm"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="grid grid-cols-4 gap-3 text-center">
+        ${[
+          ['Active', seqs.filter(s=>s.status==='active').length, 'play-circle', 'emerald'],
+          ['Completed', seqs.filter(s=>s.status==='completed').length, 'check-circle', 'blue'],
+          ['Messages Sent', seqs.reduce((a,s)=>a+(s.sent_count||0),0), 'paper-plane', 'purple'],
+          ['Pending Send', seqs.reduce((a,s)=>a+(s.pending_count||0),0), 'clock', 'amber'],
+        ].map(([lbl,cnt,icon,c])=>`
+          <div class="bg-${c}-900/20 border border-${c}-700/30 rounded-xl p-3">
+            <i class="fas fa-${icon} text-${c}-400 text-lg mb-1 block"></i>
+            <p class="text-2xl font-black text-white">${cnt}</p>
+            <p class="text-xs text-gray-500">${lbl}</p>
+          </div>`).join('')}
+      </div>
+
+      <!-- Sequences table -->
+      ${seqs.length ? `
+      <div class="overflow-x-auto rounded-xl border border-gray-800">
+        <table class="data-table text-xs">
+          <thead>
+            <tr>
+              <th>Business</th><th>Status</th><th>Progress</th><th>Next Send</th>
+              <th>Sent</th><th>Pending</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${seqs.map(s => {
+              const progressPct = Math.round((s.current_step / 4) * 100)
+              return `<tr>
+                <td>
+                  <p class="font-semibold text-white">${escHtml(s.business_name)}</p>
+                  <p class="text-gray-500">${escHtml(s.industry||'')} · ${escHtml(s.city||'')}</p>
+                </td>
+                <td><span class="${statusColor[s.status]||'text-gray-400'} font-semibold capitalize">${s.status}</span></td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                      <div class="bg-purple-500 h-1.5 rounded-full" style="width:${progressPct}%"></div>
+                    </div>
+                    <span class="text-gray-400 whitespace-nowrap">Step ${s.current_step}/4</span>
+                  </div>
+                  <p class="text-gray-600 mt-0.5">${dayLabels[s.current_step]||'Complete'}</p>
+                </td>
+                <td>${s.next_send_at ? `<span class="text-amber-400">${timeAgo(s.next_send_at)}</span>` : '—'}</td>
+                <td><span class="text-emerald-400 font-semibold">${s.sent_count||0}</span></td>
+                <td><span class="text-amber-400 font-semibold">${s.pending_count||0}</span></td>
+                <td>
+                  <div class="flex items-center gap-1">
+                    <button onclick="viewFollowupDetail(${s.id}, ${s.lead_id})"
+                      class="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded bg-blue-900/20 hover:bg-blue-900/40">
+                      <i class="fas fa-eye"></i> View
+                    </button>
+                    ${s.status === 'active' && s.current_step < 4 ? `
+                    <button onclick="sendNextStep(${s.id}, ${(s.current_step||0)+1})"
+                      class="text-xs text-purple-400 hover:text-purple-300 px-2 py-1 rounded bg-purple-900/20 hover:bg-purple-900/40">
+                      <i class="fas fa-paper-plane"></i> Send Next
+                    </button>` : ''}
+                    ${s.status === 'active' ? `
+                    <button onclick="cancelSequence(${s.id})"
+                      class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-red-900/20 hover:bg-red-900/40">
+                      <i class="fas fa-ban"></i>
+                    </button>` : ''}
+                  </div>
+                </td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+      </div>` : `
+      <div class="text-center py-12 text-gray-600">
+        <i class="fas fa-calendar-alt text-4xl mb-3 block text-gray-700"></i>
+        <p class="font-semibold text-gray-500">No follow-up sequences yet</p>
+        <p class="text-xs mt-1">Start a sequence from any build's detail view, or from the Leads tab</p>
+      </div>`}
+
+      <!-- Psychology summary -->
+      <div class="bg-purple-950/30 border border-purple-800/30 rounded-xl p-4">
+        <h4 class="text-sm font-bold text-purple-300 mb-3"><i class="fas fa-brain mr-2"></i>14-Day Psychology Sequence Blueprint</h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          ${[
+            {day:'Day 3', trigger:'Loss Aversion', desc:'Quantify weekly revenue losses. Pain motivates 2.5× more than gain.', icon:'chart-line', c:'red'},
+            {day:'Day 7', trigger:'Social Proof', desc:'Competitors who got websites and thrived. Fear of being left behind.', icon:'users', c:'blue'},
+            {day:'Day 10', trigger:'Scarcity + Urgency', desc:'Only 2 spots left this month. Price increase coming. Time pressure.', icon:'clock', c:'amber'},
+            {day:'Day 14', trigger:'Final + Breakup', desc:'Last contact. "I\'ll give your spot to another business." Pattern interrupt.', icon:'flag-checkered', c:'purple'},
+          ].map(s=>`
+            <div class="bg-${s.c}-950/40 border border-${s.c}-800/30 rounded-lg p-3">
+              <p class="text-xs font-black text-${s.c}-400"><i class="fas fa-${s.icon} mr-1"></i>${s.day}</p>
+              <p class="text-xs font-semibold text-white mt-1">${s.trigger}</p>
+              <p class="text-xs text-gray-400 mt-1 leading-relaxed">${s.desc}</p>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `
+
+  if (el) el.innerHTML = html
+  return html
+}
+
+async function viewFollowupDetail(seqId, leadId) {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'followup-detail-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-3xl">
+      <div class="p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-calendar-alt text-purple-400"></i>Follow-Up Sequence Detail</h3>
+          <button onclick="document.getElementById('followup-detail-modal').remove()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div id="fud-body" class="text-center py-8"><div class="spinner mx-auto"></div></div>
+      </div>
+    </div>`
+  document.body.appendChild(modal)
+
+  try {
+    const data = await api('GET', `/builder/followup/${leadId}`)
+    const seq  = data.sequence
+    const msgs = data.messages || []
+    const steps = [1,2,3,4]
+    const dayLabel = {1:'Day 3',2:'Day 7',3:'Day 10',4:'Day 14'}
+    const triggerLabel = {1:'Loss Aversion',2:'Social Proof',3:'Scarcity + Urgency',4:'Final Breakup'}
+    const statusCls = {sent:'text-emerald-400',scheduled:'text-amber-400',failed:'text-red-400',cancelled:'text-gray-500'}
+
+    document.getElementById('fud-body').innerHTML = `
+      <div class="space-y-3">
+        <div class="grid grid-cols-3 gap-3 text-center text-xs">
+          <div class="bg-gray-800 rounded-lg p-2"><p class="text-gray-400">Status</p><p class="text-white font-bold capitalize">${seq?.status||'—'}</p></div>
+          <div class="bg-gray-800 rounded-lg p-2"><p class="text-gray-400">Current Step</p><p class="text-white font-bold">Step ${seq?.current_step||0} / 4</p></div>
+          <div class="bg-gray-800 rounded-lg p-2"><p class="text-gray-400">Next Send</p><p class="text-amber-400 font-bold">${seq?.next_send_at ? fmtDate(seq.next_send_at) : 'Complete'}</p></div>
+        </div>
+        ${steps.map(step => {
+          const stepMsgs = msgs.filter(m=>m.step_number===step)
+          const email    = stepMsgs.find(m=>m.channel==='email')
+          const sms      = stepMsgs.find(m=>m.channel==='sms')
+          const allSent  = stepMsgs.every(m=>m.status==='sent')
+          return `
+            <div class="border ${allSent?'border-emerald-700/40 bg-emerald-950/20':'border-gray-700'} rounded-xl overflow-hidden">
+              <div class="flex items-center justify-between p-3 ${allSent?'bg-emerald-900/10':'bg-gray-800/40'}">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-full ${allSent?'bg-emerald-600':'bg-purple-700'} text-white text-xs flex items-center justify-center font-bold">${step}</span>
+                  <div>
+                    <p class="text-sm font-semibold text-white">${dayLabel[step]} — ${triggerLabel[step]}</p>
+                    <p class="text-xs text-gray-500">${stepMsgs.length} message(s)</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  ${stepMsgs.map(m=>`<span class="text-xs ${statusCls[m.status]||'text-gray-400'} capitalize">${m.channel}: ${m.status}</span>`).join(' · ')}
+                  ${!allSent && seq?.status==='active' ? `
+                    <button onclick="sendNextStep(${seq.id}, ${step})" class="btn-sm bg-purple-700 hover:bg-purple-600 text-white text-xs">
+                      <i class="fas fa-paper-plane mr-1"></i>Send Now
+                    </button>` : ''}
+                </div>
+              </div>
+              ${email ? `
+                <div class="p-3 border-t border-gray-800">
+                  <p class="text-xs text-blue-400 font-semibold mb-1"><i class="fas fa-envelope mr-1"></i>Email — ${escHtml(email.subject||'')}</p>
+                  <div class="text-xs text-gray-400 max-h-28 overflow-y-auto leading-relaxed whitespace-pre-line bg-gray-950/60 rounded p-2">${escHtml((email.body||'').substring(0,600))}${(email.body||'').length>600?'…':''}</div>
+                </div>` : ''}
+              ${sms ? `
+                <div class="p-3 border-t border-gray-800">
+                  <p class="text-xs text-green-400 font-semibold mb-1"><i class="fas fa-sms mr-1"></i>SMS</p>
+                  <div class="text-xs text-gray-400 bg-gray-950/60 rounded p-2">${escHtml(sms.body||'')}</div>
+                </div>` : ''}
+            </div>`
+        }).join('')}
+      </div>`
+  } catch(e) {
+    document.getElementById('fud-body').innerHTML = `<p class="text-red-400">Error loading sequence: ${e.message}</p>`
+  }
+}
+
+async function sendNextStep(seqId, stepNum) {
+  if (!confirm(`Send follow-up Step ${stepNum} now?\n\nThis will send the email and/or SMS immediately.`)) return
+  showToast('Sending follow-up messages...', 'info')
+  try {
+    const r = await api('POST', '/builder/followup/send-step', { sequence_id: seqId, step_number: stepNum })
+    showToast(`Step ${stepNum} sent! (${r.sent} messages)`, 'success')
+    renderBuilder()
+  } catch(e) {
+    showToast('Send failed: ' + e.message, 'error')
+  }
+}
+
+async function cancelSequence(seqId) {
+  if (!confirm('Cancel this follow-up sequence?\n\nAll scheduled messages will be cancelled.')) return
+  await api('POST', '/builder/followup/cancel', { sequence_id: seqId })
+  showToast('Sequence cancelled', 'info')
+  renderBuilder()
+}
+
+async function startFollowupSequence(leadId, buildId) {
+  showToast('Starting 14-day sequence...', 'info')
+  try {
+    const r = await api('POST', '/builder/followup/start', { lead_id: leadId, build_id: buildId })
+    showToast('Follow-up sequence started! 4 steps scheduled.', 'success')
+    switchBuilderTab('followup')
+    renderBuilder()
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error')
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OUTREACH PREVIEW MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function showOutreachPreview(leadId, pkg) {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'outreach-preview-modal'
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:760px">
+      <div class="p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fas fa-paper-plane text-blue-400"></i>Outreach Preview
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Full A/B/C variants + SMS + 14-day follow-up sequence</p>
+          </div>
+          <button onclick="document.getElementById('outreach-preview-modal').remove()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div id="opm-body" class="text-center py-8"><div class="spinner mx-auto"></div></div>
+      </div>
+    </div>`
+  document.body.appendChild(modal)
+
+  try {
+    const data = await api('GET', `/builder/preview-outreach/${leadId}?package=${pkg||'Professional'}`)
+    const variantColors = { A:'blue', B:'purple', C:'amber' }
+    const activeV = data.active_variant
+
+    document.getElementById('opm-body').innerHTML = `
+      <div class="space-y-4 text-left max-h-[70vh] overflow-y-auto pr-1">
+
+        <!-- Loss Numbers Banner -->
+        <div class="bg-red-950/40 border border-red-800/40 rounded-xl p-3 grid grid-cols-3 gap-3 text-center">
+          <div><p class="text-red-400 font-black text-xl">$${(data.loss_numbers?.weeklyLoss||0).toLocaleString()}</p><p class="text-xs text-gray-500">Weekly Loss Est.</p></div>
+          <div><p class="text-red-400 font-black text-xl">$${(data.loss_numbers?.monthlyLoss||0).toLocaleString()}</p><p class="text-xs text-gray-500">Monthly Loss Est.</p></div>
+          <div><p class="text-amber-400 font-black text-xl">${data.loss_numbers?.breakEvenDays||0}d</p><p class="text-xs text-gray-500">Break-Even Days</p></div>
+        </div>
+
+        <!-- Active variant badge -->
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 bg-blue-700 text-white text-xs font-bold rounded-full">
+            Active Variant: ${activeV} (auto-selected by lead ID)
+          </span>
+          ${data.industry_intel?.urgencyHook ? `<span class="text-xs text-gray-500 italic">"${escHtml(data.industry_intel.urgencyHook)}"</span>` : ''}
+        </div>
+
+        <!-- Email Variants Tabs -->
+        <div class="border border-gray-700 rounded-xl overflow-hidden">
+          <div class="flex border-b border-gray-700 bg-gray-900">
+            ${['A','B','C'].map(v=>`
+              <button onclick="showEmailVariant('${v}')" id="ev-tab-${v}"
+                class="flex-1 py-2 text-xs font-bold transition-all ${v===activeV?'text-blue-400 border-b-2 border-blue-500 bg-blue-900/20':'text-gray-500 hover:text-gray-300'}">
+                ${v===activeV?'★ ':''}Variant ${v}
+                <span class="text-gray-600 font-normal ml-1">${v==='A'?'Loss Aversion':v==='B'?'Reciprocity':'Pattern Interrupt'}</span>
+              </button>`).join('')}
+          </div>
+          ${['A','B','C'].map(v=>`
+            <div id="ev-body-${v}" class="${v!==activeV?'hidden':''} p-4 space-y-3">
+              <div class="bg-gray-950 rounded-lg p-2">
+                <p class="text-xs text-gray-500 mb-1">Subject Line:</p>
+                <p class="text-sm font-semibold text-white">${escHtml((data.email_variants?.[v]?.subject)||'')}</p>
+              </div>
+              <div class="bg-gray-950 rounded-lg p-3 max-h-52 overflow-y-auto">
+                <pre class="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed font-mono">${escHtml((data.email_variants?.[v]?.body)||'')}</pre>
+              </div>
+              <button onclick="navigator.clipboard.writeText(${JSON.stringify((data.email_variants?.[v]?.body)||'')}); showToast('Email copied!','success')"
+                class="btn-secondary btn-sm"><i class="fas fa-copy mr-1"></i>Copy Email</button>
+            </div>`).join('')}
+        </div>
+
+        <!-- SMS Variants -->
+        <div class="border border-gray-700 rounded-xl p-4 space-y-2">
+          <p class="text-sm font-bold text-green-400 flex items-center gap-2"><i class="fas fa-sms"></i>SMS Variants</p>
+          ${['A','B','C'].map(v=>`
+            <div class="bg-gray-900 rounded-lg p-3">
+              <p class="text-xs text-gray-500 mb-1">SMS Variant ${v}${v===activeV?' (Active)':''}:</p>
+              <p class="text-xs text-gray-300">${escHtml(data.sms_variants?.[v]||'')}</p>
+            </div>`).join('')}
+        </div>
+
+        <!-- Follow-Up Steps Preview -->
+        <div class="border border-gray-700 rounded-xl overflow-hidden">
+          <div class="bg-purple-900/20 border-b border-gray-700 p-3">
+            <p class="text-sm font-bold text-purple-300 flex items-center gap-2"><i class="fas fa-calendar-alt"></i>14-Day Follow-Up Sequence Preview</p>
+          </div>
+          <div class="divide-y divide-gray-800">
+            ${(data.followup_steps||[]).map(s=>`
+              <details class="group">
+                <summary class="p-3 cursor-pointer flex items-center justify-between hover:bg-gray-800/40 list-none">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 bg-purple-800 text-white text-xs font-bold rounded-full flex items-center justify-center">${s.step}</span>
+                    <div>
+                      <p class="text-xs font-semibold text-white">Day ${s.day}</p>
+                      <p class="text-xs text-gray-500">${escHtml(s.subject||'')}</p>
+                    </div>
+                  </div>
+                  <i class="fas fa-chevron-down text-gray-600 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="p-3 bg-gray-950/60 space-y-2">
+                  <pre class="text-xs text-gray-400 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">${escHtml((s.emailBody||'').substring(0,500))}...</pre>
+                  <div class="bg-gray-900 rounded p-2 text-xs text-gray-400">${escHtml(s.smsBody||'')}</div>
+                </div>
+              </details>`).join('')}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-2">
+          ${data.has_build ? `
+          <button onclick="startFollowupSequenceFromPreview(${leadId})"
+            class="btn-primary flex-1">
+            <i class="fas fa-calendar-plus mr-2"></i>Start 14-Day Sequence
+          </button>` : ''}
+          <button onclick="document.getElementById('outreach-preview-modal').remove()"
+            class="btn-secondary flex-1">Close</button>
+        </div>
+      </div>`
+  } catch(e) {
+    document.getElementById('opm-body').innerHTML = `<p class="text-red-400 p-4">Error: ${escHtml(e.message)}</p>`
+  }
+}
+
+function showEmailVariant(v) {
+  ['A','B','C'].forEach(x => {
+    const tab  = document.getElementById('ev-tab-' + x)
+    const body = document.getElementById('ev-body-' + x)
+    if (tab && body) {
+      const active = x === v
+      body.classList.toggle('hidden', !active)
+      tab.className = `flex-1 py-2 text-xs font-bold transition-all ${active ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-900/20' : 'text-gray-500 hover:text-gray-300'}`
+    }
+  })
+}
+
+async function startFollowupSequenceFromPreview(leadId) {
+  document.getElementById('outreach-preview-modal')?.remove()
+  await startFollowupSequence(leadId, null)
+}
+
 // ── Outreach trigger ──────────────────────────────────────────────────────────
 async function triggerOutreach(buildId) {
   showToast('Sending outreach...', 'info')
   try {
     await api('POST', `/builder/outreach/${buildId}`)
-    showToast('Outreach sent!', 'success')
+    showToast('✓ Outreach sent! Email + SMS delivered.', 'success')
     renderBuilder()
-  } catch {}
+  } catch(e) { showToast(e.message||'Send failed','error') }
+}
+
+async function triggerOutreachAndClose(buildId) {
+  document.getElementById('outreach-preview-modal')?.remove()
+  await triggerOutreach(buildId)
+}
+
+async function startFollowupFromPreview(leadId) {
+  try {
+    await api('POST', '/builder/followup/start', { lead_id: leadId })
+    showToast('✓ 14-day follow-up sequence queued! Check Follow-Up tab.', 'success')
+  } catch(e) { showToast(e.message || 'Failed to start sequence', 'error') }
 }
 
 // ── Update outreach status ─────────────────────────────────────────────────────
@@ -2949,19 +3628,15 @@ function showToast(message, type = 'info') {
 
 // Save Stripe payment links
 async function saveStripeLinks() {
-  const starterLink = document.getElementById('bcfg-stripe-starter').value.trim()
-  const professionalLink = document.getElementById('bcfg-stripe-professional').value.trim()
-  const premiumLink = document.getElementById('bcfg-stripe-premium').value.trim()
-
   try {
     await api('PUT', '/builder/config', {
-      stripe_starter_link: starterLink,
-      stripe_professional_link: professionalLink,
-      stripe_premium_link: premiumLink
+      stripe_starter_link:      (document.getElementById('bcfg-stripe-starter')?.value||'').trim(),
+      stripe_professional_link: (document.getElementById('bcfg-stripe-professional')?.value||'').trim(),
+      stripe_premium_link:      (document.getElementById('bcfg-stripe-premium')?.value||'').trim(),
+      stripe_enterprise_link:   (document.getElementById('bcfg-stripe-enterprise')?.value||'').trim(),
     })
-    showToast('Stripe payment links saved!', 'success')
-  } catch (error) {
-    console.error('Save Stripe links error:', error)
+    showToast('Stripe payment links saved! ✓', 'success')
+  } catch (e) {
     showToast('Failed to save Stripe links', 'error')
   }
 }
