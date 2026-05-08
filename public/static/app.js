@@ -1,5 +1,5 @@
 /* ===================================================
-   LocalWeb CRM - Frontend Application
+   Google Money Drop - Frontend Application
    =================================================== */
 
 const API = '/api'

@@ -46,7 +46,7 @@ app.get('*', (c) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LocalWeb CRM – Lead & Client Management</title>
+  <title>Google Money Drop – Lead & Client Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -71,7 +71,7 @@ app.get('*', (c) => {
           <i class="fas fa-globe text-white text-sm"></i>
         </div>
         <div class="sidebar-label overflow-hidden whitespace-nowrap">
-          <h1 class="font-bold text-white text-sm leading-tight">LocalWeb CRM</h1>
+          <h1 class="font-bold text-white text-sm leading-tight">Google Money Drop</h1>
           <p class="text-xs text-gray-500">Business Platform</p>
         </div>
       </div>
