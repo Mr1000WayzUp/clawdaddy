@@ -3057,29 +3057,6 @@ async function showPaymentModal(proposalId) {
   }
 }
 
-// Simple toast notification
-function showToast(message, type = 'info') {
-  const colors = {
-    success: 'bg-emerald-600',
-    error: 'bg-red-600',
-    info: 'bg-blue-600',
-    warning: 'bg-amber-600'
-  }
-  
-  const toast = document.createElement('div')
-  toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-y-0 opacity-100`
-  toast.innerHTML = `<p class="font-semibold">${escHtml(message)}</p>`
-  
-  document.body.appendChild(toast)
-  
-  setTimeout(() => {
-    toast.style.transform = 'translateY(100px)'
-    toast.style.opacity = '0'
-    setTimeout(() => toast.remove(), 300)
-  }, 3000)
-}
-
-
 // Save Stripe payment links
 async function saveStripeLinks() {
   try {
