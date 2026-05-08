@@ -9,6 +9,7 @@ import { analyticsRouter } from './routes/analytics'
 import { activitiesRouter } from './routes/activities'
 import { prospectorRouter } from './routes/prospector'
 import { builderRouter } from './routes/builder'
+import paymentsRouter from './routes/payments'
 
 type Bindings = {
   DB: D1Database
@@ -18,6 +19,9 @@ type Bindings = {
   TWILIO_AUTH_TOKEN?: string
   TWILIO_FROM_NUMBER?: string
   LOVABLE_API_KEY?: string
+  STRIPE_SECRET_KEY?: string
+  STRIPE_PUBLISHABLE_KEY?: string
+  STRIPE_WEBHOOK_SECRET?: string
 }
 
 type CronEnv = Bindings
@@ -35,6 +39,7 @@ app.route('/api/analytics', analyticsRouter)
 app.route('/api/activities', activitiesRouter)
 app.route('/api/prospector', prospectorRouter)
 app.route('/api/builder', builderRouter)
+app.route('/api/payments', paymentsRouter)
 
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))

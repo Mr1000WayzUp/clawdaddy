@@ -890,8 +890,9 @@ async function renderProposals() {
                 <th>Price</th>
                 <th>Monthly</th>
                 <th>Status</th>
+                <th>Payment</th>
                 <th>Created</th>
-                <th class="w-28">Actions</th>
+                <th class="w-40">Actions</th>
               </tr>
             </thead>
             <tbody id="proposals-tbody"></tbody>
@@ -920,9 +921,21 @@ function renderProposalRows(data) {
       <td><span class="text-money">${fmt$(p.package_price)}</span></td>
       <td>${p.recurring_fee>0?`<span class="text-emerald-400 font-semibold">${fmt$(p.recurring_fee)}<span class="text-gray-600 text-xs">/mo</span></span>`:'—'}</td>
       <td>${statusBadge(p.status)}</td>
+      <td>
+        ${p.payment_status === 'paid' ? 
+          `<span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs font-semibold"><i class="fas fa-check-circle"></i> Paid</span>` :
+          p.stripe_payment_link ? 
+            `<span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-900/30 border border-amber-500/30 rounded-lg text-amber-400 text-xs font-semibold"><i class="fas fa-clock"></i> Sent</span>` :
+            `<span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 text-xs"><i class="fas fa-circle"></i> Pending</span>`
+        }
+      </td>
       <td><span class="text-gray-500 text-xs">${fmtDate(p.created_at)}</span></td>
       <td>
         <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+          ${p.status === 'accepted' || p.payment_status === 'paid' ? 
+            `<span class="text-xs text-emerald-400 font-semibold"><i class="fas fa-check-circle"></i> Paid</span>` :
+            `<button onclick="openPaymentLink(${p.id}, '${escHtml(p.package_tier)}', ${p.package_price})" class="btn-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-1.5 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all" title="Send Payment Link"><i class="fas fa-credit-card"></i> Pay</button>`
+          }
           <button onclick="showProposalModal(null,${p.id})" class="btn-icon btn-sm" title="Edit"><i class="fas fa-edit text-blue-400"></i></button>
           <button onclick="copyProposalById(${p.id})" class="btn-icon btn-sm" title="Copy text"><i class="fas fa-copy text-gray-400"></i></button>
           <button onclick="confirmDeleteProposal(${p.id})" class="btn-icon btn-sm" title="Delete"><i class="fas fa-trash text-red-400"></i></button>
@@ -2432,6 +2445,23 @@ function renderBuilderSettingsTab(cfg) {
           </div>
           <p class="text-xs text-gray-600">Sends SMS texts. <a href="https://twilio.com" target="_blank" class="text-blue-500">Get free trial →</a></p>
         </div>
+
+        <div class="bg-emerald-900/20 border border-emerald-700/40 rounded-xl p-3 space-y-3">
+          <p class="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1"><i class="fas fa-credit-card"></i> Stripe Payment Links</p>
+          <div class="space-y-2">
+            <input id="bcfg-stripe-starter" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_starter_link||'')}" placeholder="Starter link: https://buy.stripe.com/..."/>
+            <input id="bcfg-stripe-professional" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_professional_link||'')}" placeholder="Professional link: https://buy.stripe.com/..."/>
+            <input id="bcfg-stripe-premium" type="text" class="form-input w-full text-xs" value="${escHtml(cfg.stripe_premium_link||'')}" placeholder="Premium link: https://buy.stripe.com/..."/>
+            <button onclick="saveStripeLinks()" class="btn-secondary w-full justify-center text-xs"><i class="fas fa-save mr-1"></i>Save Payment Links</button>
+          </div>
+          <p class="text-xs text-gray-600">Create payment links at <a href="https://dashboard.stripe.com/payment-links" target="_blank" class="text-emerald-400 hover:text-emerald-300">Stripe Dashboard →</a></p>
+          <div class="bg-gray-950/60 rounded-lg p-2 text-xs text-gray-400">
+            <p class="font-semibold text-emerald-400 mb-1">Quick Setup:</p>
+            <p>1. Go to <a href="https://dashboard.stripe.com/payment-links/create" target="_blank" class="text-blue-400 hover:underline">Create Payment Link</a></p>
+            <p>2. Create 3 links: Starter ($299), Professional ($599), Premium ($999)</p>
+            <p>3. Copy each link and paste above</p>
+          </div>
+        </div>
       </div>
 
       <!-- Automation toggles -->
@@ -2749,3 +2779,190 @@ async function renderActivity() {
     </div>
   `)
 }
+
+// ============================================================================
+// STRIPE PAYMENT INTEGRATION
+// ============================================================================
+
+// Open payment link for proposal
+async function openPaymentLink(proposalId, packageTier, amount) {
+  try {
+    const response = await api('POST', '/payments/create-payment-link', {
+      proposal_id: proposalId,
+      package_tier: packageTier,
+      amount: amount
+    })
+
+    if (response.error) {
+      alert(`Payment Configuration Error:\n\n${response.message || response.error}\n\nPlease configure Stripe payment links in the AI Website Builder → Settings tab.`)
+      return
+    }
+
+    // Open Stripe payment link in new tab
+    window.open(response.payment_link, '_blank')
+    
+    // Show success message
+    showToast(`Payment link opened! Amount: ${fmt$(amount)}`, 'success')
+    
+    // Refresh proposals to show updated status
+    setTimeout(() => {
+      if (currentPage === 'proposals') renderProposals()
+    }, 1000)
+  } catch (error) {
+    console.error('Payment link error:', error)
+    alert('Failed to open payment link. Please check Settings → Stripe Configuration.')
+  }
+}
+
+// Copy payment link to clipboard
+async function copyPaymentLink(proposalId) {
+  try {
+    const response = await api('GET', `/payments/proposal/${proposalId}/payment-link`)
+    
+    if (response.error) {
+      alert(response.message || response.error)
+      return
+    }
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(response.payment_link)
+    showToast('Payment link copied to clipboard!', 'success')
+  } catch (error) {
+    console.error('Copy payment link error:', error)
+    showToast('Failed to copy payment link', 'error')
+  }
+}
+
+// Mark proposal as paid (manual verification)
+async function markProposalPaid(proposalId, amount) {
+  if (!confirm('Mark this proposal as PAID?\n\nThis will:\n• Update proposal status to Accepted\n• Mark lead as Won\n• Create client record\n• Generate invoice\n\nContinue?')) {
+    return
+  }
+
+  try {
+    const response = await api('POST', '/payments/mark-paid', {
+      proposal_id: proposalId,
+      amount_paid: amount,
+      stripe_payment_id: `manual_${Date.now()}`
+    })
+
+    if (response.success) {
+      showToast('Proposal marked as paid!', 'success')
+      if (currentPage === 'proposals') renderProposals()
+    } else {
+      alert('Failed to mark as paid: ' + (response.error || 'Unknown error'))
+    }
+  } catch (error) {
+    console.error('Mark paid error:', error)
+    alert('Failed to mark proposal as paid')
+  }
+}
+
+// Show payment status modal with link
+async function showPaymentModal(proposalId) {
+  try {
+    const response = await api('GET', `/payments/proposal/${proposalId}/payment-link`)
+    
+    if (response.error) {
+      alert(response.message || response.error)
+      return
+    }
+
+    const modal = document.createElement('div')
+    modal.className = 'modal-overlay'
+    modal.innerHTML = `
+      <div class="modal-content max-w-lg">
+        <div class="p-6 space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-white">Payment Link</h3>
+              <p class="text-sm text-gray-400 mt-1">${escHtml(response.business_name)} - ${escHtml(response.package_tier)} Package</p>
+            </div>
+            <button onclick="this.closest('.modal-overlay').remove()" class="text-gray-400 hover:text-white">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <p class="text-3xl font-bold text-emerald-400">${fmt$(response.amount)}</p>
+            <p class="text-sm text-gray-400 mt-1">Total Amount</p>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <p class="text-xs text-gray-400 mb-2">Stripe Payment Link:</p>
+            <div class="flex items-center gap-2">
+              <input type="text" value="${escHtml(response.payment_link)}" readonly 
+                     class="form-input flex-1 text-xs font-mono bg-gray-900 text-blue-400" />
+              <button onclick="navigator.clipboard.writeText('${escHtml(response.payment_link)}'); showToast('Copied!', 'success')" 
+                      class="btn-secondary px-3 py-2">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="window.open('${escHtml(response.payment_link)}', '_blank')" 
+                    class="btn-primary flex-1">
+              <i class="fas fa-external-link-alt"></i> Open Payment Page
+            </button>
+            <button onclick="markProposalPaid(${proposalId}, ${response.amount})" 
+                    class="btn-secondary">
+              <i class="fas fa-check"></i> Mark as Paid
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 text-center">
+            Share this link with your client to collect payment via Stripe
+          </p>
+        </div>
+      </div>
+    `
+    document.body.appendChild(modal)
+  } catch (error) {
+    console.error('Show payment modal error:', error)
+    alert('Failed to load payment information')
+  }
+}
+
+// Simple toast notification
+function showToast(message, type = 'info') {
+  const colors = {
+    success: 'bg-emerald-600',
+    error: 'bg-red-600',
+    info: 'bg-blue-600',
+    warning: 'bg-amber-600'
+  }
+  
+  const toast = document.createElement('div')
+  toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-y-0 opacity-100`
+  toast.innerHTML = `<p class="font-semibold">${escHtml(message)}</p>`
+  
+  document.body.appendChild(toast)
+  
+  setTimeout(() => {
+    toast.style.transform = 'translateY(100px)'
+    toast.style.opacity = '0'
+    setTimeout(() => toast.remove(), 300)
+  }, 3000)
+}
+
+
+// Save Stripe payment links
+async function saveStripeLinks() {
+  const starterLink = document.getElementById('bcfg-stripe-starter').value.trim()
+  const professionalLink = document.getElementById('bcfg-stripe-professional').value.trim()
+  const premiumLink = document.getElementById('bcfg-stripe-premium').value.trim()
+
+  try {
+    await api('PUT', '/builder/config', {
+      stripe_starter_link: starterLink,
+      stripe_professional_link: professionalLink,
+      stripe_premium_link: premiumLink
+    })
+    showToast('Stripe payment links saved!', 'success')
+  } catch (error) {
+    console.error('Save Stripe links error:', error)
+    showToast('Failed to save Stripe links', 'error')
+  }
+}
+
