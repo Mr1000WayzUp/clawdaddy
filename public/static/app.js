@@ -49,7 +49,7 @@ function navigateTo(page) {
     dashboard: 'Dashboard', leads: 'Leads', pipeline: 'Pipeline',
     clients: 'Clients', proposals: 'Proposals', tasks: 'Tasks',
     revenue: 'Revenue Report', scraper: 'Lead Finder', prospector: '🤖 Auto-Prospector',
-    builder: '✨ Website Builder'
+    builder: '✨ Website Builder', activity: 'Activity Timeline'
   }
   document.getElementById('page-title').textContent = titles[page] || page
 
@@ -68,6 +68,7 @@ function navigateTo(page) {
     scraper: renderScraper,
     prospector: renderProspector,
     builder: renderBuilder,
+    activity: renderActivity,
   }
   if (pages[page]) pages[page]()
 }
@@ -143,7 +144,7 @@ async function renderDashboard() {
   setContent(`
     <div class="space-y-6">
       <!-- Welcome banner -->
-      <div class="bg-gradient-to-r from-blue-900/40 to-indigo-900/30 border border-blue-800/40 rounded-2xl p-5 flex items-center justify-between">
+      <div onclick="navigateTo('revenue')" class="bg-gradient-to-r from-blue-900/40 to-indigo-900/30 border border-blue-800/40 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all">
         <div>
           <h2 class="text-xl font-bold text-white">Welcome back! 👋</h2>
           <p class="text-blue-300 text-sm mt-1">Here's your business overview for today</p>
@@ -156,23 +157,23 @@ async function renderDashboard() {
 
       <!-- KPI Stats -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        ${kpiCard('Total Leads','map-marker-alt',stats.leads.total,'blue',`${stats.leads.new} new`)}
-        ${kpiCard('Active Clients','users',stats.clients.active,'green',`${stats.clients.total} total`)}
-        ${kpiCard('Total Revenue','dollar-sign',fmt$(stats.revenue.total),'emerald',`${fmt$(stats.revenue.monthly)}/mo recurring`)}
-        ${kpiCard('Conversion Rate','chart-line',convRate+'%','purple',`${stats.leads.won} won · ${stats.leads.lost} lost`)}
+        ${kpiCard('Total Leads','map-marker-alt',stats.leads.total,'blue',`${stats.leads.new} new`,'leads')}
+        ${kpiCard('Active Clients','users',stats.clients.active,'green',`${stats.clients.total} total`,'clients')}
+        ${kpiCard('Total Revenue','dollar-sign',fmt$(stats.revenue.total),'emerald',`${fmt$(stats.revenue.monthly)}/mo recurring`,'revenue')}
+        ${kpiCard('Conversion Rate','chart-line',convRate+'%','purple',`${stats.leads.won} won · ${stats.leads.lost} lost`,'pipeline')}
       </div>
 
       <!-- Charts row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Pipeline funnel -->
-        <div class="card">
+        <div onclick="navigateTo('pipeline')" class="card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all">
           <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-stream text-blue-400 text-sm"></i>Lead Pipeline</h3>
           <div class="space-y-3">
             ${renderPipelineFunnel(byStatus)}
           </div>
         </div>
         <!-- Industry chart -->
-        <div class="card">
+        <div onclick="navigateTo('leads')" class="card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all">
           <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-building text-indigo-400 text-sm"></i>Leads by Industry</h3>
           <div class="chart-wrapper" style="height:220px"><canvas id="industryChart"></canvas></div>
         </div>
@@ -200,7 +201,7 @@ async function renderDashboard() {
       <!-- Bottom row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- Proposals stats -->
-        <div class="card">
+        <div onclick="navigateTo('proposals')" class="card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all">
           <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-file-invoice-dollar text-yellow-400 text-sm"></i>Proposals Overview</h3>
           <div class="grid grid-cols-3 gap-3 text-center">
             <div class="bg-gray-900 rounded-xl p-3">
@@ -226,7 +227,7 @@ async function renderDashboard() {
         </div>
 
         <!-- Recent Activity -->
-        <div class="card">
+        <div onclick="navigateTo('activity')" class="card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-history text-gray-400 text-sm"></i>Recent Activity</h3>
           </div>
@@ -252,11 +253,12 @@ async function renderDashboard() {
   }
 }
 
-function kpiCard(label, icon, value, color, sub) {
+function kpiCard(label, icon, value, color, sub, clickTarget) {
   const colors = { blue:'text-blue-400 bg-blue-900/30', green:'text-green-400 bg-green-900/30', emerald:'text-emerald-400 bg-emerald-900/30', purple:'text-purple-400 bg-purple-900/30' }
   const [tc,bc] = (colors[color]||'text-gray-400 bg-gray-800').split(' ')
+  const clickAttr = clickTarget ? `onclick="navigateTo('${clickTarget}')" class="cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all"` : ''
   return `
-    <div class="stat-card flex items-center gap-4">
+    <div class="stat-card flex items-center gap-4" ${clickAttr}>
       <div class="w-12 h-12 rounded-xl ${bc} flex items-center justify-center flex-shrink-0">
         <i class="fas fa-${icon} ${tc} text-lg"></i>
       </div>
@@ -684,15 +686,15 @@ function renderClientsTable(data) {
 
       <!-- Revenue summary -->
       <div class="grid grid-cols-3 gap-4">
-        <div class="stat-card">
+        <div class="stat-card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all" onclick="navigateTo('revenue')">
           <p class="text-xs text-gray-500 uppercase font-semibold">Total Clients</p>
           <p class="text-2xl font-bold text-white mt-1">${data.length}</p>
         </div>
-        <div class="stat-card">
+        <div class="stat-card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all" onclick="navigateTo('revenue')">
           <p class="text-xs text-gray-500 uppercase font-semibold">Total Revenue</p>
           <p class="text-2xl font-bold text-green-400 mt-1">${fmt$(totalRevenue)}</p>
         </div>
-        <div class="stat-card">
+        <div class="stat-card cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all" onclick="navigateTo('revenue')">
           <p class="text-xs text-gray-500 uppercase font-semibold">Monthly Recurring</p>
           <p class="text-2xl font-bold text-emerald-400 mt-1">${fmt$(totalMRR)}<span class="text-sm text-gray-500">/mo</span></p>
         </div>
@@ -2722,3 +2724,28 @@ async function toggleBuilderSetting(key) {
 // ===== INIT =====
 initSidebar()
 navigateTo('dashboard')
+
+// ===== ACTIVITY TIMELINE (NEW) =====
+async function renderActivity() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  const activities = await api('GET', '/analytics/recent-activity?limit=100')
+  
+  setContent(`
+    <div class="space-y-4">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-400">Complete timeline of all system activities</p>
+        <button onclick="navigateTo('dashboard')" class="btn-secondary btn-sm">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+      </div>
+
+      <!-- Activity Timeline -->
+      <div class="card">
+        <div class="space-y-0 max-h-[600px] overflow-y-auto">
+          ${activities.map(a => activityItem(a)).join('') || '<p class="text-gray-600 text-sm text-center py-8">No activity yet</p>'}
+        </div>
+      </div>
+    </div>
+  `)
+}
