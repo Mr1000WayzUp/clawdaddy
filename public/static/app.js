@@ -49,7 +49,8 @@ function navigateTo(page) {
     dashboard: 'Dashboard', leads: 'Leads', pipeline: 'Pipeline',
     clients: 'Clients', proposals: 'Proposals', tasks: 'Tasks',
     revenue: 'Revenue Report', scraper: 'Lead Finder', prospector: '🤖 Auto-Prospector',
-    builder: '✨ Website Builder', activity: 'Activity Timeline'
+    builder: '✨ Website Builder', activity: 'Activity Timeline',
+    settings: '⚙️ Settings', profile: '👤 My Profile'
   }
   document.getElementById('page-title').textContent = titles[page] || page
 
@@ -69,6 +70,8 @@ function navigateTo(page) {
     prospector: renderProspector,
     builder: renderBuilder,
     activity: renderActivity,
+    settings: renderSettings,
+    profile: renderProfile,
   }
   if (pages[page]) pages[page]()
 }
@@ -2884,9 +2887,1063 @@ async function toggleBuilderSetting(key) {
   renderBuilder()
 }
 
+// ============================================================================
+// SETTINGS PAGE — full app control panel
+// ============================================================================
+let settingsTab = 'profile'
+let settingsData = null
+
+async function renderSettings() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  try {
+    const [all, profile] = await Promise.all([
+      api('GET', '/settings/all'),
+      api('GET', '/settings/profile'),
+    ])
+    settingsData = { ...all, profile }
+    _renderSettingsUI()
+  } catch(e) {
+    setContent(`<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i>Failed to load settings: ${e.message}</div>`)
+  }
+}
+
+function _renderSettingsUI() {
+  const { builder: b, prospector: p, profile: u } = settingsData
+  const tabs = [
+    { k:'profile',       icon:'user-circle',    label:'Profile' },
+    { k:'api-keys',      icon:'key',            label:'API Keys' },
+    { k:'outreach',      icon:'paper-plane',    label:'Outreach' },
+    { k:'prospector',    icon:'robot',          label:'Prospector' },
+    { k:'payments',      icon:'credit-card',    label:'Payments' },
+    { k:'members',       icon:'users',          label:'Team' },
+    { k:'danger',        icon:'shield-alt',     label:'System' },
+  ]
+
+  const togBtn = (key, cfg, src='builder') => {
+    const on = cfg[key] !== '0'
+    return `<button onclick="toggleSettingFromPage('${key}','${src}')"
+      class="relative w-12 h-6 rounded-full transition-colors ${on ? 'bg-violet-600' : 'bg-gray-700'}" id="stog-${key}">
+      <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-0'}"></span>
+    </button>`
+  }
+
+  const apiRow = (label, key, id, placeholder, hint='') => `
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">${label}</label>
+      <div class="flex gap-2">
+        <input id="${id}" type="password" class="form-input flex-1 font-mono text-sm"
+          value="${escHtml(settingsData.builder[key]||'')}" placeholder="${placeholder}"
+          onfocus="if(this.value.includes('••')){this.value=''}" />
+        <button onclick="saveSettingKey('${key}','${id}')" class="btn-secondary px-4 text-sm whitespace-nowrap">
+          <i class="fas fa-save mr-1"></i>Save
+        </button>
+      </div>
+      ${hint ? `<p class="text-xs text-gray-500">${hint}</p>` : ''}
+    </div>`
+
+  // Tab content
+  const tabContent = {
+
+    // ── Profile ──────────────────────────────────────────────────────────────
+    'profile': `
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Avatar card -->
+        <div class="card flex flex-col items-center gap-4 py-8">
+          <div id="settings-avatar" class="w-24 h-24 rounded-full bg-gradient-to-br from-${u.avatar_color||'green'}-400 to-${u.avatar_color||'emerald'}-600 flex items-center justify-center text-3xl font-bold text-white shadow-xl">
+            ${escHtml(u.avatar_initials||'YB')}
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-white text-lg">${escHtml(u.full_name||'Your Name')}</p>
+            <p class="text-gray-400 text-sm">${escHtml(u.business_name||'Your Business')}</p>
+            <span class="mt-2 inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-900/50 text-green-400 border border-green-700">
+              ${escHtml(u.role||'admin')}
+            </span>
+          </div>
+          <div class="w-full pt-2 border-t border-gray-800">
+            <p class="text-xs text-gray-500 text-center mb-3">Avatar Color</p>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${['green','blue','purple','pink','orange','red','yellow','teal'].map(c=>`
+                <button onclick="setAvatarColor('${c}')" title="${c}"
+                  class="w-7 h-7 rounded-full bg-${c}-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-gray-900 ${(u.avatar_color||'green')===c ? 'ring-white' : 'ring-transparent'}">
+                </button>`).join('')}
+            </div>
+          </div>
+          <!-- Google Connect -->
+          <div class="w-full pt-2 border-t border-gray-800">
+            ${u.google_email ? `
+              <div class="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
+                ${u.google_picture ? `<img src="${u.google_picture}" class="w-8 h-8 rounded-full" alt="Google avatar"/>` : '<i class="fab fa-google text-blue-400 text-xl"></i>'}
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-semibold text-white truncate">${escHtml(u.google_name||'')}</p>
+                  <p class="text-xs text-gray-400 truncate">${escHtml(u.google_email)}</p>
+                </div>
+                <button onclick="disconnectGoogle()" class="text-xs text-red-400 hover:text-red-300 whitespace-nowrap">Unlink</button>
+              </div>` : `
+              <button onclick="connectGoogle()" class="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-sm py-2.5 rounded-lg transition-all">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+              </button>`}
+          </div>
+        </div>
+
+        <!-- Edit form -->
+        <div class="lg:col-span-2 card space-y-5">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-user-edit text-blue-400"></i> Personal Information</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Full Name</label>
+              <input id="prof-name" type="text" class="form-input w-full" value="${escHtml(u.full_name||'')}" placeholder="Your Full Name"/>
+            </div>
+            <div>
+              <label class="form-label">Business Name</label>
+              <input id="prof-biz" type="text" class="form-input w-full" value="${escHtml(u.business_name||'')}" placeholder="Your Business Name"/>
+            </div>
+            <div>
+              <label class="form-label">Email Address</label>
+              <input id="prof-email" type="email" class="form-input w-full" value="${escHtml(u.email||'')}" placeholder="you@yourbusiness.com"/>
+            </div>
+            <div>
+              <label class="form-label">Phone Number</label>
+              <input id="prof-phone" type="tel" class="form-input w-full" value="${escHtml(u.phone||'')}" placeholder="(555) 555-5555"/>
+            </div>
+            <div>
+              <label class="form-label">Timezone</label>
+              <select id="prof-tz" class="form-input w-full">
+                ${['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Anchorage','Pacific/Honolulu','America/Phoenix'].map(tz=>
+                  `<option value="${tz}" ${(u.timezone||'America/Chicago')===tz?'selected':''}>${tz.replace('America/','').replace('Pacific/','Pacific/')}</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Role</label>
+              <input type="text" class="form-input w-full bg-gray-900 text-gray-500" value="${escHtml(u.role||'admin')}" disabled/>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Bio / Notes</label>
+            <textarea id="prof-bio" class="form-input w-full h-24 resize-none" placeholder="Brief bio or notes about your business...">${escHtml(u.bio||'')}</textarea>
+          </div>
+          <div class="flex gap-3 pt-2 border-t border-gray-800">
+            <button onclick="saveProfile()" class="btn-primary flex items-center gap-2">
+              <i class="fas fa-save"></i> Save Profile
+            </button>
+            <button onclick="renderSettings()" class="btn-secondary">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>`,
+
+    // ── API Keys ─────────────────────────────────────────────────────────────
+    'api-keys': `
+      <div class="space-y-6">
+        <div class="bg-blue-900/20 border border-blue-800/40 rounded-xl p-4 flex gap-3">
+          <i class="fas fa-info-circle text-blue-400 mt-0.5 flex-shrink-0"></i>
+          <p class="text-sm text-blue-300">API keys are stored encrypted in your database. They are never exposed in full — only the first 6 characters are shown after saving. Click a field and retype to update.</p>
+        </div>
+
+        <!-- OpenAI -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-emerald-900/50 border border-emerald-700 flex items-center justify-center"><i class="fas fa-brain text-emerald-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">OpenAI</h3><p class="text-xs text-gray-500">Deep research, AI copywriting, outreach personalization</p></div>
+            <a href="https://platform.openai.com/api-keys" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Get Key</a>
+          </div>
+          ${apiRow('OpenAI API Key','openai_api_key','s-openai','sk-proj-...','Powers AI research + email/SMS personalization. GPT-4o-mini. ~$0.001/lead.')}
+        </div>
+
+        <!-- Google Maps -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-red-900/50 border border-red-700 flex items-center justify-center"><i class="fab fa-google text-red-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">Google Maps / Places</h3><p class="text-xs text-gray-500">Auto-Prospector lead discovery engine</p></div>
+            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Get Key</a>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Google Maps API Key</label>
+            <div class="flex gap-2">
+              <input id="s-gmaps" type="password" class="form-input flex-1 font-mono text-sm"
+                value="${escHtml(settingsData.prospector.google_maps_api_key||'')}" placeholder="AIza..."
+                onfocus="if(this.value.includes('••')){this.value=''}"/>
+              <button onclick="saveProspectorKey('google_maps_api_key','s-gmaps')" class="btn-secondary px-4 text-sm whitespace-nowrap">
+                <i class="fas fa-save mr-1"></i>Save
+              </button>
+            </div>
+            <p class="text-xs text-gray-500">Enable: Places API, Maps JavaScript API, Geocoding API. Free tier = 28,000 calls/month.</p>
+          </div>
+        </div>
+
+        <!-- SendGrid -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-blue-900/50 border border-blue-700 flex items-center justify-center"><i class="fas fa-envelope text-blue-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">SendGrid</h3><p class="text-xs text-gray-500">All outreach emails + follow-up sequences</p></div>
+            <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Get Key</a>
+          </div>
+          ${apiRow('SendGrid API Key','sendgrid_api_key','s-sendgrid','SG.xxx...','Free plan = 100 emails/day. Paid = 40,000/month for $19.95.')}
+        </div>
+
+        <!-- Twilio -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-red-900/50 border border-red-700 flex items-center justify-center"><i class="fas fa-sms text-red-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">Twilio SMS</h3><p class="text-xs text-gray-500">SMS outreach + follow-up text messages</p></div>
+            <a href="https://console.twilio.com" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Console</a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Account SID</label>
+              <input id="s-twilio-sid" type="text" class="form-input font-mono text-sm" value="${escHtml(b.twilio_account_sid||'')}" placeholder="ACxxxxxxx"/>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Auth Token</label>
+              <input id="s-twilio-token" type="password" class="form-input font-mono text-sm" value="${escHtml(b.twilio_auth_token||'')}" placeholder="••••••••"
+                onfocus="if(this.value.includes('••')){this.value=''}"/>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">From Number</label>
+              <input id="s-twilio-from" type="tel" class="form-input font-mono text-sm" value="${escHtml(b.twilio_from_number||'')}" placeholder="+15551234567"/>
+            </div>
+          </div>
+          <button onclick="saveTwilioFromSettings()" class="btn-secondary text-sm">
+            <i class="fas fa-save mr-1"></i> Save Twilio Settings
+          </button>
+        </div>
+
+        <!-- Lovable -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-pink-900/50 border border-pink-700 flex items-center justify-center"><i class="fas fa-magic text-pink-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">Lovable.dev</h3><p class="text-xs text-gray-500">AI website generation — sends prompts to build demo sites</p></div>
+            <a href="https://lovable.dev" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Get Key</a>
+          </div>
+          ${apiRow('Lovable API Key','lovable_api_key','s-lovable','lv-...','Used to generate website demos for your leads automatically.')}
+        </div>
+
+        <!-- Google OAuth -->
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-blue-900/50 border border-blue-700 flex items-center justify-center"><i class="fab fa-google text-blue-400 text-sm"></i></div>
+            <div><h3 class="font-bold text-white text-sm">Google OAuth (Sign In with Google)</h3><p class="text-xs text-gray-500">Enables Google sign-in for your profile and team members</p></div>
+            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="ml-auto text-xs text-blue-400 hover:text-blue-300"><i class="fas fa-external-link-alt mr-1"></i>Setup</a>
+          </div>
+          ${apiRow('OAuth Client ID','google_oauth_client_id','s-gclient','123456-abcdef.apps.googleusercontent.com','Create OAuth 2.0 credentials → Web Application type.')}
+          ${apiRow('OAuth Client Secret','google_oauth_client_secret','s-gsecret','GOCSPX-...','Keep this secret. Never share it publicly.')}
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Redirect URI (add this to Google Console)</label>
+            <div class="flex gap-2 items-center bg-gray-900 border border-gray-700 rounded-lg px-3 py-2">
+              <code class="text-xs text-green-400 flex-1">${window.location.origin}/api/settings/google-callback</code>
+              <button onclick="navigator.clipboard.writeText('${window.location.origin}/api/settings/google-callback');showToast('Copied!','success')" class="text-gray-400 hover:text-white">
+                <i class="fas fa-copy text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`,
+
+    // ── Outreach Settings ─────────────────────────────────────────────────────
+    'outreach': `
+      <div class="space-y-6">
+        <!-- Contact Info -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-address-card text-blue-400"></i> Your Contact Info (appears in every email/SMS)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Your Full Name</label>
+              <input id="s-owner-name" type="text" class="form-input w-full" value="${escHtml(b.owner_name||'')}" placeholder="Eric Thompson"/>
+            </div>
+            <div>
+              <label class="form-label">Your Phone</label>
+              <input id="s-owner-phone" type="tel" class="form-input w-full" value="${escHtml(b.owner_phone||'')}" placeholder="(985) 860-7891"/>
+            </div>
+            <div>
+              <label class="form-label">Your Email</label>
+              <input id="s-owner-email" type="email" class="form-input w-full" value="${escHtml(b.owner_email||'')}" placeholder="you@email.com"/>
+            </div>
+            <div>
+              <label class="form-label">Default Package</label>
+              <select id="s-default-pkg" class="form-input w-full">
+                ${['Starter','Professional','Premium','Enterprise'].map(pkg=>`<option value="${pkg}" ${(b.default_package||'Professional')===pkg?'selected':''}>${pkg}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <button onclick="saveOutreachContactInfo()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i> Save Contact Info</button>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-envelope text-blue-400"></i> Email Settings</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">From Name</label>
+              <input id="s-from-name" type="text" class="form-input w-full" value="${escHtml(b.from_name||b.owner_name||'')}" placeholder="Eric at WebPro Agency"/>
+            </div>
+            <div>
+              <label class="form-label">From Email</label>
+              <input id="s-from-email" type="email" class="form-input w-full" value="${escHtml(b.from_email||b.owner_email||'')}" placeholder="eric@webproagency.com"/>
+            </div>
+            <div>
+              <label class="form-label">Reply-To Email</label>
+              <input id="s-reply-to" type="email" class="form-input w-full" value="${escHtml(b.reply_to||b.owner_email||'')}" placeholder="replies@webproagency.com"/>
+            </div>
+          </div>
+          <button onclick="saveEmailSettings()" class="btn-secondary text-sm"><i class="fas fa-save mr-1"></i> Save Email Settings</button>
+        </div>
+
+        <!-- Automation Toggles -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-robot text-purple-400"></i> Automation Toggles</h3>
+          <div class="space-y-4">
+            ${[
+              ['auto_send_outreach','Auto-Send Outreach','Automatically email + SMS leads when research completes'],
+              ['auto_followup','Auto Follow-Up Sequences','Start 14-day follow-up automatically after outreach'],
+              ['auto_research','Auto Deep Research','Research every new lead automatically on creation'],
+            ].map(([key, label, desc]) => `
+              <div class="flex items-center justify-between py-3 border-b border-gray-800 last:border-0">
+                <div>
+                  <p class="text-sm font-semibold text-white">${label}</p>
+                  <p class="text-xs text-gray-500">${desc}</p>
+                </div>
+                ${togBtn(key, b)}
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>`,
+
+    // ── Prospector Settings ───────────────────────────────────────────────────
+    'prospector': `
+      <div class="space-y-6">
+        <!-- Engine controls -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-robot text-green-400"></i> Auto-Prospector Engine</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Daily Run Time (UTC)</label>
+              <select id="s-cron" class="form-input w-full" onchange="saveProspectorSettingDirect('cron_time',this.value)">
+                ${['00:00','01:00','02:00','03:00','04:00','05:00','06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'].map(t=>
+                  `<option value="${t}" ${(p.cron_time||'06:00')===t?'selected':''}>${t} UTC</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Max Results Per ZIP</label>
+              <input id="s-max-results" type="number" min="5" max="60" class="form-input w-full"
+                value="${p.max_results_per_zip||20}"
+                onchange="saveProspectorSettingDirect('max_results_per_zip',this.value)"/>
+            </div>
+            <div>
+              <label class="form-label">Max ZIPs Per Run</label>
+              <input id="s-max-zips" type="number" min="1" max="10" class="form-input w-full"
+                value="${p.max_zips_per_run||3}"
+                onchange="saveProspectorSettingDirect('max_zips_per_run',this.value)"/>
+            </div>
+            <div>
+              <label class="form-label">Min Rating Filter</label>
+              <input id="s-min-rating" type="number" min="0" max="5" step="0.5" class="form-input w-full"
+                value="${p.min_rating||3.0}"
+                onchange="saveProspectorSettingDirect('min_rating',this.value)"/>
+              <p class="text-xs text-gray-500 mt-1">Only prospect businesses rated above this threshold</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-sliders-h text-blue-400"></i> Filter Settings</h3>
+          <div class="space-y-4">
+            ${[
+              ['skip_has_website','Skip Businesses With Websites','Only prospect businesses that have no website'],
+              ['auto_advance_zip','Auto-Advance ZIP Codes','Move to next ZIP when current one is exhausted'],
+              ['skip_low_rating','Skip Low-Rated Businesses','Filter out businesses below minimum rating'],
+            ].map(([key, label, desc]) => `
+              <div class="flex items-center justify-between py-3 border-b border-gray-800 last:border-0">
+                <div>
+                  <p class="text-sm font-semibold text-white">${label}</p>
+                  <p class="text-xs text-gray-500">${desc}</p>
+                </div>
+                ${togBtn(key, p, 'prospector')}
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Target Industries -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-industry text-orange-400"></i> Target Industries</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="s-industries-grid">
+            ${['restaurant','salon','plumber','electrician','dentist','lawyer','gym','mechanic','landscaping','roofing','cleaning','photography','bakery','florist','pet grooming','chiropractor','real estate','insurance','accounting','hvac'].map(ind => {
+              const checked = (p.target_industries||'').includes(ind)
+              return `<label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-800 transition-all">
+                <input type="checkbox" ${checked?'checked':''} value="${ind}" onchange="saveIndustriesFromSettings()" class="rounded border-gray-600 text-violet-600 focus:ring-violet-500"/>
+                <span class="text-sm text-gray-300 capitalize">${ind}</span>
+              </label>`
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- ZIP Queue -->
+        <div class="card space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-map-marker-alt text-red-400"></i> ZIP Code Queue</h3>
+            <button onclick="loadSettingsZipQueue()" class="btn-secondary btn-sm"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+          </div>
+          <div class="flex gap-2">
+            <input id="s-zip-input" type="text" class="form-input flex-1" placeholder="Enter ZIP code (e.g. 70360)"/>
+            <input id="s-zip-city" type="text" class="form-input w-36" placeholder="City"/>
+            <input id="s-zip-state" type="text" class="form-input w-20" placeholder="LA"/>
+            <button onclick="addZipCode()" class="btn-primary px-4 whitespace-nowrap"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="s-zip-list" class="space-y-2 max-h-64 overflow-y-auto">
+            <div class="text-center text-gray-600 text-sm py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading ZIPs...</div>
+          </div>
+        </div>
+      </div>`,
+
+    // ── Payments ──────────────────────────────────────────────────────────────
+    'payments': `
+      <div class="space-y-6">
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-credit-card text-emerald-400"></i> Stripe Configuration</h3>
+          ${apiRow('Stripe Secret Key','stripe_secret_key','s-stripe-secret','sk_live_... or sk_test_...','Used server-side for creating payment intents. Never exposed to clients.')}
+          ${apiRow('Stripe Publishable Key','stripe_pub_key','s-stripe-pub','pk_live_... or pk_test_...','Safe to use on the frontend for Stripe.js elements.')}
+          ${apiRow('Stripe Webhook Secret','stripe_webhook_secret','s-stripe-webhook','whsec_...','From Stripe Dashboard → Webhooks. Verifies incoming webhook events.')}
+        </div>
+
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-link text-blue-400"></i> Stripe Payment Links (pre-created in Stripe Dashboard)</h3>
+          <p class="text-sm text-gray-400">Create Payment Links in your Stripe Dashboard, then paste the URLs here. They are used in proposals and sent directly to clients.</p>
+          <div class="space-y-3">
+            ${[['Starter — $799','stripe_starter_link','s-stripe-starter'],['Professional — $1,497','stripe_professional_link','s-stripe-pro'],['Premium — $2,997','stripe_premium_link','s-stripe-premium'],['Enterprise — $5,997','stripe_enterprise_link','s-stripe-enterprise']].map(([label,key,id])=>`
+              <div>
+                <label class="form-label">${label}</label>
+                <input id="${id}" type="url" class="form-input w-full" value="${escHtml(b[key]||'')}" placeholder="https://buy.stripe.com/..."/>
+              </div>`).join('')}
+          </div>
+          <button onclick="saveStripeLinksFromSettings()" class="btn-primary text-sm"><i class="fas fa-save mr-1"></i> Save Payment Links</button>
+        </div>
+      </div>`,
+
+    // ── Team Members ──────────────────────────────────────────────────────────
+    'members': `
+      <div class="space-y-6">
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-user-plus text-green-400"></i> Invite Team Member</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input id="m-name" type="text" class="form-input" placeholder="Full Name"/>
+            <input id="m-email" type="email" class="form-input" placeholder="email@company.com"/>
+            <select id="m-role" class="form-input">
+              <option value="viewer">Viewer — read only</option>
+              <option value="manager">Manager — create/edit</option>
+              <option value="admin">Admin — full access</option>
+            </select>
+          </div>
+          <button onclick="inviteMember()" class="btn-primary text-sm"><i class="fas fa-paper-plane mr-1"></i> Send Invitation</button>
+        </div>
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-users text-blue-400"></i> Team Members</h3>
+            <button onclick="loadMembersTable()" class="btn-secondary btn-sm"><i class="fas fa-sync-alt mr-1"></i>Refresh</button>
+          </div>
+          <div id="s-members-table">
+            <div class="text-center py-8 text-gray-600"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading members...</div>
+          </div>
+        </div>
+      </div>`,
+
+    // ── System / Danger ───────────────────────────────────────────────────────
+    'danger': `
+      <div class="space-y-6">
+        <!-- App info -->
+        <div class="card space-y-3">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-info-circle text-blue-400"></i> System Information</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            ${[
+              ['App Name','Google Money Drop'],
+              ['Version','2.0.0'],
+              ['Platform','Cloudflare Pages'],
+              ['Database','D1 SQLite'],
+            ].map(([k,v])=>`
+              <div class="bg-gray-800 rounded-lg p-3">
+                <p class="text-xs text-gray-500 mb-1">${k}</p>
+                <p class="text-sm font-semibold text-white">${v}</p>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Data management -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2"><i class="fas fa-database text-yellow-400"></i> Data Management</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-xl border border-gray-700">
+              <div>
+                <p class="text-sm font-semibold text-white">Export All Leads</p>
+                <p class="text-xs text-gray-500">Download a CSV of all leads in the system</p>
+              </div>
+              <button onclick="exportLeadsCSV()" class="btn-secondary text-sm"><i class="fas fa-download mr-1"></i>Export CSV</button>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-xl border border-gray-700">
+              <div>
+                <p class="text-sm font-semibold text-white">Clear All API Keys</p>
+                <p class="text-xs text-gray-500">Reset all stored API keys — does not delete leads or clients</p>
+              </div>
+              <button onclick="clearAllApiKeys()" class="bg-orange-900/40 text-orange-400 border border-orange-700 hover:bg-orange-900/60 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                <i class="fas fa-eraser mr-1"></i>Clear Keys
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="border border-red-800/50 rounded-xl p-5 bg-red-900/10 space-y-4">
+          <h3 class="font-bold text-red-400 text-base flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+          <p class="text-sm text-gray-400">These actions are <strong class="text-red-400">irreversible</strong>. Double-check before proceeding.</p>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-red-900/50">
+              <div>
+                <p class="text-sm font-semibold text-white">Reset All Sequences</p>
+                <p class="text-xs text-gray-500">Cancel all active follow-up sequences and mark as cancelled</p>
+              </div>
+              <button onclick="if(confirm('Cancel ALL follow-up sequences?'))api('POST','/builder/followup/cancel-all').then(()=>showToast('All sequences cancelled','success'))"
+                class="bg-red-900/40 text-red-400 border border-red-700 hover:bg-red-900/60 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                <i class="fas fa-ban mr-1"></i>Cancel All
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`
+  }[settingsTab] || '<p class="text-gray-500">Select a tab</p>'
+
+  setContent(`
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-cog text-gray-400"></i> Settings</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Control every aspect of the Google Money Drop system</p>
+        </div>
+      </div>
+
+      <!-- Tab nav -->
+      <div class="flex gap-1 flex-wrap border-b border-gray-800 pb-0">
+        ${tabs.map(t => `
+          <button onclick="switchSettingsTab('${t.k}')"
+            class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap
+              ${settingsTab===t.k ? 'border-violet-500 text-violet-400 bg-violet-900/10' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'}">
+            <i class="fas fa-${t.icon}"></i>${t.label}
+          </button>`).join('')}
+      </div>
+
+      <!-- Tab content -->
+      <div id="settings-tab-content">
+        ${tabContent}
+      </div>
+    </div>
+  `)
+
+  // Load deferred data
+  if (settingsTab === 'prospector') loadSettingsZipQueue()
+  if (settingsTab === 'members')    loadMembersTable()
+}
+
+function switchSettingsTab(tab) {
+  settingsTab = tab
+  renderSettings()
+}
+
+// ── Settings action handlers ──────────────────────────────────────────────────
+async function saveSettingKey(key, inputId) {
+  const val = document.getElementById(inputId)?.value.trim()
+  if (!val || val.includes('••')) { showToast('Enter a valid key','error'); return }
+  await api('PUT', '/settings/builder', { [key]: val })
+  showToast('✓ Key saved','success')
+  renderSettings()
+}
+
+async function saveProspectorKey(key, inputId) {
+  const val = document.getElementById(inputId)?.value.trim()
+  if (!val || val.includes('••')) { showToast('Enter a valid key','error'); return }
+  await api('PUT', '/settings/prospector', { [key]: val })
+  showToast('✓ Key saved','success')
+  renderSettings()
+}
+
+async function saveProspectorSettingDirect(key, value) {
+  await api('PUT', '/settings/prospector', { [key]: value })
+  showToast('✓ Saved','success')
+}
+
+async function toggleSettingFromPage(key, src='builder') {
+  const btn = document.getElementById('stog-' + key)
+  const isOn = btn?.classList.contains('bg-violet-600')
+  const newVal = isOn ? '0' : '1'
+  if (src === 'prospector') {
+    await api('PUT', '/settings/prospector', { [key]: newVal })
+  } else {
+    await api('PUT', '/settings/builder', { [key]: newVal })
+  }
+  // update toggle UI instantly
+  if (btn) {
+    btn.classList.toggle('bg-violet-600', !isOn)
+    btn.classList.toggle('bg-gray-700', isOn)
+    const dot = btn.querySelector('span')
+    if (dot) { dot.classList.toggle('translate-x-6', !isOn); dot.classList.toggle('translate-x-0', isOn) }
+  }
+  showToast('✓ Setting updated','success')
+}
+
+async function saveOutreachContactInfo() {
+  const payload = {
+    owner_name:      document.getElementById('s-owner-name')?.value.trim(),
+    owner_phone:     document.getElementById('s-owner-phone')?.value.trim(),
+    owner_email:     document.getElementById('s-owner-email')?.value.trim(),
+    default_package: document.getElementById('s-default-pkg')?.value,
+  }
+  await api('PUT', '/settings/builder', payload)
+  // Also update sidebar display
+  await refreshSidebarProfile()
+  showToast('✓ Contact info saved','success')
+}
+
+async function saveEmailSettings() {
+  const payload = {
+    from_name:  document.getElementById('s-from-name')?.value.trim(),
+    from_email: document.getElementById('s-from-email')?.value.trim(),
+    reply_to:   document.getElementById('s-reply-to')?.value.trim(),
+  }
+  await api('PUT', '/settings/builder', payload)
+  showToast('✓ Email settings saved','success')
+}
+
+async function saveTwilioFromSettings() {
+  const payload = {
+    twilio_account_sid:  document.getElementById('s-twilio-sid')?.value.trim(),
+    twilio_auth_token:   document.getElementById('s-twilio-token')?.value.trim(),
+    twilio_from_number:  document.getElementById('s-twilio-from')?.value.trim(),
+  }
+  await api('PUT', '/settings/builder', payload)
+  showToast('✓ Twilio settings saved','success')
+}
+
+async function saveIndustriesFromSettings() {
+  const checked = [...document.querySelectorAll('#s-industries-grid input[type=checkbox]:checked')].map(el => el.value)
+  await api('PUT', '/settings/prospector', { target_industries: checked.join(',') })
+  showToast('✓ Industries saved','success')
+}
+
+async function saveStripeLinksFromSettings() {
+  const payload = {
+    stripe_starter_link:      document.getElementById('s-stripe-starter')?.value.trim(),
+    stripe_professional_link: document.getElementById('s-stripe-pro')?.value.trim(),
+    stripe_premium_link:      document.getElementById('s-stripe-premium')?.value.trim(),
+    stripe_enterprise_link:   document.getElementById('s-stripe-enterprise')?.value.trim(),
+  }
+  await api('PUT', '/settings/builder', payload)
+  showToast('✓ Stripe payment links saved','success')
+}
+
+async function setAvatarColor(color) {
+  settingsData.profile.avatar_color = color
+  await api('PUT', '/settings/profile', { ...settingsData.profile, avatar_color: color })
+  showToast(`✓ Avatar color set to ${color}`,'success')
+  renderSettings()
+}
+
+async function saveProfile() {
+  const payload = {
+    full_name:     document.getElementById('prof-name')?.value.trim(),
+    business_name: document.getElementById('prof-biz')?.value.trim(),
+    email:         document.getElementById('prof-email')?.value.trim(),
+    phone:         document.getElementById('prof-phone')?.value.trim(),
+    bio:           document.getElementById('prof-bio')?.value.trim(),
+    timezone:      document.getElementById('prof-tz')?.value,
+    avatar_color:  settingsData.profile.avatar_color,
+  }
+  const result = await api('PUT', '/settings/profile', payload)
+  showToast('✓ Profile saved','success')
+  await refreshSidebarProfile()
+  renderSettings()
+}
+
+async function refreshSidebarProfile() {
+  try {
+    const u = await api('GET', '/settings/profile')
+    const nameEl = document.getElementById('sidebar-user-name')
+    const roleEl = document.getElementById('sidebar-user-role')
+    const avatarEl = document.getElementById('sidebar-user-avatar')
+    const avatarSmEl = document.getElementById('sidebar-user-avatar-sm')
+    if (nameEl) nameEl.textContent = u.business_name || 'Your Business'
+    if (roleEl) roleEl.textContent = u.role || 'Admin'
+    const initials = u.avatar_initials || 'YB'
+    if (avatarEl) avatarEl.textContent = initials
+    if (avatarSmEl) avatarSmEl.textContent = initials
+  } catch(e) {}
+}
+
+async function connectGoogle() {
+  try {
+    const { url, error } = await api('GET', '/settings/google-auth-url')
+    if (error) { showToast(error, 'error'); return }
+    const popup = window.open(url, 'google-auth', 'width=500,height=600,left=200,top=100')
+    window.addEventListener('message', async function handler(e) {
+      if (e.data?.type === 'google-auth-success') {
+        window.removeEventListener('message', handler)
+        showToast(`✓ Connected as ${e.data.name}`, 'success')
+        renderSettings()
+      } else if (e.data?.type === 'google-auth-error') {
+        window.removeEventListener('message', handler)
+        showToast('Google sign-in failed: ' + e.data.error, 'error')
+      }
+    })
+  } catch(e) { showToast('Failed to start Google auth: ' + e.message, 'error') }
+}
+
+async function disconnectGoogle() {
+  if (!confirm('Disconnect your Google account from this profile?')) return
+  await api('POST', '/settings/disconnect-google')
+  showToast('✓ Google account disconnected','success')
+  renderSettings()
+}
+
+async function loadSettingsZipQueue() {
+  const container = document.getElementById('s-zip-list')
+  if (!container) return
+  try {
+    const zips = await api('GET', '/settings/zip-queue')
+    if (!zips.length) {
+      container.innerHTML = '<div class="text-center text-gray-600 text-sm py-4"><i class="fas fa-map-marker-alt text-2xl mb-2 block"></i>No ZIP codes queued. Add one above.</div>'
+      return
+    }
+    container.innerHTML = zips.map(z => `
+      <div class="flex items-center gap-3 bg-gray-800 rounded-lg px-3 py-2.5 border border-gray-700">
+        <div class="w-8 h-8 rounded-full ${z.status==='active' ? 'bg-green-900/50 text-green-400' : z.status==='completed' ? 'bg-gray-700 text-gray-500' : 'bg-blue-900/50 text-blue-400'} flex items-center justify-center text-xs font-bold flex-shrink-0">
+          ${z.status==='active'?'▶':z.status==='completed'?'✓':'⏳'}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white">${escHtml(z.zip)} <span class="text-gray-400 font-normal">${escHtml(z.city||'')}${z.state?', '+escHtml(z.state):''}</span></p>
+          <p class="text-xs text-gray-500">${z.leads_found||0} leads found · ${z.status}</p>
+        </div>
+        <button onclick="deleteZip('${escHtml(z.zip)}')" class="text-gray-600 hover:text-red-400 transition-colors">
+          <i class="fas fa-trash text-xs"></i>
+        </button>
+      </div>`).join('')
+  } catch(e) {
+    container.innerHTML = `<p class="text-red-400 text-sm py-2">Failed to load ZIPs: ${e.message}</p>`
+  }
+}
+
+async function addZipCode() {
+  const zip   = document.getElementById('s-zip-input')?.value.trim()
+  const city  = document.getElementById('s-zip-city')?.value.trim()
+  const state = document.getElementById('s-zip-state')?.value.trim()
+  if (!zip) { showToast('Enter a ZIP code','error'); return }
+  await api('POST', '/settings/zip-queue', { zip, city, state })
+  showToast(`✓ ZIP ${zip} added to queue`,'success')
+  document.getElementById('s-zip-input').value = ''
+  document.getElementById('s-zip-city').value  = ''
+  document.getElementById('s-zip-state').value = ''
+  loadSettingsZipQueue()
+}
+
+async function deleteZip(zip) {
+  if (!confirm(`Remove ZIP ${zip} from queue?`)) return
+  await api('DELETE', `/settings/zip-queue/${zip}`)
+  showToast(`✓ ZIP ${zip} removed`,'success')
+  loadSettingsZipQueue()
+}
+
+async function inviteMember() {
+  const full_name = document.getElementById('m-name')?.value.trim()
+  const email     = document.getElementById('m-email')?.value.trim()
+  const role      = document.getElementById('m-role')?.value
+  if (!email) { showToast('Email required','error'); return }
+  try {
+    const result = await api('POST', '/settings/members', { full_name, email, role })
+    showToast(result.message || `✓ ${email} invited`,'success')
+    document.getElementById('m-name').value  = ''
+    document.getElementById('m-email').value = ''
+    loadMembersTable()
+  } catch(e) { showToast(e.message||'Failed to invite member','error') }
+}
+
+async function loadMembersTable() {
+  const container = document.getElementById('s-members-table')
+  if (!container) return
+  try {
+    const members = await api('GET', '/settings/members')
+    if (!members.length) {
+      container.innerHTML = `
+        <div class="text-center py-10 text-gray-600">
+          <i class="fas fa-users text-4xl mb-3 block"></i>
+          <p class="text-sm">No team members yet.</p>
+          <p class="text-xs mt-1">Use the form above to invite your first team member.</p>
+        </div>`
+      return
+    }
+    const roleColors = { admin:'bg-red-900/50 text-red-400 border-red-700', manager:'bg-blue-900/50 text-blue-400 border-blue-700', viewer:'bg-gray-800 text-gray-400 border-gray-700' }
+    const statusColors = { active:'text-green-400', invited:'text-yellow-400', suspended:'text-red-400' }
+    container.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-800">
+              <th class="text-left text-xs text-gray-500 uppercase tracking-wider pb-3 font-semibold">Member</th>
+              <th class="text-left text-xs text-gray-500 uppercase tracking-wider pb-3 font-semibold">Role</th>
+              <th class="text-left text-xs text-gray-500 uppercase tracking-wider pb-3 font-semibold">Status</th>
+              <th class="text-left text-xs text-gray-500 uppercase tracking-wider pb-3 font-semibold">Invited</th>
+              <th class="pb-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-800">
+            ${members.map(m => `
+              <tr class="hover:bg-gray-800/50 transition-colors">
+                <td class="py-3 pr-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-${m.avatar_color||'blue'}-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                      ${escHtml(m.avatar_initials||m.full_name.slice(0,2).toUpperCase())}
+                    </div>
+                    <div>
+                      <p class="font-semibold text-white">${escHtml(m.full_name)}</p>
+                      <p class="text-xs text-gray-500">${escHtml(m.email)}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3 pr-4">
+                  <select onchange="updateMemberRole(${m.id}, this.value)" class="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-gray-300">
+                    <option value="viewer"  ${m.role==='viewer'  ?'selected':''}>Viewer</option>
+                    <option value="manager" ${m.role==='manager' ?'selected':''}>Manager</option>
+                    <option value="admin"   ${m.role==='admin'   ?'selected':''}>Admin</option>
+                  </select>
+                </td>
+                <td class="py-3 pr-4">
+                  <span class="text-xs font-semibold ${statusColors[m.status]||'text-gray-400'} capitalize">${m.status}</span>
+                </td>
+                <td class="py-3 pr-4 text-xs text-gray-500">${fmtDate(m.invited_at)}</td>
+                <td class="py-3 text-right">
+                  <button onclick="removeMember(${m.id},'${escHtml(m.email)}')" class="text-gray-600 hover:text-red-400 transition-colors px-2">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`
+  } catch(e) {
+    container.innerHTML = `<p class="text-red-400 text-sm p-4">Failed to load members: ${e.message}</p>`
+  }
+}
+
+async function updateMemberRole(id, role) {
+  await api('PUT', `/settings/members/${id}`, { role })
+  showToast(`✓ Role updated to ${role}`,'success')
+}
+
+async function removeMember(id, email) {
+  if (!confirm(`Remove ${email} from your team?`)) return
+  await api('DELETE', `/settings/members/${id}`)
+  showToast(`✓ ${email} removed`,'success')
+  loadMembersTable()
+}
+
+async function exportLeadsCSV() {
+  const leads = await api('GET', '/leads?limit=9999')
+  const rows = [
+    ['ID','Business','Industry','City','Phone','Email','Status','Source','Created'],
+    ...leads.map(l => [l.id, l.business_name, l.industry, l.city, l.phone||'', l.email||'', l.status, l.source||'', fmtDate(l.created_at)])
+  ]
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = `leads_${new Date().toISOString().slice(0,10)}.csv`; a.click()
+  URL.revokeObjectURL(url)
+  showToast(`✓ Exported ${leads.length} leads`,'success')
+}
+
+async function clearAllApiKeys() {
+  if (!confirm('This will clear all stored API keys.\n\nYou will need to re-enter them to restore functionality.\n\nContinue?')) return
+  const keys = ['openai_api_key','sendgrid_api_key','twilio_auth_token','lovable_api_key','stripe_secret_key','stripe_webhook_secret']
+  const payload = {}
+  keys.forEach(k => payload[k] = '')
+  await api('PUT', '/settings/builder', payload)
+  showToast('✓ All API keys cleared','success')
+  renderSettings()
+}
+
+// ============================================================================
+// PROFILE PAGE — user info, Google auth, team overview
+// ============================================================================
+async function renderProfile() {
+  setContent(`<div class="flex items-center justify-center h-48"><div class="spinner"></div></div>`)
+  try {
+    const [profile, members] = await Promise.all([
+      api('GET', '/settings/profile'),
+      api('GET', '/settings/members'),
+    ])
+    _renderProfileUI(profile, members)
+  } catch(e) {
+    setContent(`<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i>Failed to load profile: ${e.message}</div>`)
+  }
+}
+
+function _renderProfileUI(u, members) {
+  const colorMap = {
+    green:'from-green-400 to-emerald-600', blue:'from-blue-400 to-blue-600',
+    purple:'from-purple-400 to-purple-600', pink:'from-pink-400 to-rose-600',
+    orange:'from-orange-400 to-orange-600', red:'from-red-400 to-red-600',
+    yellow:'from-yellow-400 to-amber-500', teal:'from-teal-400 to-teal-600'
+  }
+  const grad = colorMap[u.avatar_color||'green'] || colorMap.green
+
+  setContent(`
+    <div class="space-y-6 max-w-4xl mx-auto">
+
+      <!-- Profile hero -->
+      <div class="card bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-violet-900/20 to-transparent pointer-events-none"></div>
+        <div class="relative flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6">
+          <!-- Avatar -->
+          <div class="flex flex-col items-center gap-3 flex-shrink-0">
+            <div class="w-28 h-28 rounded-full bg-gradient-to-br ${grad} flex items-center justify-center text-4xl font-black text-white shadow-2xl ring-4 ring-white/10">
+              ${u.google_picture
+                ? `<img src="${escHtml(u.google_picture)}" class="w-full h-full rounded-full object-cover" alt="avatar"/>`
+                : escHtml(u.avatar_initials||'YB')}
+            </div>
+            <button onclick="navigateTo('settings')" class="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+              <i class="fas fa-edit"></i> Edit Profile
+            </button>
+          </div>
+          <!-- Info -->
+          <div class="flex-1 text-center sm:text-left">
+            <h2 class="text-2xl font-black text-white">${escHtml(u.full_name||'Your Name')}</h2>
+            <p class="text-gray-400 text-base mt-0.5">${escHtml(u.business_name||'Your Business')}</p>
+            <div class="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/50 text-green-400 border border-green-700 capitalize">${escHtml(u.role||'admin')}</span>
+              ${u.google_email ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-900/50 text-blue-400 border border-blue-700"><i class="fab fa-google mr-1"></i>Google Connected</span>` : ''}
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-800 text-gray-400 border border-gray-700">${escHtml(u.timezone||'America/Chicago')}</span>
+            </div>
+            <div class="flex gap-4 mt-4 text-sm text-gray-400 flex-wrap justify-center sm:justify-start">
+              ${u.email ? `<span><i class="fas fa-envelope mr-1.5 text-gray-600"></i>${escHtml(u.email)}</span>` : ''}
+              ${u.phone ? `<span><i class="fas fa-phone mr-1.5 text-gray-600"></i>${escHtml(u.phone)}</span>` : ''}
+            </div>
+            ${u.bio ? `<p class="text-gray-400 text-sm mt-3 max-w-lg">${escHtml(u.bio)}</p>` : ''}
+          </div>
+          <!-- Quick actions -->
+          <div class="flex flex-col gap-2 flex-shrink-0">
+            <button onclick="navigateTo('settings')" class="btn-primary text-sm whitespace-nowrap">
+              <i class="fas fa-cog mr-1.5"></i> Open Settings
+            </button>
+            ${!u.google_email ? `
+              <button onclick="connectGoogle()" class="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-sm py-2 px-4 rounded-lg transition-all whitespace-nowrap">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+              </button>` : `
+              <button onclick="disconnectGoogle()" class="btn-secondary text-sm text-red-400 border-red-800 whitespace-nowrap">
+                <i class="fas fa-unlink mr-1.5"></i> Disconnect Google
+              </button>`}
+          </div>
+        </div>
+      </div>
+
+      <!-- Google account info -->
+      ${u.google_email ? `
+        <div class="card border border-blue-800/40 bg-blue-900/10 flex items-center gap-4 p-4">
+          ${u.google_picture ? `<img src="${escHtml(u.google_picture)}" class="w-12 h-12 rounded-full flex-shrink-0" alt="Google"/>` : '<i class="fab fa-google text-blue-400 text-2xl flex-shrink-0"></i>'}
+          <div>
+            <p class="font-semibold text-white text-sm">Signed in with Google</p>
+            <p class="text-xs text-gray-400">${escHtml(u.google_name||'')} · ${escHtml(u.google_email)}</p>
+          </div>
+          <button onclick="disconnectGoogle()" class="ml-auto text-xs text-red-400 hover:text-red-300 border border-red-800 rounded-lg px-3 py-1.5 transition-all">Disconnect</button>
+        </div>` : ''}
+
+      <!-- Edit form inline -->
+      <div class="card space-y-4">
+        <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-user-edit text-blue-400"></i> Quick Edit Profile</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Full Name</label>
+            <input id="prof-name" type="text" class="form-input w-full" value="${escHtml(u.full_name||'')}"/>
+          </div>
+          <div>
+            <label class="form-label">Business Name</label>
+            <input id="prof-biz" type="text" class="form-input w-full" value="${escHtml(u.business_name||'')}"/>
+          </div>
+          <div>
+            <label class="form-label">Email</label>
+            <input id="prof-email" type="email" class="form-input w-full" value="${escHtml(u.email||'')}"/>
+          </div>
+          <div>
+            <label class="form-label">Phone</label>
+            <input id="prof-phone" type="tel" class="form-input w-full" value="${escHtml(u.phone||'')}"/>
+          </div>
+          <div>
+            <label class="form-label">Timezone</label>
+            <select id="prof-tz" class="form-input w-full">
+              ${['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Anchorage','Pacific/Honolulu','America/Phoenix'].map(tz=>
+                `<option value="${tz}" ${(u.timezone||'America/Chicago')===tz?'selected':''}>${tz.replace('_',' ')}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Avatar Color</label>
+            <div class="flex gap-2 mt-1 flex-wrap">
+              ${['green','blue','purple','pink','orange','red','yellow','teal'].map(c=>`
+                <button onclick="setAvatarColor('${c}')" title="${c}"
+                  class="w-7 h-7 rounded-full bg-${c}-500 hover:scale-110 transition-transform ring-2 ring-offset-2 ring-offset-gray-900 ${(u.avatar_color||'green')===c?'ring-white':'ring-transparent'}">
+                </button>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Bio</label>
+          <textarea id="prof-bio" class="form-input w-full h-20 resize-none" placeholder="Brief description...">${escHtml(u.bio||'')}</textarea>
+        </div>
+        <div class="flex gap-3 pt-2 border-t border-gray-800">
+          <button onclick="saveProfile()" class="btn-primary"><i class="fas fa-save mr-1.5"></i> Save Changes</button>
+          <button onclick="navigateTo('settings')" class="btn-secondary"><i class="fas fa-cog mr-1.5"></i> Full Settings</button>
+        </div>
+      </div>
+
+      <!-- Team members -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-users text-purple-400"></i> Team Members
+            <span class="ml-1 text-xs bg-gray-700 text-gray-300 rounded-full px-2 py-0.5">${members.length}</span>
+          </h3>
+          <button onclick="navigateTo('settings');settingsTab='members';renderSettings()" class="btn-secondary btn-sm">
+            <i class="fas fa-user-plus mr-1"></i> Manage Team
+          </button>
+        </div>
+        ${members.length === 0 ? `
+          <div class="text-center py-8 text-gray-600">
+            <i class="fas fa-user-friends text-4xl mb-3 block"></i>
+            <p class="text-sm">No team members yet.</p>
+            <button onclick="navigateTo('settings');settingsTab='members';renderSettings()" class="text-violet-400 text-xs hover:text-violet-300 mt-2 inline-flex items-center gap-1">
+              <i class="fas fa-plus"></i> Invite your first team member
+            </button>
+          </div>` : `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${members.map(m => `
+              <div class="flex items-center gap-3 bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-${m.avatar_color||'blue'}-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                  ${escHtml(m.avatar_initials || m.full_name.slice(0,2).toUpperCase())}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-white truncate">${escHtml(m.full_name)}</p>
+                  <p class="text-xs text-gray-500 truncate">${escHtml(m.email)}</p>
+                  <span class="text-xs capitalize ${m.status==='active'?'text-green-400':m.status==='invited'?'text-yellow-400':'text-red-400'}">${m.status}</span>
+                  <span class="text-xs text-gray-600 ml-2">· ${m.role}</span>
+                </div>
+              </div>`).join('')}
+          </div>`}
+      </div>
+
+    </div>
+  `)
+}
+
 // ===== INIT =====
 initSidebar()
 navigateTo('dashboard')
+refreshSidebarProfile()
 
 // ===== ACTIVITY TIMELINE (NEW) =====
 async function renderActivity() {

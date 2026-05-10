@@ -10,6 +10,7 @@ import { activitiesRouter } from './routes/activities'
 import { prospectorRouter } from './routes/prospector'
 import { builderRouter } from './routes/builder'
 import paymentsRouter from './routes/payments'
+import { settingsRouter } from './routes/settings'
 
 type Bindings = {
   DB: D1Database
@@ -40,6 +41,7 @@ app.route('/api/activities', activitiesRouter)
 app.route('/api/prospector', prospectorRouter)
 app.route('/api/builder', builderRouter)
 app.route('/api/payments', paymentsRouter)
+app.route('/api/settings', settingsRouter)
 
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
@@ -1118,14 +1120,36 @@ app.get('*', (c) => {
       </button>
     </nav>
 
-    <!-- User -->
+    <!-- User / Settings bar -->
     <div class="border-t border-gray-800 overflow-hidden">
-      <div class="sidebar-user-expanded flex items-center gap-3 px-4 py-3">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">YB</div>
-        <div class="sidebar-label min-w-0 overflow-hidden">
-          <p class="text-sm font-medium text-white truncate whitespace-nowrap">Your Business</p>
-          <p class="text-xs text-gray-500 truncate whitespace-nowrap">Admin</p>
+      <!-- Expanded state -->
+      <div class="sidebar-user-expanded flex items-center gap-2 px-3 py-3">
+        <!-- Avatar → Profile -->
+        <button onclick="navigateTo('profile')" id="sidebar-avatar-btn"
+          title="Your Profile"
+          class="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0 hover:ring-2 hover:ring-green-400 hover:ring-offset-2 hover:ring-offset-gray-900 transition-all cursor-pointer"
+          id="sidebar-user-avatar">YB</button>
+        <!-- Name + role -->
+        <div class="sidebar-label min-w-0 overflow-hidden flex-1 cursor-pointer" onclick="navigateTo('profile')">
+          <p id="sidebar-user-name" class="text-sm font-medium text-white truncate whitespace-nowrap">Your Business</p>
+          <p id="sidebar-user-role" class="text-xs text-gray-500 truncate whitespace-nowrap">Admin</p>
         </div>
+        <!-- Settings cog -->
+        <button onclick="navigateTo('settings')" id="nav-settings"
+          title="Settings"
+          class="sidebar-label flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all">
+          <i class="fas fa-cog text-sm"></i>
+        </button>
+      </div>
+      <!-- Collapsed state: show avatar only -->
+      <div class="sidebar-collapsed-divider hidden flex-col items-center gap-2 py-3">
+        <button onclick="navigateTo('profile')" title="Profile"
+          class="w-9 h-9 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white hover:ring-2 hover:ring-green-400 transition-all"
+          id="sidebar-user-avatar-sm">YB</button>
+        <button onclick="navigateTo('settings')" title="Settings"
+          class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all">
+          <i class="fas fa-cog text-sm"></i>
+        </button>
       </div>
     </div>
   </aside>
