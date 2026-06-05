@@ -1490,6 +1490,823 @@ app.get('/crm', (c) => {
 </html>`)
 })
 
+// ── Begyn.ai Landing Page ─────────────────────────────────────────────────────
+app.get('/', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Begyn.ai — AI Voice Agents for Law Firms</title>
+  <meta name="description" content="AI voice agents that qualify leads, book consultations, and handle after-hours calls — built specifically for law firms."/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --purple: #7c3aed; --purple-light: #8b5cf6; --cyan: #06b6d4; --cyan-light: #22d3ee; }
+    body { background: #030712; color: #f3f4f6; font-family: ui-sans-serif,system-ui,-apple-system,sans-serif; }
+    .grad-purple { background: linear-gradient(135deg,#7c3aed,#8b5cf6); }
+    .grad-text-purple { background: linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .grad-text-hero { background: linear-gradient(135deg,#f8fafc,#a78bfa,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .card-dark { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; opacity:0.4; }
+    .orb-purple { background:#7c3aed; }
+    .orb-cyan { background:#06b6d4; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    @keyframes pulse-ring { 0%{transform:scale(0.95);opacity:1} 70%{transform:scale(1.1);opacity:0.3} 100%{transform:scale(0.95);opacity:0} }
+    @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .float-anim { animation:float 6s ease-in-out infinite; }
+    .pulse-ring { animation:pulse-ring 2s ease-out infinite; }
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
+    #mobile-menu { display:none; }
+    #mobile-menu.open { display:block; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/60">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg grad-purple flex items-center justify-center shadow-lg shadow-purple-900/40">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
+          </svg>
+        </div>
+        <span class="font-black text-lg grad-text-purple">Begyn.ai</span>
+      </a>
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+        <a href="#how-it-works" class="text-sm text-gray-400 hover:text-white transition-colors">How It Works</a>
+        <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+        <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+      </div>
+      <!-- CTA -->
+      <div class="hidden md:flex items-center gap-3">
+        <a href="#cta" class="grad-purple text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/30 hover:opacity-90 transition-opacity">Book a Demo</a>
+      </div>
+      <!-- Mobile hamburger -->
+      <button onclick="document.getElementById('mobile-menu').classList.toggle('open')" class="md:hidden text-gray-400 hover:text-white p-2">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="md:hidden border-t border-gray-800 bg-gray-950 px-4 py-4 space-y-3">
+    <a href="#features" class="block text-gray-300 hover:text-white py-2">Features</a>
+    <a href="#how-it-works" class="block text-gray-300 hover:text-white py-2">How It Works</a>
+    <a href="#pricing" class="block text-gray-300 hover:text-white py-2">Pricing</a>
+    <a href="/blog" class="block text-gray-300 hover:text-white py-2">Blog</a>
+    <a href="#cta" class="block grad-purple text-white text-sm font-semibold px-5 py-3 rounded-xl text-center mt-2">Book a Demo</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="relative overflow-hidden min-h-screen flex items-center">
+  <!-- Background orbs -->
+  <div class="orb orb-purple w-[600px] h-[600px] top-[-200px] left-[-200px]"></div>
+  <div class="orb orb-cyan w-[400px] h-[400px] bottom-[-100px] right-[-100px]"></div>
+  <!-- Grid overlay -->
+  <div class="absolute inset-0 opacity-[0.03]" style="background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:60px 60px"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+      <div>
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-purple-900/30 border border-purple-700/40 text-purple-300 text-xs font-bold px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
+          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse inline-block"></span>
+          Now serving 200+ law firms
+        </div>
+        <!-- H1 -->
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] mb-6">
+          <span class="text-white">Never Miss</span><br/>
+          <span class="text-white">Another</span><br/>
+          <span class="grad-text-hero">Client Intake</span>
+        </h1>
+        <p class="text-lg sm:text-xl text-gray-400 leading-relaxed mb-10 max-w-xl">
+          AI voice agents that qualify leads, book consultations, and handle after-hours calls — built specifically for law firms.
+        </p>
+        <!-- CTAs -->
+        <div class="flex flex-wrap gap-4">
+          <a href="#cta" class="inline-flex items-center gap-2 grad-purple text-white font-bold px-7 py-4 rounded-2xl shadow-xl shadow-purple-900/40 hover:opacity-90 transition-opacity text-base">
+            Book Free Demo
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#features" class="inline-flex items-center gap-2 bg-transparent border-2 border-gray-700 hover:border-purple-500 text-white font-bold px-7 py-4 rounded-2xl transition-colors text-base">
+            See It In Action
+          </a>
+        </div>
+      </div>
+      <!-- Hero Visual -->
+      <div class="hidden lg:flex items-center justify-center relative">
+        <div class="float-anim relative w-80 h-80">
+          <!-- Outer pulse ring -->
+          <div class="absolute inset-0 rounded-full border-2 border-purple-500/30 pulse-ring"></div>
+          <!-- Glow rings -->
+          <div class="absolute inset-4 rounded-full border border-cyan-500/20"></div>
+          <div class="absolute inset-8 rounded-full border border-purple-500/30"></div>
+          <!-- Center orb -->
+          <div class="absolute inset-12 rounded-full grad-purple flex items-center justify-center shadow-2xl shadow-purple-900/60">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
+              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
+            </svg>
+          </div>
+          <!-- Orbit dots -->
+          <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/60"></div>
+          <div class="absolute bottom-4 left-4 w-2.5 h-2.5 bg-purple-400 rounded-full shadow-lg shadow-purple-400/60"></div>
+          <div class="absolute right-2 top-1/3 w-2 h-2 bg-pink-400 rounded-full shadow-lg shadow-pink-400/60"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TRUSTED BY ═══ -->
+<section class="border-y border-gray-800/60 bg-gray-900/30 py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <p class="text-center text-xs font-semibold text-gray-600 uppercase tracking-widest mb-6">Trusted by leading law firms</p>
+    <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+      ${['Morrison & Reed LLP','Callahan Legal Group','Pacific Defense Attorneys','Westfield Family Law','Hargrove Trial Lawyers','Crawford IP Partners'].map(name =>
+        `<span class="text-gray-500 text-sm font-semibold bg-gray-800/50 border border-gray-700/40 px-4 py-2 rounded-full">${name}</span>`
+      ).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROBLEM SECTION ═══ -->
+<section class="py-24 relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[0.02]" style="background:radial-gradient(ellipse at center,#7c3aed,transparent 70%)"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">The Problem</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Cost of Missed Calls</h2>
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Every unanswered call is a potential client walking to your competitor.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      ${[
+        { stat: '62%', desc: 'of callers don\'t leave a voicemail when they reach an answering machine', color: 'from-red-900/20 to-red-950/10', border: 'border-red-800/30', text: 'text-red-400' },
+        { stat: '$3,800', desc: 'average lifetime value of a new legal client — lost with every missed intake call', color: 'from-orange-900/20 to-orange-950/10', border: 'border-orange-800/30', text: 'text-orange-400' },
+        { stat: '38%', desc: 'of calls to law firms go unanswered during evenings, weekends, and holidays', color: 'from-yellow-900/20 to-yellow-950/10', border: 'border-yellow-800/30', text: 'text-yellow-400' },
+      ].map(({ stat, desc, color, border, text }) => `
+      <div class="card-dark bg-gradient-to-br ${color} border ${border} p-8 text-center">
+        <div class="text-5xl font-black ${text} mb-4">${stat}</div>
+        <p class="text-gray-400 leading-relaxed">${desc}</p>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section id="features" class="py-24 bg-gray-900/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Features</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Everything Your Firm Needs</h2>
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto">One AI agent handles the entire client intake process, 24/7.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      ${[
+        { icon: '🕐', title: '24/7 Voice Intake', desc: 'Your AI agent answers every call, day or night. Never let a potential client reach voicemail again. Handles unlimited simultaneous calls during peak hours.', tag: 'Always On' },
+        { icon: '🎯', title: 'Intelligent Client Screening', desc: 'Asks the right intake questions for your practice area — personal injury, family law, criminal defense, or estate planning. Qualifies leads instantly before routing.', tag: 'AI-Powered' },
+        { icon: '⚡', title: 'Practice Management Integration', desc: 'Seamlessly connects with Clio, MyCase, and Filevine. New intake information flows directly into your existing case management workflow without manual data entry.', tag: 'Integrations' },
+        { icon: '📋', title: 'Real-Time Call Summaries', desc: 'Receive full transcripts, key information extracted, and sentiment analysis for every call. Know the urgency and case type before you even pick up the phone.', tag: 'Insights' },
+      ].map(({ icon, title, desc, tag }) => `
+      <div class="card-dark p-8 hover:border-purple-500/40 transition-colors group">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-900/50 to-cyan-900/30 border border-purple-700/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:border-purple-500/50 transition-colors">
+            ${icon}
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <h3 class="text-lg font-bold text-white">${title}</h3>
+              <span class="text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full">${tag}</span>
+            </div>
+            <p class="text-gray-400 leading-relaxed">${desc}</p>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section id="how-it-works" class="py-24 relative overflow-hidden">
+  <div class="orb orb-purple w-96 h-96 opacity-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <div class="text-center mb-16">
+      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">How It Works</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Live in 24 Hours</h2>
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Three simple steps from signup to capturing every client call.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+      <!-- Connecting line desktop -->
+      <div class="hidden md:block absolute top-10 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-purple-500 to-cyan-500 opacity-40"></div>
+      ${[
+        { num: '01', title: 'Tell Us About Your Practice', desc: 'A 15-minute onboarding session where we learn your practice areas, intake questions, and routing preferences. No technical setup required.', color: 'text-purple-400', bg: 'from-purple-900/30 to-purple-950/10', border: 'border-purple-700/30' },
+        { num: '02', title: 'We Configure Your AI Agent', desc: 'Our team trains your custom voice agent on your firm\'s specific needs, scripts it for your practice area, and integrates it with your systems.', color: 'text-cyan-400', bg: 'from-cyan-900/30 to-cyan-950/10', border: 'border-cyan-700/30' },
+        { num: '03', title: 'Capture Every Lead Automatically', desc: 'Forward your main number and every call — day or night — is handled, qualified, and summarized. You only spend time on clients worth your attention.', color: 'text-purple-400', bg: 'from-purple-900/30 to-purple-950/10', border: 'border-purple-700/30' },
+      ].map(({ num, title, desc, color, bg, border }) => `
+      <div class="card-dark bg-gradient-to-br ${bg} border ${border} p-8 text-center relative z-10">
+        <div class="text-5xl font-black ${color} opacity-30 mb-4">${num}</div>
+        <h3 class="text-xl font-bold text-white mb-3">${title}</h3>
+        <p class="text-gray-400 leading-relaxed">${desc}</p>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="py-24 bg-gray-900/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Testimonials</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Lawyers Love Begyn.ai</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      ${[
+        { name: 'Sarah Morrison', firm: 'Morrison & Reed LLP', role: 'Managing Partner', quote: 'We were missing nearly 40% of our after-hours calls. Begyn.ai captured 23 new clients in the first 60 days alone. The ROI was obvious within the first week.' },
+        { name: 'James Callahan', firm: 'Callahan Legal Group', role: 'Senior Partner', quote: 'The intake quality is remarkable. Clients are pre-screened, their information is accurate, and by the time I call back they already feel like they\'ve been heard. My team is freed up to focus on cases.' },
+        { name: 'Diana Westfield', firm: 'Westfield Family Law', role: 'Founder', quote: 'Family law clients call in emotional crises — often at midnight. Begyn.ai handles those calls with genuine warmth and captures everything I need. It\'s like having a compassionate receptionist available 24/7.' },
+      ].map(({ name, firm, role, quote }) => `
+      <div class="card-dark p-7">
+        <div class="flex gap-1 mb-4">
+          ${'★'.repeat(5).split('').map(() => '<span class="text-yellow-400">★</span>').join('')}
+        </div>
+        <p class="text-gray-300 leading-relaxed mb-6 italic">"${quote}"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            ${name.split(' ').map((n: string) => n[0]).join('')}
+          </div>
+          <div>
+            <p class="font-semibold text-white text-sm">${name}</p>
+            <p class="text-xs text-gray-500">${role} · ${firm}</p>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section id="pricing" class="py-24 relative overflow-hidden">
+  <div class="orb orb-cyan w-96 h-96 opacity-15 bottom-0 right-0"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <div class="text-center mb-16">
+      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">Pricing</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Simple, Transparent Pricing</h2>
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto">No setup fees, no long-term contracts. Cancel anytime.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <!-- Starter -->
+      <div class="card-dark p-8">
+        <div class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Starter</div>
+        <div class="text-4xl font-black text-white mb-1">$299<span class="text-xl font-normal text-gray-500">/mo</span></div>
+        <p class="text-gray-500 text-sm mb-6">For solo practitioners & small firms</p>
+        <ul class="space-y-3 text-sm text-gray-300 mb-8">
+          ${['Up to 150 calls/month','Basic intake screening','Email summaries','Standard voice options','Email support'].map(f => `<li class="flex gap-2"><span class="text-green-400 mt-0.5">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#cta" class="block text-center bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Get Started</a>
+      </div>
+      <!-- Growth (Most Popular) -->
+      <div class="relative rounded-2xl p-0.5 bg-gradient-to-br from-purple-500 to-cyan-500 shadow-2xl shadow-purple-900/30">
+        <div class="bg-gray-900 rounded-2xl p-8 h-full">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-semibold text-purple-300 uppercase tracking-wide">Growth</div>
+            <span class="text-xs bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
+          </div>
+          <div class="text-4xl font-black text-white mb-1">$599<span class="text-xl font-normal text-gray-500">/mo</span></div>
+          <p class="text-gray-500 text-sm mb-6">For growing multi-attorney firms</p>
+          <ul class="space-y-3 text-sm text-gray-300 mb-8">
+            ${['Unlimited calls','Practice management CMS integration','Real-time call transcripts','SMS summaries to attorneys','Priority phone support','Custom voice & persona','Advanced call routing'].map(f => `<li class="flex gap-2"><span class="text-purple-400 mt-0.5">✓</span>${f}</li>`).join('')}
+          </ul>
+          <a href="#cta" class="block text-center grad-purple text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">Get Started</a>
+        </div>
+      </div>
+      <!-- Enterprise -->
+      <div class="card-dark p-8">
+        <div class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Enterprise</div>
+        <div class="text-4xl font-black text-white mb-1">Custom</div>
+        <p class="text-gray-500 text-sm mb-6">For large firms & multi-location</p>
+        <ul class="space-y-3 text-sm text-gray-300 mb-8">
+          ${['Everything in Growth','Multi-location support','White-label options','Full API access','Dedicated account manager','Custom integrations','SLA guarantee'].map(f => `<li class="flex gap-2"><span class="text-cyan-400 mt-0.5">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#cta" class="block text-center bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BLOG PREVIEW ═══ -->
+<section id="blog" class="py-24 bg-gray-900/40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Blog</p>
+        <h2 class="text-4xl font-black text-white">Latest from the Blog</h2>
+        <p class="text-gray-400 mt-2">AI insights for legal professionals</p>
+      </div>
+      <a href="/blog" class="hidden sm:flex items-center gap-2 text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+        View All Posts
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div id="blog-posts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Placeholder cards shown while loading -->
+      ${[1,2,3].map(() => `
+      <div class="card-dark p-6 animate-pulse">
+        <div class="w-16 h-4 bg-gray-700 rounded mb-4"></div>
+        <div class="h-6 bg-gray-700 rounded mb-2"></div>
+        <div class="h-4 bg-gray-800 rounded mb-1"></div>
+        <div class="h-4 bg-gray-800 rounded w-3/4 mb-6"></div>
+        <div class="h-4 bg-gray-700 rounded w-1/2"></div>
+      </div>`).join('')}
+    </div>
+    <div class="sm:hidden text-center mt-8">
+      <a href="/blog" class="text-purple-400 hover:text-purple-300 font-semibold">View All Posts →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA SECTION ═══ -->
+<section id="cta" class="py-24 relative overflow-hidden">
+  <div class="orb orb-purple w-[500px] h-[500px] opacity-25 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+    <div class="card-dark border-purple-700/30 p-12 sm:p-16 bg-gradient-to-br from-purple-900/20 to-cyan-900/10">
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Ready to Capture Every Lead?</h2>
+      <p class="text-xl text-gray-400 mb-10">Join 200+ law firms already converting more callers into clients.</p>
+      <form onsubmit="handleDemoRequest(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input
+          id="demo-email"
+          type="email"
+          required
+          placeholder="your@lawfirm.com"
+          class="flex-1 bg-gray-900 border border-gray-700 focus:border-purple-500 text-white placeholder-gray-500 px-5 py-4 rounded-xl outline-none transition-colors"
+        />
+        <button type="submit" class="grad-purple text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-purple-900/30 hover:opacity-90 transition-opacity whitespace-nowrap">
+          Book Free Demo
+        </button>
+      </form>
+      <p class="text-gray-600 text-sm mt-4">No credit card required. Setup in 24 hours.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="border-t border-gray-800 py-12 bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg grad-purple flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
+          </svg>
+        </div>
+        <span class="font-black grad-text-purple">Begyn.ai</span>
+        <span class="text-gray-600 text-sm ml-2">AI Voice Agents for Law Firms</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm">
+        <a href="#features" class="text-gray-500 hover:text-white transition-colors">Features</a>
+        <a href="#pricing" class="text-gray-500 hover:text-white transition-colors">Pricing</a>
+        <a href="/blog" class="text-gray-500 hover:text-white transition-colors">Blog</a>
+        <a href="#cta" class="text-gray-500 hover:text-white transition-colors">Contact</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="#" class="text-gray-500 hover:text-white transition-colors" aria-label="Twitter">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="#" class="text-gray-500 hover:text-white transition-colors" aria-label="LinkedIn">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="mt-8 pt-6 border-t border-gray-800/60 text-center text-gray-600 text-sm">
+      © 2025 Begyn.ai. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<script>
+// Load blog posts
+async function loadBlogPosts() {
+  const grid = document.getElementById('blog-posts-grid')
+  if (!grid) return
+  try {
+    const res = await fetch('/api/blog?limit=3')
+    if (!res.ok) throw new Error('fetch failed')
+    const data = await res.json()
+    const posts = data.posts || []
+    if (posts.length === 0) {
+      grid.innerHTML = \`
+        <div class="col-span-3 text-center py-12 text-gray-500">
+          <p class="text-lg mb-2">No blog posts yet</p>
+          <p class="text-sm">Check back soon for AI insights for legal professionals.</p>
+        </div>\`
+      return
+    }
+    grid.innerHTML = posts.map((p) => \`
+      <a href="/blog/\${p.slug}" class="card-dark p-6 hover:border-purple-500/40 transition-colors block group">
+        <span class="inline-block text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full mb-4">\${p.category || 'AI News'}</span>
+        <h3 class="text-base font-bold text-white mb-2 group-hover:text-purple-300 transition-colors line-clamp-2">\${p.title}</h3>
+        <p class="text-gray-500 text-sm leading-relaxed mb-5 line-clamp-3">\${p.excerpt || ''}</p>
+        <div class="flex items-center justify-between text-xs text-gray-600">
+          <span>\${p.author || 'Begyn.ai Team'}</span>
+          <span>\${new Date(p.published_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</span>
+        </div>
+      </a>\`).join('')
+  } catch (e) {
+    // keep placeholder cards on error
+  }
+}
+
+async function handleDemoRequest(e) {
+  e.preventDefault()
+  const email = document.getElementById('demo-email').value
+  const btn = e.target.querySelector('button[type=submit]')
+  btn.textContent = 'Sending...'
+  btn.disabled = true
+  // Simulate sending (in production connect to your CRM/email system)
+  await new Promise(r => setTimeout(r, 1200))
+  btn.textContent = 'Request Sent!'
+  btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'
+  document.getElementById('demo-email').value = ''
+  setTimeout(() => { btn.textContent = 'Book Free Demo'; btn.disabled = false; btn.style.background = ''; }, 3000)
+}
+
+loadBlogPosts()
+</script>
+</body>
+</html>`)
+})
+
+// ── Blog listing page ─────────────────────────────────────────────────────────
+app.get('/blog', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blog — Begyn.ai | AI Insights for Legal Professionals</title>
+  <meta name="description" content="Expert insights on AI voice agents, legal technology, and how law firms can automate client intake."/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#030712; color:#f3f4f6; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
+    .grad-purple { background:linear-gradient(135deg,#7c3aed,#8b5cf6); }
+    .grad-text-purple { background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .card-dark { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
+  </style>
+</head>
+<body class="min-h-screen">
+<!-- NAV (same as landing) -->
+<nav class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/60">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg grad-purple flex items-center justify-center shadow-lg shadow-purple-900/40">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
+          </svg>
+        </div>
+        <span class="font-black text-lg grad-text-purple">Begyn.ai</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="/#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+        <a href="/#how-it-works" class="text-sm text-gray-400 hover:text-white transition-colors">How It Works</a>
+        <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+        <a href="/blog" class="text-sm text-white font-semibold">Blog</a>
+      </div>
+      <a href="/#cta" class="grad-purple text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/30 hover:opacity-90 transition-opacity">Book a Demo</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Blog Hero -->
+<section class="relative overflow-hidden py-20 border-b border-gray-800/60">
+  <div class="absolute inset-0 opacity-[0.03]" style="background:radial-gradient(ellipse at 30% 50%,#7c3aed,transparent 60%)"></div>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+    <div class="inline-flex items-center gap-2 bg-purple-900/30 border border-purple-700/40 text-purple-300 text-xs font-bold px-4 py-2 rounded-full mb-6">
+      AI Insights for Legal Professionals
+    </div>
+    <h1 class="text-5xl sm:text-6xl font-black text-white mb-4">The <span class="grad-text-purple">Begyn.ai</span> Blog</h1>
+    <p class="text-xl text-gray-400 max-w-2xl mx-auto">Stay ahead of AI adoption in law. Practical insights for forward-thinking legal professionals.</p>
+  </div>
+</section>
+
+<!-- Category tabs + posts -->
+<section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Category Filter -->
+  <div id="category-tabs" class="flex flex-wrap gap-2 mb-10">
+    <button onclick="filterPosts('')" id="cat-all" class="px-4 py-2 rounded-full text-sm font-semibold bg-purple-600 text-white transition-all">All</button>
+    <button onclick="filterPosts('AI News')" id="cat-ai-news" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">AI News</button>
+    <button onclick="filterPosts('Legal Technology')" id="cat-legal-tech" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Legal Technology</button>
+    <button onclick="filterPosts('Client Intake')" id="cat-client-intake" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Client Intake</button>
+    <button onclick="filterPosts('Law Firm Tips')" id="cat-tips" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Law Firm Tips</button>
+  </div>
+
+  <!-- Posts Grid -->
+  <div id="posts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-64"></div>
+
+  <!-- Pagination -->
+  <div id="pagination" class="flex items-center justify-center gap-3 mt-12 hidden">
+    <button id="prev-btn" onclick="changePage(-1)" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-40">← Prev</button>
+    <span id="page-info" class="text-gray-400 text-sm"></span>
+    <button id="next-btn" onclick="changePage(1)" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-40">Next →</button>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-16 border-t border-gray-800">
+  <div class="max-w-3xl mx-auto px-4 text-center">
+    <h2 class="text-3xl font-black text-white mb-4">Ready to Transform Your Intake?</h2>
+    <p class="text-gray-400 mb-8">Join 200+ law firms capturing more clients with AI.</p>
+    <a href="/#cta" class="inline-flex items-center gap-2 grad-purple text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-purple-900/30 hover:opacity-90 transition-opacity">
+      Book Free Demo →
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-gray-800 py-8 bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2"><div class="w-6 h-6 rounded-lg grad-purple flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/></svg></div><span class="font-black text-sm grad-text-purple">Begyn.ai</span></a>
+    <div class="flex gap-6 text-sm text-gray-500">
+      <a href="/#features" class="hover:text-white transition-colors">Features</a>
+      <a href="/#pricing" class="hover:text-white transition-colors">Pricing</a>
+      <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+      <a href="/#cta" class="hover:text-white transition-colors">Contact</a>
+    </div>
+    <p class="text-gray-700 text-sm">© 2025 Begyn.ai</p>
+  </div>
+</footer>
+
+<script>
+let currentPage = 1
+let currentCategory = ''
+let totalPages = 1
+
+async function loadPosts(page, category) {
+  const container = document.getElementById('posts-container')
+  container.innerHTML = [1,2,3,4,5,6].map(() => \`
+    <div class="card-dark p-6 animate-pulse">
+      <div class="w-20 h-4 bg-gray-700 rounded mb-4"></div>
+      <div class="h-6 bg-gray-700 rounded mb-2"></div>
+      <div class="h-4 bg-gray-800 rounded mb-1"></div>
+      <div class="h-4 bg-gray-800 rounded w-3/4 mb-6"></div>
+      <div class="h-4 bg-gray-700 rounded w-1/2"></div>
+    </div>\`).join('')
+
+  let url = \`/api/blog?page=\${page}&limit=9\`
+  if (category) url += \`&category=\${encodeURIComponent(category)}\`
+
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+    const posts = data.posts || []
+    totalPages = data.pagination?.pages || 1
+    currentPage = data.pagination?.page || 1
+
+    if (posts.length === 0) {
+      container.innerHTML = \`<div class="col-span-3 py-16 text-center"><p class="text-gray-500 text-lg">No posts found.</p><a href="/blog" onclick="filterPosts('')" class="text-purple-400 hover:text-purple-300 mt-3 inline-block">View all posts</a></div>\`
+    } else {
+      container.innerHTML = posts.map(p => \`
+        <a href="/blog/\${p.slug}" class="card-dark p-6 hover:border-purple-500/40 transition-colors block group">
+          <span class="inline-block text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full mb-4">\${p.category || 'AI News'}</span>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-purple-300 transition-colors line-clamp-2">\${p.title}</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-5 line-clamp-3">\${p.excerpt || ''}</p>
+          <div class="flex items-center justify-between text-xs text-gray-600">
+            <span>\${p.author || 'Begyn.ai Team'}</span>
+            <span>\${new Date(p.published_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+          </div>
+        </a>\`).join('')
+    }
+
+    // Pagination
+    const pag = document.getElementById('pagination')
+    const pageInfo = document.getElementById('page-info')
+    if (totalPages > 1) {
+      pag.classList.remove('hidden')
+      pageInfo.textContent = \`Page \${currentPage} of \${totalPages}\`
+      document.getElementById('prev-btn').disabled = currentPage <= 1
+      document.getElementById('next-btn').disabled = currentPage >= totalPages
+    } else {
+      pag.classList.add('hidden')
+    }
+  } catch (e) {
+    container.innerHTML = '<div class="col-span-3 py-16 text-center text-gray-500">Failed to load posts.</div>'
+  }
+}
+
+function filterPosts(cat) {
+  currentCategory = cat
+  currentPage = 1
+  // Update tab styles
+  document.querySelectorAll('#category-tabs button').forEach(btn => {
+    btn.className = 'px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all'
+  })
+  const activeId = cat === '' ? 'cat-all' : 'cat-' + cat.toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g,'')
+  const activeBtn = document.getElementById(activeId)
+  if (activeBtn) activeBtn.className = 'px-4 py-2 rounded-full text-sm font-semibold bg-purple-600 text-white transition-all'
+  loadPosts(currentPage, currentCategory)
+}
+
+function changePage(delta) {
+  const newPage = currentPage + delta
+  if (newPage < 1 || newPage > totalPages) return
+  loadPosts(newPage, currentCategory)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+loadPosts(1, '')
+</script>
+</body>
+</html>`)
+})
+
+// ── Individual blog post page ──────────────────────────────────────────────────
+app.get('/blog/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="page-title">Loading... — Begyn.ai Blog</title>
+  <meta id="page-desc" name="description" content=""/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#030712; color:#f3f4f6; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
+    .grad-purple { background:linear-gradient(135deg,#7c3aed,#8b5cf6); }
+    .grad-text-purple { background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .card-dark { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
+    .prose-content h2 { font-size:1.5rem; font-weight:800; color:#f9fafb; margin:2rem 0 1rem; border-bottom:1px solid #1f2937; padding-bottom:0.5rem; }
+    .prose-content p { color:#9ca3af; line-height:1.8; margin-bottom:1.25rem; }
+    .prose-content ul { list-style:disc; margin-left:1.5rem; margin-bottom:1.25rem; color:#9ca3af; line-height:1.8; }
+    .prose-content ul li { margin-bottom:0.5rem; }
+    .prose-content strong { color:#f3f4f6; font-weight:700; }
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
+  </style>
+</head>
+<body class="min-h-screen">
+<!-- NAV -->
+<nav class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/60">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg grad-purple flex items-center justify-center shadow-lg shadow-purple-900/40">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
+          </svg>
+        </div>
+        <span class="font-black text-lg grad-text-purple">Begyn.ai</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="/#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+        <a href="/#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+        <a href="/blog" class="text-sm text-purple-400 font-semibold">Blog</a>
+      </div>
+      <a href="/#cta" class="grad-purple text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">Book a Demo</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Back link -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+  <a href="/blog" class="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to Blog
+  </a>
+</div>
+
+<!-- Article content -->
+<div id="post-loading" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <!-- Loading skeleton -->
+  <div class="max-w-3xl animate-pulse">
+    <div class="w-24 h-5 bg-gray-700 rounded mb-6"></div>
+    <div class="h-10 bg-gray-700 rounded mb-3"></div>
+    <div class="h-10 bg-gray-700 rounded w-4/5 mb-8"></div>
+    <div class="flex gap-4 mb-10">
+      <div class="w-32 h-4 bg-gray-800 rounded"></div>
+      <div class="w-24 h-4 bg-gray-800 rounded"></div>
+    </div>
+    ${[1,2,3,4,5].map(() => '<div class="h-4 bg-gray-800 rounded mb-3"></div>').join('')}
+  </div>
+</div>
+
+<div id="post-content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <!-- Main article -->
+    <main class="lg:col-span-2">
+      <div id="article-header" class="mb-8"></div>
+      <div id="article-body" class="card-dark p-8 sm:p-10 prose-content"></div>
+    </main>
+    <!-- Sidebar -->
+    <aside class="space-y-6">
+      <!-- CTA -->
+      <div class="card-dark p-6 bg-gradient-to-br from-purple-900/20 to-cyan-900/10 border-purple-700/30">
+        <h3 class="font-bold text-white mb-2">Never miss a client call</h3>
+        <p class="text-sm text-gray-400 mb-4">Begyn.ai handles every intake call, 24/7 — so you never lose a lead again.</p>
+        <a href="/#cta" class="block text-center grad-purple text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">Book Free Demo</a>
+      </div>
+      <!-- Related posts -->
+      <div id="related-posts"></div>
+    </aside>
+  </div>
+</div>
+
+<div id="post-error" class="hidden max-w-3xl mx-auto px-4 py-24 text-center">
+  <div class="text-6xl mb-4">📭</div>
+  <h2 class="text-2xl font-bold text-white mb-2">Post Not Found</h2>
+  <p class="text-gray-400 mb-6">This article may have been moved or deleted.</p>
+  <a href="/blog" class="inline-flex items-center gap-2 grad-purple text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Browse All Posts</a>
+</div>
+
+<!-- Footer -->
+<footer class="border-t border-gray-800 py-8 bg-gray-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2"><span class="font-black text-sm grad-text-purple">Begyn.ai</span></a>
+    <div class="flex gap-6 text-sm text-gray-500">
+      <a href="/#features" class="hover:text-white transition-colors">Features</a>
+      <a href="/#pricing" class="hover:text-white transition-colors">Pricing</a>
+      <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+    </div>
+    <p class="text-gray-700 text-sm">© 2025 Begyn.ai</p>
+  </div>
+</footer>
+
+<script>
+const SLUG = ${JSON.stringify(slug)}
+
+async function loadPost() {
+  try {
+    const res = await fetch('/api/blog/' + SLUG)
+    if (!res.ok) throw new Error('not found')
+    const data = await res.json()
+    const post = data.post
+    const related = data.related || []
+
+    // Update page metadata
+    document.getElementById('page-title').textContent = (post.seo_title || post.title) + ' — Begyn.ai Blog'
+    document.getElementById('page-desc').content = post.seo_description || post.excerpt || ''
+
+    // Build article header
+    const pubDate = new Date(post.published_at).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})
+    const tags = (post.tags || []).map(t => \`<span class="text-xs bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full">\${t}</span>\`).join('')
+    document.getElementById('article-header').innerHTML = \`
+      <span class="inline-block text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-3 py-1 rounded-full mb-4">\${post.category || 'AI News'}</span>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-6">\${post.title}</h1>
+      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
+        <span class="flex items-center gap-1.5">
+          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">\${(post.author||'B')[0]}</div>
+          \${post.author || 'Begyn.ai Team'}
+        </span>
+        <span>\${pubDate}</span>
+        <span>\${post.views || 0} views</span>
+      </div>
+      \${tags ? \`<div class="flex flex-wrap gap-2 mt-3">\${tags}</div>\` : ''}
+    \`
+
+    // Article body
+    document.getElementById('article-body').innerHTML = post.content
+
+    // Related posts
+    if (related.length > 0) {
+      document.getElementById('related-posts').innerHTML = \`
+        <div class="card-dark p-5">
+          <h3 class="font-bold text-white mb-4 text-sm uppercase tracking-wide">Related Posts</h3>
+          <div class="space-y-4">
+            \${related.map(r => \`
+              <a href="/blog/\${r.slug}" class="block group">
+                <span class="text-xs text-purple-400">\${r.category || 'AI News'}</span>
+                <p class="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors leading-snug mt-0.5">\${r.title}</p>
+                <p class="text-xs text-gray-600 mt-1">\${new Date(r.published_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
+              </a>
+            \`).join('<div class="border-t border-gray-800"></div>')}
+          </div>
+        </div>\`
+    }
+
+    document.getElementById('post-loading').classList.add('hidden')
+    document.getElementById('post-content').classList.remove('hidden')
+  } catch (e) {
+    document.getElementById('post-loading').classList.add('hidden')
+    document.getElementById('post-error').classList.remove('hidden')
+  }
+}
+
+loadPost()
+</script>
+</body>
+</html>`)
+})
+
 // ── Cloudflare Cron Trigger (runs daily at 6am UTC) ─────────────────────────
 async function runScheduledProspecting(env: CronEnv) {
   // Check if enabled
@@ -1524,6 +2341,22 @@ async function runScheduledProspecting(env: CronEnv) {
       await app.fetch(buildReq, env)
     }
   } catch (_) { /* builder not configured — skip */ }
+
+  // Step 3: Auto-generate blog post if enabled and API key available
+  try {
+    const blogEnabled = await env.DB.prepare("SELECT value FROM blog_settings WHERE key='auto_post_enabled'").first() as any
+    if (blogEnabled?.value === '1') {
+      const anthropicKey = env.ANTHROPIC_API_KEY
+      const openaiKey = env.OPENAI_API_KEY
+      if (anthropicKey || openaiKey) {
+        const blogReq = new Request('https://localhost/api/blog/auto-generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+        await app.fetch(blogReq, env)
+      }
+    }
+  } catch (_) { /* blog not configured — skip */ }
 }
 
 export default {
