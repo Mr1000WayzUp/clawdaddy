@@ -11,6 +11,7 @@ import { prospectorRouter } from './routes/prospector'
 import { builderRouter } from './routes/builder'
 import paymentsRouter from './routes/payments'
 import { settingsRouter } from './routes/settings'
+import { blogRouter } from './routes/blog'
 
 type Bindings = {
   DB: D1Database
@@ -23,6 +24,8 @@ type Bindings = {
   STRIPE_SECRET_KEY?: string
   STRIPE_PUBLISHABLE_KEY?: string
   STRIPE_WEBHOOK_SECRET?: string
+  ANTHROPIC_API_KEY?: string
+  OPENAI_API_KEY?: string
 }
 
 type CronEnv = Bindings
@@ -42,6 +45,7 @@ app.route('/api/prospector', prospectorRouter)
 app.route('/api/builder', builderRouter)
 app.route('/api/payments', paymentsRouter)
 app.route('/api/settings', settingsRouter)
+app.route('/api/blog', blogRouter)
 
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
@@ -1015,8 +1019,8 @@ app.get('/tutorial', (c) => {
 </html>`)
 })
 
-// Main app - serve the SPA
-app.get('*', (c) => {
+// ── /crm — hidden route serving the legacy Google Money Drop CRM ─────────────
+app.get('/crm', (c) => {
   return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
