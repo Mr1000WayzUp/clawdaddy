@@ -7,8 +7,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "webapp-production",
-      "database_id": "local-db"
+      "database_name": "cruz-auto-production",
+      "database_id": "3ad2722d-db78-49e5-bf31-a2a61a6d3e8a"
     }
   ],
 }
