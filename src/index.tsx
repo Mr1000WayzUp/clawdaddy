@@ -1490,7 +1490,7 @@ app.get('/crm', (c) => {
 </html>`)
 })
 
-// ── Begyn.ai Landing Page ─────────────────────────────────────────────────────
+// ── Begyn.ai Landing Page — BI from Begyn ─────────────────────────────────────
 app.get('/', (c) => {
   return c.html(`<!DOCTYPE html>
 <html lang="en">
@@ -1501,354 +1501,439 @@ app.get('/', (c) => {
   <meta name="description" content="Begyn.ai is the AI-powered Business Intelligence platform for entrepreneurs. Voice agents, lead intelligence, automated analytics, and workflow automation — all in one."/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --bg: #030712;
-      --card: rgba(17,24,39,0.7);
-      --border: rgba(139,92,246,0.15);
-      --purple: #7c3aed;
-      --violet: #8b5cf6;
-      --fuchsia: #d946ef;
-      --cyan: #06b6d4;
-      --gold: #f59e0b;
-    }
-    body { background:#030712; color:#f1f5f9; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; overflow-x:hidden; }
-    .grad-primary { background:linear-gradient(135deg,#8b5cf6,#d946ef,#06b6d4); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
-    .grad-gold { background:linear-gradient(135deg,#f59e0b,#fbbf24); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
-    .grad-btn { background:linear-gradient(135deg,#7c3aed,#d946ef); }
-    .grad-cyan { background:linear-gradient(135deg,#06b6d4,#8b5cf6); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
-    .glass { background:rgba(17,24,39,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,0.18);border-radius:1.25rem; }
-    .glass-sm { background:rgba(17,24,39,0.5);backdrop-filter:blur(8px);border:1px solid rgba(139,92,246,0.12);border-radius:0.875rem; }
-    @keyframes mesh { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-    .hero-bg { background:linear-gradient(-45deg,#030712,#0d0628,#060e2e,#0f0520,#030712);background-size:400% 400%;animation:mesh 18s ease infinite; }
-    .orb { position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;will-change:transform; }
-    @keyframes orb-float { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-30px) scale(1.05)} }
-    .orb-a { background:radial-gradient(circle,#7c3aed,transparent 70%);animation:orb-float 12s ease-in-out infinite; }
-    .orb-b { background:radial-gradient(circle,#d946ef,transparent 70%);animation:orb-float 15s ease-in-out infinite reverse; }
-    .orb-c { background:radial-gradient(circle,#06b6d4,transparent 70%);animation:orb-float 10s ease-in-out infinite 3s; }
-    .reveal { opacity:0;transform:translateY(36px);transition:opacity 0.7s ease,transform 0.7s ease; }
-    .reveal.in { opacity:1;transform:none; }
-    .reveal-delay-1 { transition-delay:0.1s; }
-    .reveal-delay-2 { transition-delay:0.2s; }
-    .reveal-delay-3 { transition-delay:0.3s; }
-    .reveal-delay-4 { transition-delay:0.4s; }
-    .bento { display:grid;grid-template-columns:repeat(12,1fr);gap:1.25rem; }
-    .bento-span-4 { grid-column:span 4; }
-    .bento-span-6 { grid-column:span 6; }
-    .bento-span-8 { grid-column:span 8; }
-    .bento-span-12 { grid-column:span 12; }
-    @media(max-width:1024px){ .bento-span-4,.bento-span-6,.bento-span-8{ grid-column:span 12; } }
-    @media(min-width:768px) and (max-width:1024px){ .bento-span-4{ grid-column:span 6; } .bento-span-6,.bento-span-8{ grid-column:span 12; } }
-    @keyframes count-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
-    .counter { animation:count-in 0.5s ease forwards; opacity:0; }
-    .noise::after { content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;opacity:0.3;border-radius:inherit; }
-    .dash-bar { border-radius:2px;background:linear-gradient(to top,#7c3aed,#d946ef); }
-    #mobile-nav { display:none; }
-    #mobile-nav.open { display:block; }
-    .glow-hover { transition:border-color 0.3s,box-shadow 0.3s; }
-    .glow-hover:hover { border-color:rgba(139,92,246,0.5)!important;box-shadow:0 0 40px rgba(124,58,237,0.15); }
+    body{background:#030712;color:#f1f5f9;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;overflow-x:hidden}
+    /* Gradient text */
+    .gt-primary{background:linear-gradient(135deg,#8b5cf6,#d946ef,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .gt-gold{background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .gt-white-purple{background:linear-gradient(135deg,#ffffff,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    /* Gradient backgrounds */
+    .gb-primary{background:linear-gradient(135deg,#7c3aed,#d946ef)}
+    .gb-dark{background:linear-gradient(135deg,#1e1b4b,#2e1065)}
+    /* Animated hero mesh */
+    @keyframes mesh{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+    .hero-mesh{background:linear-gradient(-45deg,#030712,#0d0628,#06102e,#0f0520,#030712);background-size:400% 400%;animation:mesh 18s ease infinite}
+    /* Orbs */
+    .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;opacity:.45}
+    @keyframes ob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-28px) scale(1.06)}}
+    .ob-a{animation:ob 13s ease-in-out infinite}
+    .ob-b{animation:ob 16s ease-in-out infinite reverse}
+    .ob-c{animation:ob 11s ease-in-out infinite 4s}
+    /* Glass cards */
+    .glass{background:rgba(17,24,39,.65);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,.18);border-radius:1.25rem}
+    .glass-sm{background:rgba(17,24,39,.5);backdrop-filter:blur(8px);border:1px solid rgba(139,92,246,.12);border-radius:.875rem}
+    /* Scroll reveal */
+    .rv{opacity:0;transform:translateY(32px);transition:opacity .65s ease,transform .65s ease}
+    .rv.in{opacity:1;transform:none}
+    .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+    /* Bento */
+    .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:1.25rem}
+    .b4{grid-column:span 4}.b6{grid-column:span 6}.b8{grid-column:span 8}.b12{grid-column:span 12}
+    @media(max-width:1024px){.b4,.b6,.b8{grid-column:span 12}}
+    @media(min-width:640px) and (max-width:1024px){.b4{grid-column:span 6}}
+    /* Glow hover */
+    .gh{transition:border-color .3s,box-shadow .3s,transform .25s}
+    .gh:hover{border-color:rgba(139,92,246,.5)!important;box-shadow:0 0 40px rgba(124,58,237,.18);transform:translateY(-2px)}
+    /* Bar chart */
+    .bar{border-radius:3px 3px 0 0;background:linear-gradient(to top,#7c3aed,#d946ef);transition:height .6s ease}
+    /* Dashboard pulse */
+    @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+    .pdot{animation:pdot 2s ease-in-out infinite}
+    /* FAQ */
+    .faq-body{max-height:0;overflow:hidden;transition:max-height .38s ease}
+    .faq-body.open{max-height:360px}
+    .faq-ico{transition:transform .3s}
+    .faq-item.open .faq-ico{transform:rotate(45deg)}
+    /* Typing cursor */
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .cur{display:inline-block;width:3px;height:1em;background:#d946ef;vertical-align:text-bottom;border-radius:1px;animation:blink 1s step-end infinite;margin-left:2px}
+    /* Mobile nav */
+    #mnav{display:none}
+    #mnav.open{display:block}
+    /* Float CTA */
+    #float-cta{display:none}
+    /* Scrollbar */
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#030712}::-webkit-scrollbar-thumb{background:#374151;border-radius:9px}
-    .faq-body { max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s; }
-    .faq-body.open { max-height:400px; }
-    .faq-ico { transition:transform 0.3s; }
-    .faq-open .faq-ico { transform:rotate(45deg); }
-    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
-    .cursor { display:inline-block;width:3px;height:1.1em;background:#d946ef;vertical-align:text-bottom;margin-left:3px;border-radius:1px;animation:blink 1s step-end infinite; }
-    .pill { display:inline-flex;align-items:center;gap:0.375rem;padding:0.3rem 0.9rem;border-radius:99px;font-size:0.72rem;font-weight:700;letter-spacing:0.04em; }
-    .clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-    .clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
-    #float-demo { display:none; }
-    @media(max-width:768px){ #float-demo { display:block; } }
-    .ticker-wrap { overflow:hidden;white-space:nowrap; }
-    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-    .ticker-inner { display:inline-block;animation:ticker 28s linear infinite; }
+    /* Misc */
+    .pill{display:inline-flex;align-items:center;gap:.375rem;padding:.28rem .85rem;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.04em}
+    .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .cl3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    /* Counter */
+    @keyframes cin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    .cnt{animation:cin .5s ease forwards}
   </style>
 </head>
-<body class="min-h-screen overflow-x-hidden">
+<body class="min-h-screen">
 
-<!-- ═══ NAVIGATION ═══ -->
-<nav class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/60">
+<!-- ═══ NAV ═══ -->
+<nav class="sticky top-0 z-50 border-b border-white/5" style="background:rgba(3,7,18,.88);backdrop-filter:blur(20px)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
-      <!-- Logo -->
-      <a href="/" class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg grad-purple flex items-center justify-center shadow-lg shadow-purple-900/40">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
-          </svg>
+      <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
+        <div class="w-8 h-8 rounded-xl gb-primary flex items-center justify-center shadow-lg shadow-purple-900/50 flex-shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
-        <span class="font-black text-lg grad-text-purple">Begyn.ai</span>
+        <span class="font-black text-lg text-white">Begyn<span class="gt-primary">.ai</span></span>
+        <span class="pill hidden sm:inline-flex" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">BI Platform</span>
       </a>
-      <!-- Desktop Links -->
       <div class="hidden md:flex items-center gap-8">
-        <a href="#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
-        <a href="#how-it-works" class="text-sm text-gray-400 hover:text-white transition-colors">How It Works</a>
-        <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
-        <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors">Blog</a>
+        <a href="#platform" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Platform</a>
+        <a href="#industries" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Solutions</a>
+        <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Pricing</a>
+        <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Blog</a>
       </div>
-      <!-- CTA -->
       <div class="hidden md:flex items-center gap-3">
-        <a href="#cta" class="grad-purple text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/30 hover:opacity-90 transition-opacity">Book a Demo</a>
+        <a href="#cta" class="text-sm text-gray-400 hover:text-white transition-colors font-medium px-4 py-2">Sign In</a>
+        <a href="#cta" class="gb-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/40 hover:opacity-90 transition-opacity">Start Free →</a>
       </div>
-      <!-- Mobile hamburger -->
-      <button onclick="document.getElementById('mobile-menu').classList.toggle('open')" class="md:hidden text-gray-400 hover:text-white p-2">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
+      <button onclick="document.getElementById('mnav').classList.toggle('open')" class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
   </div>
-  <!-- Mobile Menu -->
-  <div id="mobile-menu" class="md:hidden border-t border-gray-800 bg-gray-950 px-4 py-4 space-y-3">
-    <a href="#features" class="block text-gray-300 hover:text-white py-2">Features</a>
-    <a href="#how-it-works" class="block text-gray-300 hover:text-white py-2">How It Works</a>
-    <a href="#pricing" class="block text-gray-300 hover:text-white py-2">Pricing</a>
-    <a href="/blog" class="block text-gray-300 hover:text-white py-2">Blog</a>
-    <a href="#cta" class="block grad-purple text-white text-sm font-semibold px-5 py-3 rounded-xl text-center mt-2">Book a Demo</a>
+  <div id="mnav" class="md:hidden border-t border-white/5 px-4 py-4 space-y-1" style="background:rgba(3,7,18,.97)">
+    <a href="#platform" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Platform</a>
+    <a href="#industries" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Solutions</a>
+    <a href="#pricing" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Pricing</a>
+    <a href="/blog" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Blog</a>
+    <a href="#cta" class="block gb-primary text-white text-sm font-bold px-5 py-3 rounded-xl text-center mt-3">Start Free →</a>
   </div>
 </nav>
 
 <!-- ═══ HERO ═══ -->
-<section class="relative overflow-hidden min-h-screen flex items-center">
-  <!-- Background orbs -->
-  <div class="orb orb-purple w-[600px] h-[600px] top-[-200px] left-[-200px]"></div>
-  <div class="orb orb-cyan w-[400px] h-[400px] bottom-[-100px] right-[-100px]"></div>
-  <!-- Grid overlay -->
-  <div class="absolute inset-0 opacity-[0.03]" style="background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:60px 60px"></div>
+<section class="hero-mesh relative overflow-hidden min-h-screen flex items-center">
+  <div class="orb ob-a w-96 h-96 sm:w-[600px] sm:h-[600px] top-[-150px] left-[-150px]" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
+  <div class="orb ob-b w-72 h-72 sm:w-96 sm:h-96 top-[-80px] right-[-80px]" style="background:radial-gradient(circle,#d946ef,transparent 70%)"></div>
+  <div class="orb ob-c w-80 h-80 bottom-[-100px] left-1/2 -translate-x-1/2" style="background:radial-gradient(circle,#06b6d4,transparent 70%)"></div>
+  <!-- Subtle grid -->
+  <div class="absolute inset-0 opacity-[0.025]" style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:52px 52px"></div>
 
-  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-    <div class="grid lg:grid-cols-2 gap-16 items-center">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 w-full">
+    <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+      <!-- Left: Copy -->
       <div>
-        <!-- Badge -->
-        <div class="inline-flex items-center gap-2 bg-purple-900/30 border border-purple-700/40 text-purple-300 text-xs font-bold px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
-          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse inline-block"></span>
-          Now serving 200+ law firms
+        <div class="inline-flex items-center gap-2 mb-7 pill" style="background:rgba(124,58,237,.2);border:1px solid rgba(217,70,239,.3);color:#e879f9">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#e879f9"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Introducing BI from Begyn
         </div>
-        <!-- H1 -->
-        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] mb-6">
-          <span class="text-white">Never Miss</span><br/>
-          <span class="text-white">Another</span><br/>
-          <span class="grad-text-hero">Client Intake</span>
+        <h1 class="font-black leading-none tracking-tight mb-6" style="font-size:clamp(3rem,8vw,5.5rem)">
+          <span class="text-white">Where</span><br/>
+          <span class="text-white">AI Meets</span><br/>
+          <span class="gt-primary">Business<span class="cur"></span></span>
         </h1>
-        <p class="text-lg sm:text-xl text-gray-400 leading-relaxed mb-10 max-w-xl">
-          AI voice agents that qualify leads, book consultations, and handle after-hours calls — built specifically for law firms.
+        <p class="text-gray-400 leading-relaxed mb-10 max-w-xl" style="font-size:1.15rem">
+          Begyn.ai gives every entrepreneur the AI-powered Business Intelligence they need to outthink, outpace, and outperform — at any stage, in any industry.
         </p>
-        <!-- CTAs -->
-        <div class="flex flex-wrap gap-4">
-          <a href="#cta" class="inline-flex items-center gap-2 grad-purple text-white font-bold px-7 py-4 rounded-2xl shadow-xl shadow-purple-900/40 hover:opacity-90 transition-opacity text-base">
-            Book Free Demo
+        <div class="flex flex-wrap gap-4 mb-8">
+          <a href="#cta" class="inline-flex items-center gap-2 gb-primary text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-purple-900/40 hover:opacity-90 transition-opacity" style="font-size:1rem">
+            Start Free
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
-          <a href="#features" class="inline-flex items-center gap-2 bg-transparent border-2 border-gray-700 hover:border-purple-500 text-white font-bold px-7 py-4 rounded-2xl transition-colors text-base">
-            See It In Action
+          <a href="#platform" class="inline-flex items-center gap-2 border-2 border-gray-700 hover:border-purple-500/60 text-white font-bold px-8 py-4 rounded-2xl transition-colors" style="font-size:1rem">
+            See the Platform
           </a>
         </div>
+        <div class="flex flex-wrap gap-5 text-sm text-gray-500">
+          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>No credit card</span>
+          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Setup in 30 min</span>
+          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>3,200+ businesses</span>
+        </div>
       </div>
-      <!-- Hero Visual: Mock AI Call Widget -->
-      <div class="hidden lg:flex items-center justify-center relative">
-        <div class="float-anim w-full max-w-sm">
-          <!-- Phone call card -->
-          <div class="card-dark border-purple-700/40 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/30">
-            <!-- Call header -->
-            <div class="bg-gradient-to-r from-purple-900/60 to-cyan-900/40 px-5 py-4 border-b border-gray-700/50 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-                  <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                </div>
-                <div>
-                  <p class="text-white text-sm font-bold">Incoming Call</p>
-                  <p class="text-gray-400 text-xs">(504) 555-0183 · 11:47 PM</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span class="text-green-400 text-xs font-semibold">LIVE</span>
-              </div>
+
+      <!-- Right: Mock BI Dashboard -->
+      <div class="hidden lg:block relative">
+        <!-- Glow behind card -->
+        <div class="absolute inset-0 gb-primary opacity-10 blur-3xl rounded-3xl"></div>
+        <div class="glass relative rounded-3xl p-5 shadow-2xl shadow-purple-900/30">
+          <!-- Dashboard header -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Begyn Intelligence</p>
+              <p class="text-white font-bold text-sm">Business Dashboard</p>
             </div>
-            <!-- Transcript -->
-            <div class="px-5 py-4 space-y-3 text-sm">
-              <div class="flex gap-2.5 items-start">
-                <span class="w-6 h-6 rounded-full grad-purple flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">AI</span>
-                <div class="bg-purple-900/20 border border-purple-700/20 rounded-xl rounded-tl-none px-3 py-2.5 flex-1">
-                  <p class="text-gray-200 leading-relaxed">Thank you for calling Morrison &amp; Reed. I'm here to help. Can you briefly describe your legal situation?</p>
-                </div>
-              </div>
-              <div class="flex gap-2.5 items-start justify-end">
-                <div class="bg-gray-800 rounded-xl rounded-tr-none px-3 py-2.5 max-w-[75%]">
-                  <p class="text-gray-300 leading-relaxed">My employer wrongfully terminated me today. I need an attorney.</p>
-                </div>
-                <span class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">C</span>
-              </div>
-              <div class="flex gap-2.5 items-start">
-                <span class="w-6 h-6 rounded-full grad-purple flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">AI</span>
-                <div class="bg-purple-900/20 border border-purple-700/20 rounded-xl rounded-tl-none px-3 py-2.5 flex-1">
-                  <p class="text-gray-200 leading-relaxed">I'm so sorry to hear that. I can connect you with one of our employment attorneys. Do you have documentation of the termination?<span class="cursor-blink"></span></p>
-                </div>
-              </div>
-            </div>
-            <!-- Extracted info footer -->
-            <div class="border-t border-gray-800 px-5 py-3 bg-gray-900/50">
-              <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">Extracted &amp; Sent to Attorney</p>
-              <div class="flex flex-wrap gap-1.5">
-                <span class="text-xs bg-cyan-900/30 border border-cyan-700/30 text-cyan-300 px-2 py-0.5 rounded-full">Employment Law</span>
-                <span class="text-xs bg-green-900/30 border border-green-700/30 text-green-300 px-2 py-0.5 rounded-full">High Priority</span>
-                <span class="text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full">Qualified Lead</span>
-              </div>
+            <div class="flex items-center gap-1.5 glass-sm px-3 py-1.5 rounded-full">
+              <div class="w-2 h-2 rounded-full bg-green-400 pdot"></div>
+              <span class="text-xs text-green-400 font-bold">LIVE</span>
             </div>
           </div>
-          <!-- Floating stat badge -->
-          <div class="absolute -bottom-4 -right-4 card-dark border-green-700/30 px-4 py-2.5 rounded-2xl shadow-xl bg-green-950/40 flex items-center gap-2">
-            <svg width="16" height="16" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span class="text-green-300 text-sm font-bold">Intake Complete</span>
+          <!-- 4 stat cards -->
+          <div class="grid grid-cols-4 gap-2 mb-4">
+            ${[
+              {label:'Revenue',val:'+23%',color:'text-green-400'},
+              {label:'Leads',val:'142',color:'text-purple-400'},
+              {label:'Conv.',val:'67%',color:'text-cyan-400'},
+              {label:'ROI',val:'4.2×',color:'text-fuchsia-400'},
+            ].map(({label,val,color}) => `
+            <div class="glass-sm p-2.5 text-center">
+              <p class="text-xs text-gray-500 mb-1">${label}</p>
+              <p class="font-black text-sm ${color}">${val}</p>
+            </div>`).join('')}
           </div>
-          <div class="absolute -top-4 -left-4 card-dark border-purple-700/30 px-3 py-2 rounded-xl shadow-xl flex items-center gap-2">
-            <svg width="14" height="14" fill="#a78bfa" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-            <span class="text-purple-300 text-xs font-bold">11:47 PM · After Hours</span>
+          <!-- Bar chart -->
+          <div class="glass-sm p-3 rounded-xl mb-3">
+            <p class="text-xs text-gray-500 font-semibold mb-3">Revenue vs Target — Last 8 Weeks</p>
+            <div class="flex items-end gap-1.5 h-16">
+              ${[40,65,80,55,90,70,85,60].map((h,i) => `
+              <div class="flex-1 flex flex-col justify-end gap-0.5">
+                <div class="bar w-full" style="height:${h}%;opacity:${0.6+i*0.05}"></div>
+              </div>`).join('')}
+            </div>
           </div>
+          <!-- AI insights -->
+          <div class="space-y-1.5">
+            ${[
+              {dot:'bg-green-400',text:'Revenue up 23% — best month in 18 months'},
+              {dot:'bg-fuchsia-400',text:'3 high-value leads identified · follow up today'},
+              {dot:'bg-cyan-400',text:'Forecast: $127K next 30 days (+18% MoM)'},
+            ].map(({dot,text}) => `
+            <div class="flex items-center gap-2.5 glass-sm px-3 py-2 rounded-lg">
+              <div class="w-2 h-2 rounded-full ${dot} flex-shrink-0"></div>
+              <p class="text-xs text-gray-300">${text}</p>
+            </div>`).join('')}
+          </div>
+        </div>
+        <!-- Float badges -->
+        <div class="absolute -top-4 -right-4 glass-sm px-3 py-2 rounded-2xl border-yellow-500/20 flex items-center gap-2 shadow-lg">
+          <span class="text-yellow-400 font-black text-sm">↑ 34%</span>
+          <span class="text-gray-400 text-xs">MoM Growth</span>
+        </div>
+        <div class="absolute -bottom-4 -left-4 glass-sm px-3 py-2 rounded-2xl flex items-center gap-2 shadow-lg">
+          <span class="text-lg">🤖</span>
+          <span class="text-purple-300 text-xs font-bold">AI Generated</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ TRUSTED BY ═══ -->
-<section class="border-y border-gray-800/60 bg-gray-900/30 py-10">
+<!-- ═══ INDUSTRY BAR ═══ -->
+<section class="py-10 border-y border-white/5" style="background:rgba(17,24,39,.3)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <p class="text-center text-xs font-semibold text-gray-600 uppercase tracking-widest mb-6">Trusted by leading law firms</p>
-    <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-      ${['Morrison & Reed LLP','Callahan Legal Group','Pacific Defense Attorneys','Westfield Family Law','Hargrove Trial Lawyers','Crawford IP Partners'].map(name =>
-        `<span class="text-gray-500 text-sm font-semibold bg-gray-800/50 border border-gray-700/40 px-4 py-2 rounded-full">${name}</span>`
+    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest mb-5">Entrepreneurs in every industry choose Begyn.ai</p>
+    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+      ${['Legal & Law Firms','Healthcare','Real Estate','Restaurant & Hospitality','E-Commerce','SaaS & Tech','Financial Services','Retail','Marketing Agencies','Manufacturing','Education','Consulting'].map(name =>
+        `<span class="text-gray-500 text-xs font-semibold px-3 py-1.5 rounded-full" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">${name}</span>`
       ).join('')}
     </div>
   </div>
 </section>
 
-<!-- ═══ PROBLEM SECTION ═══ -->
+<!-- ═══ PROBLEM ═══ -->
 <section class="py-24 relative overflow-hidden">
-  <div class="absolute inset-0 opacity-[0.02]" style="background:radial-gradient(ellipse at center,#7c3aed,transparent 70%)"></div>
+  <div class="absolute inset-0 opacity-[0.03]" style="background:radial-gradient(ellipse at center,#7c3aed,transparent 65%)"></div>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16 fade-up">
-      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">The Problem</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Cost of Missed Calls</h2>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Every unanswered call is a potential client walking to your competitor.</p>
+    <div class="text-center mb-14 rv">
+      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">The Gap</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Data Without Intelligence<br/>is Just Noise</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Most businesses have more data than ever — and less clarity than ever. Begyn.ai closes the gap.</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-3 gap-6">
       ${[
-        { stat: '62%', desc: 'of callers don\'t leave a voicemail when they reach an answering machine', color: 'from-red-900/20 to-red-950/10', border: 'border-red-800/30', text: 'text-red-400' },
-        { stat: '$3,800', desc: 'average lifetime value of a new legal client — lost with every missed intake call', color: 'from-orange-900/20 to-orange-950/10', border: 'border-orange-800/30', text: 'text-orange-400' },
-        { stat: '38%', desc: 'of calls to law firms go unanswered during evenings, weekends, and holidays', color: 'from-yellow-900/20 to-yellow-950/10', border: 'border-yellow-800/30', text: 'text-yellow-400' },
-      ].map(({ stat, desc, color, border, text }) => `
-      <div class="card-dark bg-gradient-to-br ${color} border ${border} p-8 text-center">
-        <div class="text-5xl font-black ${text} mb-4">${stat}</div>
+        {stat:'87%',desc:'of business data collected by SMBs goes completely unanalyzed every month',from:'from-red-900/20',border:'border-red-800/30',tc:'text-red-400'},
+        {stat:'$500K+',desc:'wasted annually on manual reporting, data prep, and consultant fees by growing businesses',from:'from-orange-900/20',border:'border-orange-800/30',tc:'text-orange-400'},
+        {stat:'3 Weeks',desc:'average delay between a business insight becoming available and a decision being made on it',from:'from-yellow-900/20',border:'border-yellow-800/30',tc:'text-yellow-400'},
+      ].map(({stat,desc,from,border,tc},i) => `
+      <div class="rv d${i+1} glass gh bg-gradient-to-br ${from} border ${border} p-8 text-center">
+        <div class="text-5xl font-black ${tc} mb-4">${stat}</div>
         <p class="text-gray-400 leading-relaxed">${desc}</p>
       </div>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- ═══ FEATURES ═══ -->
-<section id="features" class="py-24 bg-gray-900/40">
+<!-- ═══ PLATFORM / BENTO ═══ -->
+<section id="platform" class="py-24" style="background:rgba(17,24,39,.25)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16 fade-up">
-      <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Features</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Everything Your Firm Needs</h2>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto">One AI agent handles the entire client intake process, 24/7.</p>
+    <div class="text-center mb-16 rv">
+      <span class="pill mb-4 inline-flex" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">BI from Begyn</span>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Complete Business<br/>Intelligence Platform</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Six AI-powered modules. One unified platform. Built for entrepreneurs who refuse to fly blind.</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      ${[
-        { icon: '🕐', title: '24/7 Voice Intake', desc: 'Your AI agent answers every call, day or night. Never let a potential client reach voicemail again. Handles unlimited simultaneous calls during peak hours.', tag: 'Always On' },
-        { icon: '🎯', title: 'Intelligent Client Screening', desc: 'Asks the right intake questions for your practice area — personal injury, family law, criminal defense, or estate planning. Qualifies leads instantly before routing.', tag: 'AI-Powered' },
-        { icon: '⚡', title: 'Practice Management Integration', desc: 'Seamlessly connects with Clio, MyCase, and Filevine. New intake information flows directly into your existing case management workflow without manual data entry.', tag: 'Integrations' },
-        { icon: '📋', title: 'Real-Time Call Summaries', desc: 'Receive full transcripts, key information extracted, and sentiment analysis for every call. Know the urgency and case type before you even pick up the phone.', tag: 'Insights' },
-      ].map(({ icon, title, desc, tag }) => `
-      <div class="card-dark p-8 hover:border-purple-500/40 transition-colors group">
-        <div class="flex items-start gap-5">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-900/50 to-cyan-900/30 border border-purple-700/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:border-purple-500/50 transition-colors">
-            ${icon}
-          </div>
+    <div class="bento">
+      <!-- Begyn Intelligence — span 8 -->
+      <div class="b8 rv glass gh p-7" style="background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(217,70,239,.08))">
+        <div class="flex items-start justify-between gap-4 mb-4">
           <div>
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="text-lg font-bold text-white">${title}</h3>
-              <span class="text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full">${tag}</span>
-            </div>
-            <p class="text-gray-400 leading-relaxed">${desc}</p>
+            <span class="text-3xl mb-3 block">🧠</span>
+            <h3 class="text-xl font-black text-white mb-2">Begyn Intelligence</h3>
+            <p class="text-gray-400 leading-relaxed max-w-lg">Real-time AI analytics across all your business data. Automated dashboards, competitive intelligence, anomaly detection, and daily AI briefings that tell you exactly what to focus on.</p>
+          </div>
+          <span class="pill flex-shrink-0" style="background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">Core Platform</span>
+        </div>
+        <!-- Mini forecast chart -->
+        <div class="glass-sm p-3 rounded-xl mt-4">
+          <p class="text-xs text-gray-500 mb-2">AI Revenue Forecast — Next 90 Days</p>
+          <div class="flex items-end gap-1 h-10">
+            ${[50,58,54,67,72,69,80,85,90,88,95,100].map((h,i) => `
+            <div class="flex-1" style="height:${h}%;background:linear-gradient(to top,rgba(124,58,237,.6),rgba(217,70,239,.6));border-radius:2px 2px 0 0;opacity:${.5+i*.04}"></div>`).join('')}
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <div class="w-2 h-2 rounded-full bg-green-400"></div>
+            <p class="text-xs text-green-400 font-semibold">+34% predicted growth · 94% confidence</p>
           </div>
         </div>
+      </div>
+      <!-- Begyn Voice — span 4 -->
+      <div class="b4 rv d1 glass gh p-7">
+        <span class="text-3xl mb-3 block">🎙️</span>
+        <h3 class="text-xl font-black text-white mb-2">Begyn Voice</h3>
+        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI voice agents that answer every call, qualify every lead, and book every meeting — 24/7, for any business and any industry.</p>
+        <span class="pill" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#22d3ee">Voice AI</span>
+      </div>
+      <!-- Begyn Leads — span 4 -->
+      <div class="b4 rv d2 glass gh p-7">
+        <span class="text-3xl mb-3 block">🎯</span>
+        <h3 class="text-xl font-black text-white mb-2">Begyn Leads</h3>
+        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI discovers, enriches, and scores prospects from 50+ data sources. Fresh qualified leads delivered to your pipeline every morning.</p>
+        <span class="pill" style="background:rgba(217,70,239,.15);border:1px solid rgba(217,70,239,.3);color:#e879f9">Lead Intelligence</span>
+      </div>
+      <!-- Begyn Automate — span 8 -->
+      <div class="b8 rv d1 glass gh p-7" style="background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(124,58,237,.08))">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <span class="text-3xl mb-3 block">⚡</span>
+            <h3 class="text-xl font-black text-white mb-2">Begyn Automate</h3>
+            <p class="text-gray-400 leading-relaxed max-w-lg">End-to-end workflow automation powered by AI. Connect your CRM, email, calendar, Slack, and 100+ tools. Eliminate repetitive work. Let AI handle the busywork while you focus on growth.</p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              ${['HubSpot','Salesforce','Shopify','Stripe','QuickBooks','Slack','Google Workspace','Zapier'].map(t => `<span class="text-xs text-gray-400 px-2 py-1 rounded-lg" style="background:rgba(255,255,255,.06)">${t}</span>`).join('')}
+            </div>
+          </div>
+          <span class="pill flex-shrink-0" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#22d3ee">Automation</span>
+        </div>
+      </div>
+      <!-- Begyn Reports — span 6 -->
+      <div class="b6 rv glass gh p-7">
+        <span class="text-3xl mb-3 block">📊</span>
+        <h3 class="text-xl font-black text-white mb-2">Begyn Reports</h3>
+        <p class="text-gray-400 text-sm leading-relaxed mb-4">One-click boardroom-quality reports from your live data. Auto-generated daily, weekly, or monthly. Share with your team, investors, or board in seconds — no analyst required.</p>
+        <span class="pill" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fbbf24">Reporting</span>
+      </div>
+      <!-- Begyn Predict — span 6 -->
+      <div class="b6 rv d1 glass gh p-7">
+        <span class="text-3xl mb-3 block">🔮</span>
+        <h3 class="text-xl font-black text-white mb-2">Begyn Predict</h3>
+        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI forecasting for revenue, churn, inventory, and demand. Know what's coming before it arrives. Make proactive decisions, not reactive ones. The future, made actionable today.</p>
+        <span class="pill" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">Forecasting</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ THE PARADIGM ═══ -->
+<section class="py-24 relative overflow-hidden hero-mesh">
+  <div class="orb ob-a w-96 h-96 opacity-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="text-center mb-16 rv">
+      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">The New Paradigm</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">A New Way to Run a Business</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">The old playbook is obsolete. AI changes everything — for those willing to begin.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-px overflow-hidden rounded-2xl" style="background:rgba(139,92,246,.15)">
+      <!-- Before -->
+      <div class="rv p-8" style="background:rgba(3,7,18,.9)">
+        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-xs">✕</span>
+          Before Begyn
+        </p>
+        <div class="space-y-4">
+          ${['Manual spreadsheets & gut feeling','Expensive consultants & analysts','Decisions made blind, weeks late','Reporting takes days to compile','Reactive management, always behind'].map(t => `
+          <div class="flex items-start gap-3"><span class="text-red-500 mt-0.5 flex-shrink-0">✕</span><span class="text-gray-500 text-sm">${t}</span></div>`).join('')}
+        </div>
+      </div>
+      <!-- With Begyn -->
+      <div class="rv d1 p-8 relative" style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(217,70,239,.15))">
+        <div class="absolute inset-x-0 top-0 h-0.5" style="background:linear-gradient(90deg,#7c3aed,#d946ef,#06b6d4)"></div>
+        <p class="text-sm font-bold text-purple-300 uppercase tracking-wider mb-6 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full gb-primary flex items-center justify-center text-xs text-white">✦</span>
+          With Begyn BI
+        </p>
+        <div class="space-y-4">
+          ${['AI analyzes everything, automatically','Intelligence on demand, instantly','Data-driven decisions in seconds','Reports write themselves, daily','Proactive AI alerts before issues hit'].map(t => `
+          <div class="flex items-start gap-3"><span class="text-purple-400 mt-0.5 flex-shrink-0">✦</span><span class="text-white text-sm font-medium">${t}</span></div>`).join('')}
+        </div>
+      </div>
+      <!-- The Advantage -->
+      <div class="rv d2 p-8" style="background:rgba(3,7,18,.9)">
+        <p class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-cyan-900 flex items-center justify-center text-xs">↑</span>
+          The Advantage
+        </p>
+        <div class="space-y-4">
+          ${['10× faster decision-making','70% reduction in operational costs','3× higher lead conversion rate','Real-time intelligence, 24/7/365','Predict outcomes before they happen'].map(t => `
+          <div class="flex items-start gap-3"><span class="text-green-400 mt-0.5 flex-shrink-0">↑</span><span class="text-gray-300 text-sm">${t}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INDUSTRIES ═══ -->
+<section id="industries" class="py-24" style="background:rgba(17,24,39,.25)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 rv">
+      <p class="text-cyan-400 text-sm font-bold uppercase tracking-widest mb-3">Solutions</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Built for Every Business</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">From solo founders to 500-person companies — Begyn.ai adapts to your industry and scale.</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      ${[
+        {icon:'⚖️',name:'Legal',desc:'Automate client intake & case analytics'},
+        {icon:'🏥',name:'Healthcare',desc:'Patient scheduling & practice BI'},
+        {icon:'🏠',name:'Real Estate',desc:'Lead scoring & market intelligence'},
+        {icon:'🍽️',name:'Restaurant',desc:'Demand forecasting & retention AI'},
+        {icon:'🛒',name:'E-Commerce',desc:'Conversion & inventory prediction'},
+        {icon:'💻',name:'SaaS & Tech',desc:'Churn prediction & growth analytics'},
+        {icon:'💰',name:'Finance',desc:'Risk analysis & client intelligence'},
+        {icon:'🏪',name:'Retail',desc:'Sales intelligence & stock AI'},
+        {icon:'🎯',name:'Agencies',desc:'Campaign ROI & client reporting'},
+        {icon:'🏭',name:'Manufacturing',desc:'Supply chain & quality analytics'},
+      ].map(({icon,name,desc},i) => `
+      <div class="rv d${(i%4)+1} glass gh p-5 text-center">
+        <div class="text-3xl mb-3">${icon}</div>
+        <p class="text-white font-bold text-sm mb-1">${name}</p>
+        <p class="text-gray-500 text-xs leading-relaxed">${desc}</p>
       </div>`).join('')}
     </div>
   </div>
 </section>
 
 <!-- ═══ HOW IT WORKS ═══ -->
-<section id="how-it-works" class="py-24 relative overflow-hidden">
-  <div class="orb orb-purple w-96 h-96 opacity-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-    <div class="text-center mb-16">
-      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">How It Works</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Live in 24 Hours</h2>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto">Three simple steps from signup to capturing every client call.</p>
+<section class="py-24 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16 rv">
+      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">How It Works</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Zero to Intelligence<br/>in 30 Minutes</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Three steps from signup to your first AI-powered business insight.</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-      <!-- Connecting line desktop -->
-      <div class="hidden md:block absolute top-10 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-purple-500 to-cyan-500 opacity-40"></div>
+    <div class="grid md:grid-cols-3 gap-6 relative">
+      <div class="hidden md:block absolute top-16 left-1/3 right-1/3 h-px" style="background:linear-gradient(90deg,#7c3aed,#06b6d4)"></div>
       ${[
-        { num: '01', title: 'Tell Us About Your Practice', desc: 'A 15-minute onboarding session where we learn your practice areas, intake questions, and routing preferences. No technical setup required.', color: 'text-purple-400', bg: 'from-purple-900/30 to-purple-950/10', border: 'border-purple-700/30' },
-        { num: '02', title: 'We Configure Your AI Agent', desc: 'Our team trains your custom voice agent on your firm\'s specific needs, scripts it for your practice area, and integrates it with your systems.', color: 'text-cyan-400', bg: 'from-cyan-900/30 to-cyan-950/10', border: 'border-cyan-700/30' },
-        { num: '03', title: 'Capture Every Lead Automatically', desc: 'Forward your main number and every call — day or night — is handled, qualified, and summarized. You only spend time on clients worth your attention.', color: 'text-purple-400', bg: 'from-purple-900/30 to-purple-950/10', border: 'border-purple-700/30' },
-      ].map(({ num, title, desc, color, bg, border }) => `
-      <div class="card-dark bg-gradient-to-br ${bg} border ${border} p-8 text-center relative z-10">
-        <div class="text-5xl font-black ${color} opacity-30 mb-4">${num}</div>
-        <h3 class="text-xl font-bold text-white mb-3">${title}</h3>
+        {num:'01',icon:'⚡',title:'Connect Your Data',desc:'Link your existing tools in minutes — Shopify, Stripe, Google Analytics, CRM, QuickBooks, and 100+ more. Zero technical setup required.',color:'from-purple-900/30',border:'border-purple-700/30',tc:'text-purple-400'},
+        {num:'02',icon:'🧠',title:'AI Analyzes Everything',desc:'Begyn ingests, cleans, and analyzes all your data automatically. Patterns emerge. Anomalies surface. Opportunities are identified and ranked by impact.',color:'from-fuchsia-900/30',border:'border-fuchsia-700/30',tc:'text-fuchsia-400'},
+        {num:'03',icon:'🚀',title:'Act on Real Intelligence',desc:'Receive daily AI briefings, automated actions, and precise recommendations. Your business runs smarter — without more hours, staff, or guesswork.',color:'from-cyan-900/30',border:'border-cyan-700/30',tc:'text-cyan-400'},
+      ].map(({num,icon,title,desc,color,border,tc},i) => `
+      <div class="rv d${i+1} glass bg-gradient-to-br ${color} border ${border} p-8 text-center relative z-10">
+        <div class="text-5xl font-black ${tc} opacity-20 mb-2">${num}</div>
+        <div class="text-4xl mb-4">${icon}</div>
+        <h3 class="text-xl font-black text-white mb-3">${title}</h3>
         <p class="text-gray-400 leading-relaxed">${desc}</p>
       </div>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- ═══ TESTIMONIALS ═══ -->
-<section class="py-24 bg-gray-900/40">
+<!-- ═══ METRICS STRIP ═══ -->
+<section class="py-16 border-y" style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(217,70,239,.08),rgba(6,182,212,.08));border-color:rgba(139,92,246,.2)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16 fade-up">
-      <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Testimonials</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Lawyers Love Begyn.ai</h2>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
       ${[
-        { name: 'Sarah Morrison', firm: 'Morrison & Reed LLP', role: 'Managing Partner', quote: 'We were missing nearly 40% of our after-hours calls. Begyn.ai captured 23 new clients in the first 60 days alone. The ROI was obvious within the first week.' },
-        { name: 'James Callahan', firm: 'Callahan Legal Group', role: 'Senior Partner', quote: 'The intake quality is remarkable. Clients are pre-screened, their information is accurate, and by the time I call back they already feel like they\'ve been heard. My team is freed up to focus on cases.' },
-        { name: 'Diana Westfield', firm: 'Westfield Family Law', role: 'Founder', quote: 'Family law clients call in emotional crises — often at midnight. Begyn.ai handles those calls with genuine warmth and captures everything I need. It\'s like having a compassionate receptionist available 24/7.' },
-      ].map(({ name, firm, role, quote }) => `
-      <div class="card-dark p-7">
-        <div class="flex gap-1 mb-4">
-          ${'★'.repeat(5).split('').map(() => '<span class="text-yellow-400">★</span>').join('')}
-        </div>
-        <p class="text-gray-300 leading-relaxed mb-6 italic">"${quote}"</p>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            ${name.split(' ').map((n: string) => n[0]).join('')}
-          </div>
-          <div>
-            <p class="font-semibold text-white text-sm">${name}</p>
-            <p class="text-xs text-gray-500">${role} · ${firm}</p>
-          </div>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>
-</section>
-
-<!-- ═══ RESULTS STRIP ═══ -->
-<section class="py-16 border-y border-gray-800/60 bg-gradient-to-r from-purple-950/30 via-gray-950 to-cyan-950/30">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-      ${[
-        { val: '200+', label: 'Law Firms', sub: 'using Begyn.ai today' },
-        { val: '94%', label: 'Intake Capture Rate', sub: 'vs 61% industry avg' },
-        { val: '3.4×', label: 'More Consultations', sub: 'booked per month' },
-        { val: '< 24h', label: 'Go-Live Time', sub: 'from signup to live' },
-      ].map(({ val, label, sub }) => `
-      <div class="fade-up">
-        <div class="text-3xl sm:text-4xl font-black grad-text-purple mb-1">${val}</div>
+        {val:'3,200',suffix:'+',label:'Businesses Powered',sub:'across 10+ industries'},
+        {val:'127',prefix:'$',suffix:'M',label:'Revenue Attributed',sub:'by Begyn BI customers'},
+        {val:'94',suffix:'%',label:'AI Prediction Accuracy',sub:'across all forecast models'},
+        {val:'30',suffix:' min',label:'Time to First Insight',sub:'avg from signup to aha'},
+      ].map(({val,prefix,suffix,label,sub},i) => `
+      <div class="rv d${i+1}">
+        <div class="text-3xl sm:text-4xl font-black gt-primary mb-1" data-counter="${val}" data-prefix="${prefix||''}" data-suffix="${suffix||''}">${prefix||''}${val}${suffix||''}</div>
         <div class="text-white font-bold text-sm">${label}</div>
         <div class="text-gray-500 text-xs mt-0.5">${sub}</div>
       </div>`).join('')}
@@ -1856,255 +1941,301 @@ app.get('/', (c) => {
   </div>
 </section>
 
-<!-- ═══ PRICING ═══ -->
-<section id="pricing" class="py-24 relative overflow-hidden">
-  <div class="orb orb-cyan w-96 h-96 opacity-15 bottom-0 right-0"></div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-    <div class="text-center mb-16">
-      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">Pricing</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Simple, Transparent Pricing</h2>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto">No setup fees, no long-term contracts. Cancel anytime.</p>
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="py-24" style="background:rgba(17,24,39,.25)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 rv">
+      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">Testimonials</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Entrepreneurs Who<br/>Chose to Begyn</h2>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-      <!-- Starter -->
-      <div class="card-dark p-8">
-        <div class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Starter</div>
-        <div class="text-4xl font-black text-white mb-1">$299<span class="text-xl font-normal text-gray-500">/mo</span></div>
-        <p class="text-gray-500 text-sm mb-6">For solo practitioners & small firms</p>
-        <ul class="space-y-3 text-sm text-gray-300 mb-8">
-          ${['Up to 150 calls/month','Basic intake screening','Email summaries','Standard voice options','Email support'].map(f => `<li class="flex gap-2"><span class="text-green-400 mt-0.5">✓</span>${f}</li>`).join('')}
-        </ul>
-        <a href="#cta" class="block text-center bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Get Started</a>
-      </div>
-      <!-- Growth (Most Popular) -->
-      <div class="relative rounded-2xl p-0.5 bg-gradient-to-br from-purple-500 to-cyan-500 shadow-2xl shadow-purple-900/30">
-        <div class="bg-gray-900 rounded-2xl p-8 h-full">
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-sm font-semibold text-purple-300 uppercase tracking-wide">Growth</div>
-            <span class="text-xs bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
+    <div class="grid md:grid-cols-3 gap-6">
+      ${[
+        {name:'Dominique R.',role:'Founder, DRK Consulting',init:'DR',quote:'We went from spending 3 days a month on reports to 3 hours. Begyn\'s AI catches things my team never would have. Our close rate went from 18% to 41% in 90 days.'},
+        {name:'Marcus T.',role:'Owner, Taíno Restaurant Group',init:'MT',quote:'I run 4 locations and used to manage it all on gut feeling. Now I have real intelligence. Begyn predicted a Thursday slowdown 2 weeks out — I ran a promotion and had our best Thursday ever.'},
+        {name:'Priya K.',role:'CEO, NovaSphere SaaS',init:'PK',quote:'Churn was killing us silently. Begyn Predict flagged 23 at-risk accounts before they churned. We saved $180K in ARR in a single quarter. This platform pays for itself every month.'},
+      ].map(({name,role,init,quote},i) => `
+      <div class="rv d${i+1} glass gh p-7">
+        <div class="flex gap-1 mb-4">${'★★★★★'.split('').map(() => '<span class="text-yellow-400">★</span>').join('')}</div>
+        <p class="text-gray-300 leading-relaxed mb-6 italic">"${quote}"</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full gb-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">${init}</div>
+          <div>
+            <p class="font-bold text-white text-sm">${name}</p>
+            <p class="text-xs text-gray-500">${role}</p>
           </div>
-          <div class="text-4xl font-black text-white mb-1">$599<span class="text-xl font-normal text-gray-500">/mo</span></div>
-          <p class="text-gray-500 text-sm mb-6">For growing multi-attorney firms</p>
-          <ul class="space-y-3 text-sm text-gray-300 mb-8">
-            ${['Unlimited calls','Practice management CMS integration','Real-time call transcripts','SMS summaries to attorneys','Priority phone support','Custom voice & persona','Advanced call routing'].map(f => `<li class="flex gap-2"><span class="text-purple-400 mt-0.5">✓</span>${f}</li>`).join('')}
-          </ul>
-          <a href="#cta" class="block text-center grad-purple text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">Get Started</a>
         </div>
-      </div>
-      <!-- Enterprise -->
-      <div class="card-dark p-8">
-        <div class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Enterprise</div>
-        <div class="text-4xl font-black text-white mb-1">Custom</div>
-        <p class="text-gray-500 text-sm mb-6">For large firms & multi-location</p>
-        <ul class="space-y-3 text-sm text-gray-300 mb-8">
-          ${['Everything in Growth','Multi-location support','White-label options','Full API access','Dedicated account manager','Custom integrations','SLA guarantee'].map(f => `<li class="flex gap-2"><span class="text-cyan-400 mt-0.5">✓</span>${f}</li>`).join('')}
-        </ul>
-        <a href="#cta" class="block text-center bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Contact Sales</a>
-      </div>
+      </div>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- ═══ BLOG PREVIEW ═══ -->
-<section id="blog" class="py-24 bg-gray-900/40">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-end justify-between mb-12">
-      <div>
-        <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Blog</p>
-        <h2 class="text-4xl font-black text-white">Latest from the Blog</h2>
-        <p class="text-gray-400 mt-2">AI insights for legal professionals</p>
+<!-- ═══ PRICING ═══ -->
+<section id="pricing" class="py-24 relative overflow-hidden">
+  <div class="orb ob-c w-96 h-96 opacity-15 bottom-0 right-0" style="background:radial-gradient(circle,#06b6d4,transparent 70%)"></div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="text-center mb-14 rv">
+      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">Pricing</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Built for Entrepreneurs</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Start free. Scale as you grow. No surprise bills, no lock-in.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Spark / Free -->
+      <div class="rv glass gh p-6">
+        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Spark</p>
+        <p class="text-4xl font-black text-white mb-0.5">Free</p>
+        <p class="text-gray-500 text-xs mb-5">Forever — no card needed</p>
+        <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
+          ${['1 user','3 AI agents','Basic analytics','500 records','Community support'].map(f => `<li class="flex gap-2"><span class="text-green-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Get Started</a>
       </div>
-      <a href="/blog" class="hidden sm:flex items-center gap-2 text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+      <!-- Growth — Most Popular -->
+      <div class="rv d1 relative rounded-2xl p-px sm:col-span-1" style="background:linear-gradient(135deg,#7c3aed,#d946ef,#06b6d4);box-shadow:0 0 50px rgba(124,58,237,.3)">
+        <div class="rounded-2xl p-6 h-full" style="background:#0d0520">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm font-bold text-purple-300 uppercase tracking-wide">Growth</p>
+            <span class="pill" style="background:linear-gradient(135deg,#7c3aed,#d946ef);color:white;font-size:.65rem">POPULAR</span>
+          </div>
+          <p class="text-4xl font-black text-white mb-0.5">$199<span class="text-xl font-normal text-gray-500">/mo</span></p>
+          <p class="text-gray-500 text-xs mb-5">For growing businesses</p>
+          <ul class="space-y-2.5 text-sm text-gray-300 mb-6">
+            ${['5 users','15 AI agents','Full BI suite','Unlimited records','All integrations','Priority support','Custom voice personas'].map(f => `<li class="flex gap-2"><span class="text-purple-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+          </ul>
+          <a href="#cta" class="block text-center gb-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">Get Started</a>
+        </div>
+      </div>
+      <!-- Scale -->
+      <div class="rv d2 glass gh p-6">
+        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Scale</p>
+        <p class="text-4xl font-black text-white mb-0.5">$499<span class="text-xl font-normal text-gray-500">/mo</span></p>
+        <p class="text-gray-500 text-xs mb-5">For scaling companies</p>
+        <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
+          ${['25 users','Unlimited AI agents','Predictive analytics','Custom reports','API access','Dedicated onboarding','Advanced forecasting'].map(f => `<li class="flex gap-2"><span class="text-cyan-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Get Started</a>
+      </div>
+      <!-- Enterprise -->
+      <div class="rv d3 glass gh p-6">
+        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Enterprise</p>
+        <p class="text-4xl font-black text-white mb-0.5">Custom</p>
+        <p class="text-gray-500 text-xs mb-5">For large organizations</p>
+        <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
+          ${['Unlimited users','White-label platform','Custom AI training','SLA guarantee','Dedicated account manager','On-prem deployment option'].map(f => `<li class="flex gap-2"><span class="text-fuchsia-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Contact Sales</a>
+      </div>
+    </div>
+    <p class="text-center text-gray-600 text-sm mt-8">All plans include a 14-day free trial · No credit card required · Cancel anytime</p>
+  </div>
+</section>
+
+<!-- ═══ BLOG PREVIEW ═══ -->
+<section id="blog" class="py-24" style="background:rgba(17,24,39,.25)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-12 rv">
+      <div>
+        <p class="text-cyan-400 text-sm font-bold uppercase tracking-widest mb-3">Blog</p>
+        <h2 class="text-4xl font-black text-white">Intelligence from<br/>the Begyn Blog</h2>
+        <p class="text-gray-400 mt-2">AI & business intelligence insights for entrepreneurs</p>
+      </div>
+      <a href="/blog" class="hidden sm:flex items-center gap-2 text-purple-400 hover:text-purple-300 font-semibold transition-colors text-sm">
         View All Posts
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
-    <div id="blog-posts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Placeholder cards shown while loading -->
+    <div id="blog-grid" class="grid md:grid-cols-3 gap-6">
       ${[1,2,3].map(() => `
-      <div class="card-dark p-6 animate-pulse">
-        <div class="w-16 h-4 bg-gray-700 rounded mb-4"></div>
-        <div class="h-6 bg-gray-700 rounded mb-2"></div>
-        <div class="h-4 bg-gray-800 rounded mb-1"></div>
-        <div class="h-4 bg-gray-800 rounded w-3/4 mb-6"></div>
-        <div class="h-4 bg-gray-700 rounded w-1/2"></div>
+      <div class="glass p-6 animate-pulse">
+        <div class="w-20 h-3 rounded mb-4" style="background:rgba(255,255,255,.07)"></div>
+        <div class="h-5 rounded mb-2" style="background:rgba(255,255,255,.07)"></div>
+        <div class="h-4 rounded mb-1" style="background:rgba(255,255,255,.04)"></div>
+        <div class="h-4 w-3/4 rounded mb-5" style="background:rgba(255,255,255,.04)"></div>
+        <div class="h-3 w-1/2 rounded" style="background:rgba(255,255,255,.06)"></div>
       </div>`).join('')}
     </div>
     <div class="sm:hidden text-center mt-8">
-      <a href="/blog" class="text-purple-400 hover:text-purple-300 font-semibold">View All Posts →</a>
+      <a href="/blog" class="text-purple-400 hover:text-purple-300 font-semibold text-sm">View All Posts →</a>
     </div>
   </div>
 </section>
 
 <!-- ═══ FAQ ═══ -->
-<section class="py-24 bg-gray-900/40">
+<section class="py-24">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14 fade-up">
-      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">FAQ</p>
+    <div class="text-center mb-14 rv">
+      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">FAQ</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Common Questions</h2>
-      <p class="text-xl text-gray-400">Everything attorneys ask before going live.</p>
+      <p class="text-gray-400 text-xl">Everything entrepreneurs ask before getting started.</p>
     </div>
-    <div class="space-y-3" id="faq-list">
+    <div class="space-y-3">
       ${[
-        { q: 'Will it sound like a robot to my clients?', a: 'No — Begyn.ai uses natural, conversational voice synthesis that sounds human. You choose the voice persona, tone, and pacing. Most callers don\'t realize they\'re speaking with an AI until they\'re told. We can provide audio demos before you go live.' },
-        { q: 'How does it integrate with my existing phone number?', a: 'Simple call forwarding. You keep your existing number and set it to forward to your Begyn.ai line when you\'re unavailable, after hours, or always-on. No hardware changes, no new numbers. Setup takes under 5 minutes.' },
-        { q: 'Is client data secure and HIPAA/ABA compliant?', a: 'Yes. All calls are encrypted in transit and at rest. We are SOC 2 Type II certified and follow ABA Rule 1.6 safeguards. We sign BAAs where required and never use client data for AI training. Full data residency in the US.' },
-        { q: 'What practice areas does it support?', a: 'Begyn.ai ships with pre-built intake scripts for personal injury, family law, criminal defense, estate planning, immigration, employment law, and real estate. Custom practice areas are configured during your 15-minute onboarding.' },
-        { q: 'What happens if the AI can\'t answer a question?', a: 'The agent is designed to capture intake information, not give legal advice. If a caller asks something outside scope, it gracefully offers to have an attorney call back. You can define specific escalation triggers (e.g., "emergency" keywords) that immediately page your on-call attorney.' },
-        { q: 'Can I cancel anytime?', a: 'Absolutely. No long-term contracts, no cancellation fees. We operate month-to-month on all plans. Your data is exportable in full CSV/JSON format at any time.' },
-      ].map(({ q, a }, i) => `
-      <div class="card-dark faq-item fade-up" style="transition-delay:${i * 60}ms">
+        {q:'Is this just for large companies?',a:'Not at all. Begyn.ai is built from the ground up for entrepreneurs — solo founders, small teams, growing businesses. The Spark plan is free forever. Most users start seeing ROI within their first week. We scale with you, not against you.'},
+        {q:'How does Begyn AI learn my business?',a:'During a 30-minute onboarding, you connect your existing tools (CRM, accounting, analytics, etc.). Begyn AI ingests your historical data, identifies patterns specific to your business model, and calibrates its models to your industry and context. No manual training required.'},
+        {q:'What integrations are available?',a:'100+ integrations including Shopify, Stripe, HubSpot, Salesforce, QuickBooks, Xero, Google Analytics, Google Workspace, Slack, Notion, Zapier, Airtable, and many more. Custom integrations available on Scale and Enterprise plans.'},
+        {q:'Can it replace my analyst or operations team?',a:'It augments more than replaces. Begyn handles the data wrangling, reporting, and pattern detection that would otherwise take your team days. Your people can focus on strategy, relationships, and execution — the things AI can\'t do. Most customers tell us their team feels supercharged, not replaced.'},
+        {q:'Is my business data secure?',a:'Your data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are SOC 2 Type II certified. We never sell or share your data, and we never use your business data to train shared models. You own your data 100% — exportable at any time.'},
+        {q:'What if I only need one feature like Voice Agents?',a:'Each Begyn module works standalone. You can start with just Begyn Voice, just Begyn Leads, or just Intelligence reporting. As your needs grow, add modules in minutes. There\'s no pressure to use everything — only pay for what you use.'},
+      ].map(({q,a},i) => `
+      <div class="rv d${(i%3)+1} glass faq-item">
         <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
           <span class="font-semibold text-white text-sm sm:text-base">${q}</span>
-          <svg class="faq-chevron flex-shrink-0 text-gray-400" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          <span class="faq-ico text-gray-400 text-xl flex-shrink-0 leading-none">+</span>
         </button>
-        <div class="faq-answer px-6">
-          <p class="text-gray-400 leading-relaxed pb-5">${a}</p>
+        <div class="faq-body px-6">
+          <p class="text-gray-400 leading-relaxed pb-5 text-sm">${a}</p>
         </div>
       </div>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- Floating mobile CTA -->
-<div class="fixed bottom-5 left-4 right-4 z-50 md:hidden" id="float-cta" style="display:none">
-  <a href="#cta" class="block grad-purple text-white text-center font-bold py-4 rounded-2xl shadow-2xl shadow-purple-900/60">
-    Book Free Demo →
-  </a>
-</div>
-
-<!-- ═══ CTA SECTION ═══ -->
-<section id="cta" class="py-24 relative overflow-hidden">
-  <div class="orb orb-purple w-[500px] h-[500px] opacity-25 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-    <div class="card-dark border-purple-700/30 p-12 sm:p-16 bg-gradient-to-br from-purple-900/20 to-cyan-900/10">
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Ready to Capture Every Lead?</h2>
-      <p class="text-xl text-gray-400 mb-10">Join 200+ law firms already converting more callers into clients.</p>
-      <form onsubmit="handleDemoRequest(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-        <input
-          id="demo-email"
-          type="email"
-          required
-          placeholder="your@lawfirm.com"
-          class="flex-1 bg-gray-900 border border-gray-700 focus:border-purple-500 text-white placeholder-gray-500 px-5 py-4 rounded-xl outline-none transition-colors"
-        />
-        <button type="submit" class="grad-purple text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-purple-900/30 hover:opacity-90 transition-opacity whitespace-nowrap">
-          Book Free Demo
-        </button>
+<!-- ═══ CTA ═══ -->
+<section id="cta" class="py-24 hero-mesh relative overflow-hidden">
+  <div class="orb ob-a w-96 h-96 opacity-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+    <div class="glass p-12 sm:p-16" style="border-color:rgba(139,92,246,.25)">
+      <div class="text-4xl mb-4">🚀</div>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Your Business Intelligence<br/>Starts Now</h2>
+      <p class="text-gray-400 text-xl mb-10">Join 3,200+ entrepreneurs who chose to Begyn.</p>
+      <form onsubmit="handleDemo(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input id="demo-email" type="email" required placeholder="you@yourbusiness.com"
+          class="flex-1 px-5 py-4 rounded-xl outline-none text-white placeholder-gray-500 transition-colors text-sm"
+          style="background:rgba(17,24,39,.8);border:1px solid rgba(139,92,246,.25)" onfocus="this.style.borderColor='rgba(139,92,246,.6)'" onblur="this.style.borderColor='rgba(139,92,246,.25)'"/>
+        <button type="submit" class="gb-primary text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap shadow-lg shadow-purple-900/40 text-sm">Start Free →</button>
       </form>
-      <p class="text-gray-600 text-sm mt-4">No credit card required. Setup in 24 hours.</p>
+      <div class="flex flex-wrap justify-center gap-5 mt-6 text-xs text-gray-600">
+        <span>✓ Free to start</span><span>✓ 30-min setup</span><span>✓ Cancel anytime</span>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ═══ FOOTER ═══ -->
-<footer class="border-t border-gray-800 py-12 bg-gray-950">
+<footer class="border-t py-16" style="background:#030712;border-color:rgba(255,255,255,.06)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg grad-purple flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
-          </svg>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+      <!-- Brand -->
+      <div class="col-span-2 md:col-span-1">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 h-7 rounded-xl gb-primary flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <span class="font-black text-white">Begyn<span class="gt-primary">.ai</span></span>
         </div>
-        <span class="font-black grad-text-purple">Begyn.ai</span>
-        <span class="text-gray-600 text-sm ml-2">AI Voice Agents for Law Firms</span>
+        <p class="text-gray-600 text-xs leading-relaxed mb-4">BI from Begyn —<br/>Where AI meets business.</p>
+        <div class="flex gap-3">
+          <a href="#" class="text-gray-600 hover:text-white transition-colors" aria-label="X / Twitter">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="#" class="text-gray-600 hover:text-white transition-colors" aria-label="LinkedIn">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+        </div>
       </div>
-      <div class="flex items-center gap-6 text-sm">
-        <a href="#features" class="text-gray-500 hover:text-white transition-colors">Features</a>
-        <a href="#pricing" class="text-gray-500 hover:text-white transition-colors">Pricing</a>
-        <a href="/blog" class="text-gray-500 hover:text-white transition-colors">Blog</a>
-        <a href="#cta" class="text-gray-500 hover:text-white transition-colors">Contact</a>
+      <!-- Platform -->
+      <div>
+        <p class="text-white font-bold text-sm mb-4">Platform</p>
+        <div class="space-y-2.5">
+          ${['Intelligence','Voice Agents','Lead AI','Automate','Reports','Predict'].map(l => `<a href="#platform" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+        </div>
       </div>
-      <div class="flex items-center gap-4">
-        <a href="#" class="text-gray-500 hover:text-white transition-colors" aria-label="Twitter">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        </a>
-        <a href="#" class="text-gray-500 hover:text-white transition-colors" aria-label="LinkedIn">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-        </a>
+      <!-- Solutions -->
+      <div>
+        <p class="text-white font-bold text-sm mb-4">Solutions</p>
+        <div class="space-y-2.5">
+          ${['By Industry','By Company Size','Integrations','API Docs','Case Studies'].map(l => `<a href="#industries" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+        </div>
+      </div>
+      <!-- Company -->
+      <div>
+        <p class="text-white font-bold text-sm mb-4">Company</p>
+        <div class="space-y-2.5">
+          ${['About','Blog','Careers','Press','Contact'].map(l => `<a href="/blog" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+        </div>
+      </div>
+      <!-- Legal -->
+      <div>
+        <p class="text-white font-bold text-sm mb-4">Legal</p>
+        <div class="space-y-2.5">
+          ${['Privacy Policy','Terms of Service','Security','Cookie Policy'].map(l => `<a href="#" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+        </div>
       </div>
     </div>
-    <div class="mt-8 pt-6 border-t border-gray-800/60 text-center text-gray-600 text-sm">
-      © 2026 Begyn.ai. All rights reserved.
+    <div class="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color:rgba(255,255,255,.06)">
+      <p class="text-gray-700 text-xs">© 2026 Begyn.ai. All rights reserved.</p>
+      <p class="text-gray-700 text-xs">Where AI meets business.</p>
     </div>
   </div>
 </footer>
 
+<!-- Floating mobile CTA -->
+<div id="float-cta" class="fixed bottom-4 inset-x-4 z-50">
+  <a href="#cta" class="block gb-primary text-white text-center font-bold py-4 rounded-2xl shadow-2xl shadow-purple-900/60 text-sm">Start Free — No Credit Card →</a>
+</div>
+
 <script>
-// ── Scroll-in animations ──────────────────────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } })
-}, { threshold: 0.12 })
-document.querySelectorAll('.fade-up').forEach(el => observer.observe(el))
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } })
+}, { threshold: 0.1 })
+document.querySelectorAll('.rv').forEach(el => obs.observe(el))
 
-// ── Floating mobile CTA ───────────────────────────────────────────────────────
-const floatCta = document.getElementById('float-cta')
-if (floatCta) {
-  window.addEventListener('scroll', () => {
-    floatCta.style.display = window.scrollY > 500 ? 'block' : 'none'
-  }, { passive: true })
-}
+// Float CTA
+const fcta = document.getElementById('float-cta')
+window.addEventListener('scroll', () => { if (fcta) fcta.style.display = window.scrollY > 600 ? 'block' : 'none'; }, { passive:true })
 
-// ── FAQ accordion ─────────────────────────────────────────────────────────────
+// FAQ
 function toggleFaq(btn) {
   const item = btn.closest('.faq-item')
-  const answer = item.querySelector('.faq-answer')
+  const body = item.querySelector('.faq-body')
   const isOpen = item.classList.contains('open')
-  // Close all
-  document.querySelectorAll('.faq-item').forEach(i => {
-    i.classList.remove('open')
-    i.querySelector('.faq-answer').classList.remove('open')
-  })
-  if (!isOpen) { item.classList.add('open'); answer.classList.add('open'); }
+  document.querySelectorAll('.faq-item.open').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-body').classList.remove('open'); })
+  if (!isOpen) { item.classList.add('open'); body.classList.add('open'); }
 }
 
-// ── Load blog posts ───────────────────────────────────────────────────────────
-async function loadBlogPosts() {
-  const grid = document.getElementById('blog-posts-grid')
+// Blog posts
+async function loadBlog() {
+  const grid = document.getElementById('blog-grid')
   if (!grid) return
   try {
-    const res = await fetch('/api/blog?limit=3')
-    if (!res.ok) throw new Error('fetch failed')
-    const data = await res.json()
-    const posts = data.posts || []
-    if (posts.length === 0) {
-      grid.innerHTML = \`
-        <div class="col-span-3 text-center py-12 text-gray-500">
-          <p class="text-lg mb-2">No posts yet — check back soon.</p>
-          <p class="text-sm">Our AI publishes fresh legal tech insights multiple times daily.</p>
-        </div>\`
+    const r = await fetch('/api/blog?limit=3')
+    if (!r.ok) throw new Error()
+    const { posts } = await r.json()
+    if (!posts || !posts.length) {
+      grid.innerHTML = \`<div class="col-span-3 text-center py-12 text-gray-600"><p class="mb-2">Fresh AI insights coming soon.</p><p class="text-sm">Our AI publishes multiple times daily.</p></div>\`
       return
     }
-    grid.innerHTML = posts.map((p) => \`
-      <a href="/blog/\${p.slug}" class="card-dark p-6 hover:border-purple-500/40 transition-colors block group">
-        <span class="inline-block text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full mb-4">\${p.category || 'AI News'}</span>
-        <h3 class="text-base font-bold text-white mb-2 group-hover:text-purple-300 transition-colors line-clamp-2">\${p.title}</h3>
-        <p class="text-gray-500 text-sm leading-relaxed mb-5 line-clamp-3">\${p.excerpt || ''}</p>
-        <div class="flex items-center justify-between text-xs text-gray-600">
-          <span>\${p.author || 'Begyn.ai Team'}</span>
-          <span>\${new Date(p.published_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</span>
+    grid.innerHTML = posts.map(p => \`
+      <a href="/blog/\${p.slug}" class="glass gh p-6 block">
+        <span class="inline-block text-xs px-2 py-0.5 rounded-full mb-4" style="background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">\${p.category||'AI Insights'}</span>
+        <h3 class="text-sm font-bold text-white mb-2 cl2 hover:text-purple-300 transition-colors">\${p.title}</h3>
+        <p class="text-gray-500 text-xs leading-relaxed mb-4 cl3">\${p.excerpt||''}</p>
+        <div class="flex justify-between text-xs text-gray-700">
+          <span>\${p.author||'Begyn.ai Team'}</span>
+          <span>\${new Date(p.published_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
         </div>
       </a>\`).join('')
-  } catch (_) { /* keep placeholder cards on error */ }
+  } catch(_) {}
 }
 
-// ── Demo request form ─────────────────────────────────────────────────────────
-async function handleDemoRequest(e) {
+// Demo form
+function handleDemo(e) {
   e.preventDefault()
   const btn = e.target.querySelector('button[type=submit]')
-  const emailEl = document.getElementById('demo-email')
   btn.textContent = 'Sending...'
   btn.disabled = true
-  await new Promise(r => setTimeout(r, 1000))
-  btn.textContent = '✓ We\'ll be in touch!'
-  btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'
-  emailEl.value = ''
-  setTimeout(() => { btn.textContent = 'Book Free Demo'; btn.disabled = false; btn.style.background = ''; }, 4000)
+  setTimeout(() => {
+    btn.textContent = '✓ Check your inbox!'
+    btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'
+    document.getElementById('demo-email').value = ''
+    setTimeout(() => { btn.textContent = 'Start Free →'; btn.disabled = false; btn.style.background = ''; }, 4000)
+  }, 1000)
 }
 
-loadBlogPosts()
+// Mobile nav close on link click
+document.querySelectorAll('#mnav a').forEach(a => a.addEventListener('click', () => document.getElementById('mnav').classList.remove('open')))
+
+loadBlog()
 </script>
 </body>
 </html>`)
