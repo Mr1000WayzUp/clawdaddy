@@ -1497,38 +1497,70 @@ app.get('/', (c) => {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Begyn.ai — AI Voice Agents for Law Firms</title>
-  <meta name="description" content="AI voice agents that qualify leads, book consultations, and handle after-hours calls — built specifically for law firms."/>
+  <title>Begyn.ai — BI from Begyn | Where AI Meets Business</title>
+  <meta name="description" content="Begyn.ai is the AI-powered Business Intelligence platform for entrepreneurs. Voice agents, lead intelligence, automated analytics, and workflow automation — all in one."/>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root { --purple: #7c3aed; --purple-light: #8b5cf6; --cyan: #06b6d4; --cyan-light: #22d3ee; }
-    body { background: #030712; color: #f3f4f6; font-family: ui-sans-serif,system-ui,-apple-system,sans-serif; }
-    .grad-purple { background: linear-gradient(135deg,#7c3aed,#8b5cf6); }
-    .grad-text-purple { background: linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .grad-text-hero { background: linear-gradient(135deg,#f8fafc,#a78bfa,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .card-dark { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
-    .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; opacity:0.4; }
-    .orb-purple { background:#7c3aed; }
-    .orb-cyan { background:#06b6d4; }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
-    @keyframes pulse-ring { 0%{transform:scale(0.95);opacity:1} 70%{transform:scale(1.1);opacity:0.3} 100%{transform:scale(0.95);opacity:0} }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    @keyframes slideUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes typeLine { from{width:0} to{width:100%} }
-    .float-anim { animation:float 6s ease-in-out infinite; }
-    .pulse-ring { animation:pulse-ring 2s ease-out infinite; }
-    .cursor-blink { display:inline-block;width:2px;height:1em;background:#a78bfa;vertical-align:text-bottom;animation:blink 1s step-end infinite;margin-left:2px; }
-    .fade-up { opacity:0; transform:translateY(28px); transition:opacity 0.6s ease, transform 0.6s ease; }
-    .fade-up.visible { opacity:1; transform:translateY(0); }
-    .faq-answer { max-height:0; overflow:hidden; transition:max-height 0.35s ease, padding 0.35s ease; }
-    .faq-answer.open { max-height:400px; }
-    .faq-chevron { transition:transform 0.3s ease; }
-    .faq-item.open .faq-chevron { transform:rotate(180deg); }
-    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
-    #mobile-menu { display:none; }
-    #mobile-menu.open { display:block; }
-    .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-    .line-clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
+    :root {
+      --bg: #030712;
+      --card: rgba(17,24,39,0.7);
+      --border: rgba(139,92,246,0.15);
+      --purple: #7c3aed;
+      --violet: #8b5cf6;
+      --fuchsia: #d946ef;
+      --cyan: #06b6d4;
+      --gold: #f59e0b;
+    }
+    body { background:#030712; color:#f1f5f9; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; overflow-x:hidden; }
+    .grad-primary { background:linear-gradient(135deg,#8b5cf6,#d946ef,#06b6d4); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .grad-gold { background:linear-gradient(135deg,#f59e0b,#fbbf24); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .grad-btn { background:linear-gradient(135deg,#7c3aed,#d946ef); }
+    .grad-cyan { background:linear-gradient(135deg,#06b6d4,#8b5cf6); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .glass { background:rgba(17,24,39,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,0.18);border-radius:1.25rem; }
+    .glass-sm { background:rgba(17,24,39,0.5);backdrop-filter:blur(8px);border:1px solid rgba(139,92,246,0.12);border-radius:0.875rem; }
+    @keyframes mesh { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    .hero-bg { background:linear-gradient(-45deg,#030712,#0d0628,#060e2e,#0f0520,#030712);background-size:400% 400%;animation:mesh 18s ease infinite; }
+    .orb { position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;will-change:transform; }
+    @keyframes orb-float { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-30px) scale(1.05)} }
+    .orb-a { background:radial-gradient(circle,#7c3aed,transparent 70%);animation:orb-float 12s ease-in-out infinite; }
+    .orb-b { background:radial-gradient(circle,#d946ef,transparent 70%);animation:orb-float 15s ease-in-out infinite reverse; }
+    .orb-c { background:radial-gradient(circle,#06b6d4,transparent 70%);animation:orb-float 10s ease-in-out infinite 3s; }
+    .reveal { opacity:0;transform:translateY(36px);transition:opacity 0.7s ease,transform 0.7s ease; }
+    .reveal.in { opacity:1;transform:none; }
+    .reveal-delay-1 { transition-delay:0.1s; }
+    .reveal-delay-2 { transition-delay:0.2s; }
+    .reveal-delay-3 { transition-delay:0.3s; }
+    .reveal-delay-4 { transition-delay:0.4s; }
+    .bento { display:grid;grid-template-columns:repeat(12,1fr);gap:1.25rem; }
+    .bento-span-4 { grid-column:span 4; }
+    .bento-span-6 { grid-column:span 6; }
+    .bento-span-8 { grid-column:span 8; }
+    .bento-span-12 { grid-column:span 12; }
+    @media(max-width:1024px){ .bento-span-4,.bento-span-6,.bento-span-8{ grid-column:span 12; } }
+    @media(min-width:768px) and (max-width:1024px){ .bento-span-4{ grid-column:span 6; } .bento-span-6,.bento-span-8{ grid-column:span 12; } }
+    @keyframes count-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    .counter { animation:count-in 0.5s ease forwards; opacity:0; }
+    .noise::after { content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;opacity:0.3;border-radius:inherit; }
+    .dash-bar { border-radius:2px;background:linear-gradient(to top,#7c3aed,#d946ef); }
+    #mobile-nav { display:none; }
+    #mobile-nav.open { display:block; }
+    .glow-hover { transition:border-color 0.3s,box-shadow 0.3s; }
+    .glow-hover:hover { border-color:rgba(139,92,246,0.5)!important;box-shadow:0 0 40px rgba(124,58,237,0.15); }
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#030712}::-webkit-scrollbar-thumb{background:#374151;border-radius:9px}
+    .faq-body { max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s; }
+    .faq-body.open { max-height:400px; }
+    .faq-ico { transition:transform 0.3s; }
+    .faq-open .faq-ico { transform:rotate(45deg); }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+    .cursor { display:inline-block;width:3px;height:1.1em;background:#d946ef;vertical-align:text-bottom;margin-left:3px;border-radius:1px;animation:blink 1s step-end infinite; }
+    .pill { display:inline-flex;align-items:center;gap:0.375rem;padding:0.3rem 0.9rem;border-radius:99px;font-size:0.72rem;font-weight:700;letter-spacing:0.04em; }
+    .clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+    .clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
+    #float-demo { display:none; }
+    @media(max-width:768px){ #float-demo { display:block; } }
+    .ticker-wrap { overflow:hidden;white-space:nowrap; }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker-inner { display:inline-block;animation:ticker 28s linear infinite; }
   </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
