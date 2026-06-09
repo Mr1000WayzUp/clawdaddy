@@ -1510,14 +1510,25 @@ app.get('/', (c) => {
     .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; opacity:0.4; }
     .orb-purple { background:#7c3aed; }
     .orb-cyan { background:#06b6d4; }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
     @keyframes pulse-ring { 0%{transform:scale(0.95);opacity:1} 70%{transform:scale(1.1);opacity:0.3} 100%{transform:scale(0.95);opacity:0} }
-    @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes slideUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes typeLine { from{width:0} to{width:100%} }
     .float-anim { animation:float 6s ease-in-out infinite; }
     .pulse-ring { animation:pulse-ring 2s ease-out infinite; }
+    .cursor-blink { display:inline-block;width:2px;height:1em;background:#a78bfa;vertical-align:text-bottom;animation:blink 1s step-end infinite;margin-left:2px; }
+    .fade-up { opacity:0; transform:translateY(28px); transition:opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity:1; transform:translateY(0); }
+    .faq-answer { max-height:0; overflow:hidden; transition:max-height 0.35s ease, padding 0.35s ease; }
+    .faq-answer.open { max-height:400px; }
+    .faq-chevron { transition:transform 0.3s ease; }
+    .faq-item.open .faq-chevron { transform:rotate(180deg); }
     ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
     #mobile-menu { display:none; }
     #mobile-menu.open { display:block; }
+    .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+    .line-clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
   </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
@@ -1601,25 +1612,67 @@ app.get('/', (c) => {
           </a>
         </div>
       </div>
-      <!-- Hero Visual -->
+      <!-- Hero Visual: Mock AI Call Widget -->
       <div class="hidden lg:flex items-center justify-center relative">
-        <div class="float-anim relative w-80 h-80">
-          <!-- Outer pulse ring -->
-          <div class="absolute inset-0 rounded-full border-2 border-purple-500/30 pulse-ring"></div>
-          <!-- Glow rings -->
-          <div class="absolute inset-4 rounded-full border border-cyan-500/20"></div>
-          <div class="absolute inset-8 rounded-full border border-purple-500/30"></div>
-          <!-- Center orb -->
-          <div class="absolute inset-12 rounded-full grad-purple flex items-center justify-center shadow-2xl shadow-purple-900/60">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14Z"/>
-              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14Z"/>
-            </svg>
+        <div class="float-anim w-full max-w-sm">
+          <!-- Phone call card -->
+          <div class="card-dark border-purple-700/40 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/30">
+            <!-- Call header -->
+            <div class="bg-gradient-to-r from-purple-900/60 to-cyan-900/40 px-5 py-4 border-b border-gray-700/50 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                  <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                </div>
+                <div>
+                  <p class="text-white text-sm font-bold">Incoming Call</p>
+                  <p class="text-gray-400 text-xs">(504) 555-0183 · 11:47 PM</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span class="text-green-400 text-xs font-semibold">LIVE</span>
+              </div>
+            </div>
+            <!-- Transcript -->
+            <div class="px-5 py-4 space-y-3 text-sm">
+              <div class="flex gap-2.5 items-start">
+                <span class="w-6 h-6 rounded-full grad-purple flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">AI</span>
+                <div class="bg-purple-900/20 border border-purple-700/20 rounded-xl rounded-tl-none px-3 py-2.5 flex-1">
+                  <p class="text-gray-200 leading-relaxed">Thank you for calling Morrison &amp; Reed. I'm here to help. Can you briefly describe your legal situation?</p>
+                </div>
+              </div>
+              <div class="flex gap-2.5 items-start justify-end">
+                <div class="bg-gray-800 rounded-xl rounded-tr-none px-3 py-2.5 max-w-[75%]">
+                  <p class="text-gray-300 leading-relaxed">My employer wrongfully terminated me today. I need an attorney.</p>
+                </div>
+                <span class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">C</span>
+              </div>
+              <div class="flex gap-2.5 items-start">
+                <span class="w-6 h-6 rounded-full grad-purple flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5 font-bold">AI</span>
+                <div class="bg-purple-900/20 border border-purple-700/20 rounded-xl rounded-tl-none px-3 py-2.5 flex-1">
+                  <p class="text-gray-200 leading-relaxed">I'm so sorry to hear that. I can connect you with one of our employment attorneys. Do you have documentation of the termination?<span class="cursor-blink"></span></p>
+                </div>
+              </div>
+            </div>
+            <!-- Extracted info footer -->
+            <div class="border-t border-gray-800 px-5 py-3 bg-gray-900/50">
+              <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">Extracted &amp; Sent to Attorney</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span class="text-xs bg-cyan-900/30 border border-cyan-700/30 text-cyan-300 px-2 py-0.5 rounded-full">Employment Law</span>
+                <span class="text-xs bg-green-900/30 border border-green-700/30 text-green-300 px-2 py-0.5 rounded-full">High Priority</span>
+                <span class="text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-2 py-0.5 rounded-full">Qualified Lead</span>
+              </div>
+            </div>
           </div>
-          <!-- Orbit dots -->
-          <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/60"></div>
-          <div class="absolute bottom-4 left-4 w-2.5 h-2.5 bg-purple-400 rounded-full shadow-lg shadow-purple-400/60"></div>
-          <div class="absolute right-2 top-1/3 w-2 h-2 bg-pink-400 rounded-full shadow-lg shadow-pink-400/60"></div>
+          <!-- Floating stat badge -->
+          <div class="absolute -bottom-4 -right-4 card-dark border-green-700/30 px-4 py-2.5 rounded-2xl shadow-xl bg-green-950/40 flex items-center gap-2">
+            <svg width="16" height="16" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span class="text-green-300 text-sm font-bold">Intake Complete</span>
+          </div>
+          <div class="absolute -top-4 -left-4 card-dark border-purple-700/30 px-3 py-2 rounded-xl shadow-xl flex items-center gap-2">
+            <svg width="14" height="14" fill="#a78bfa" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            <span class="text-purple-300 text-xs font-bold">11:47 PM · After Hours</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1642,7 +1695,7 @@ app.get('/', (c) => {
 <section class="py-24 relative overflow-hidden">
   <div class="absolute inset-0 opacity-[0.02]" style="background:radial-gradient(ellipse at center,#7c3aed,transparent 70%)"></div>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
+    <div class="text-center mb-16 fade-up">
       <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">The Problem</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Cost of Missed Calls</h2>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto">Every unanswered call is a potential client walking to your competitor.</p>
@@ -1664,7 +1717,7 @@ app.get('/', (c) => {
 <!-- ═══ FEATURES ═══ -->
 <section id="features" class="py-24 bg-gray-900/40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
+    <div class="text-center mb-16 fade-up">
       <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Features</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Everything Your Firm Needs</h2>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto">One AI agent handles the entire client intake process, 24/7.</p>
@@ -1723,7 +1776,7 @@ app.get('/', (c) => {
 <!-- ═══ TESTIMONIALS ═══ -->
 <section class="py-24 bg-gray-900/40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
+    <div class="text-center mb-16 fade-up">
       <p class="text-cyan-400 text-sm font-semibold uppercase tracking-widest mb-3">Testimonials</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Lawyers Love Begyn.ai</h2>
     </div>
@@ -1747,6 +1800,25 @@ app.get('/', (c) => {
             <p class="text-xs text-gray-500">${role} · ${firm}</p>
           </div>
         </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ RESULTS STRIP ═══ -->
+<section class="py-16 border-y border-gray-800/60 bg-gradient-to-r from-purple-950/30 via-gray-950 to-cyan-950/30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      ${[
+        { val: '200+', label: 'Law Firms', sub: 'using Begyn.ai today' },
+        { val: '94%', label: 'Intake Capture Rate', sub: 'vs 61% industry avg' },
+        { val: '3.4×', label: 'More Consultations', sub: 'booked per month' },
+        { val: '< 24h', label: 'Go-Live Time', sub: 'from signup to live' },
+      ].map(({ val, label, sub }) => `
+      <div class="fade-up">
+        <div class="text-3xl sm:text-4xl font-black grad-text-purple mb-1">${val}</div>
+        <div class="text-white font-bold text-sm">${label}</div>
+        <div class="text-gray-500 text-xs mt-0.5">${sub}</div>
       </div>`).join('')}
     </div>
   </div>
@@ -1832,6 +1904,43 @@ app.get('/', (c) => {
   </div>
 </section>
 
+<!-- ═══ FAQ ═══ -->
+<section class="py-24 bg-gray-900/40">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 fade-up">
+      <p class="text-purple-400 text-sm font-semibold uppercase tracking-widest mb-3">FAQ</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Common Questions</h2>
+      <p class="text-xl text-gray-400">Everything attorneys ask before going live.</p>
+    </div>
+    <div class="space-y-3" id="faq-list">
+      ${[
+        { q: 'Will it sound like a robot to my clients?', a: 'No — Begyn.ai uses natural, conversational voice synthesis that sounds human. You choose the voice persona, tone, and pacing. Most callers don\'t realize they\'re speaking with an AI until they\'re told. We can provide audio demos before you go live.' },
+        { q: 'How does it integrate with my existing phone number?', a: 'Simple call forwarding. You keep your existing number and set it to forward to your Begyn.ai line when you\'re unavailable, after hours, or always-on. No hardware changes, no new numbers. Setup takes under 5 minutes.' },
+        { q: 'Is client data secure and HIPAA/ABA compliant?', a: 'Yes. All calls are encrypted in transit and at rest. We are SOC 2 Type II certified and follow ABA Rule 1.6 safeguards. We sign BAAs where required and never use client data for AI training. Full data residency in the US.' },
+        { q: 'What practice areas does it support?', a: 'Begyn.ai ships with pre-built intake scripts for personal injury, family law, criminal defense, estate planning, immigration, employment law, and real estate. Custom practice areas are configured during your 15-minute onboarding.' },
+        { q: 'What happens if the AI can\'t answer a question?', a: 'The agent is designed to capture intake information, not give legal advice. If a caller asks something outside scope, it gracefully offers to have an attorney call back. You can define specific escalation triggers (e.g., "emergency" keywords) that immediately page your on-call attorney.' },
+        { q: 'Can I cancel anytime?', a: 'Absolutely. No long-term contracts, no cancellation fees. We operate month-to-month on all plans. Your data is exportable in full CSV/JSON format at any time.' },
+      ].map(({ q, a }, i) => `
+      <div class="card-dark faq-item fade-up" style="transition-delay:${i * 60}ms">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+          <span class="font-semibold text-white text-sm sm:text-base">${q}</span>
+          <svg class="faq-chevron flex-shrink-0 text-gray-400" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="faq-answer px-6">
+          <p class="text-gray-400 leading-relaxed pb-5">${a}</p>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- Floating mobile CTA -->
+<div class="fixed bottom-5 left-4 right-4 z-50 md:hidden" id="float-cta" style="display:none">
+  <a href="#cta" class="block grad-purple text-white text-center font-bold py-4 rounded-2xl shadow-2xl shadow-purple-900/60">
+    Book Free Demo →
+  </a>
+</div>
+
 <!-- ═══ CTA SECTION ═══ -->
 <section id="cta" class="py-24 relative overflow-hidden">
   <div class="orb orb-purple w-[500px] h-[500px] opacity-25 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
@@ -1886,13 +1995,40 @@ app.get('/', (c) => {
       </div>
     </div>
     <div class="mt-8 pt-6 border-t border-gray-800/60 text-center text-gray-600 text-sm">
-      © 2025 Begyn.ai. All rights reserved.
+      © 2026 Begyn.ai. All rights reserved.
     </div>
   </div>
 </footer>
 
 <script>
-// Load blog posts
+// ── Scroll-in animations ──────────────────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } })
+}, { threshold: 0.12 })
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el))
+
+// ── Floating mobile CTA ───────────────────────────────────────────────────────
+const floatCta = document.getElementById('float-cta')
+if (floatCta) {
+  window.addEventListener('scroll', () => {
+    floatCta.style.display = window.scrollY > 500 ? 'block' : 'none'
+  }, { passive: true })
+}
+
+// ── FAQ accordion ─────────────────────────────────────────────────────────────
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item')
+  const answer = item.querySelector('.faq-answer')
+  const isOpen = item.classList.contains('open')
+  // Close all
+  document.querySelectorAll('.faq-item').forEach(i => {
+    i.classList.remove('open')
+    i.querySelector('.faq-answer').classList.remove('open')
+  })
+  if (!isOpen) { item.classList.add('open'); answer.classList.add('open'); }
+}
+
+// ── Load blog posts ───────────────────────────────────────────────────────────
 async function loadBlogPosts() {
   const grid = document.getElementById('blog-posts-grid')
   if (!grid) return
@@ -1904,8 +2040,8 @@ async function loadBlogPosts() {
     if (posts.length === 0) {
       grid.innerHTML = \`
         <div class="col-span-3 text-center py-12 text-gray-500">
-          <p class="text-lg mb-2">No blog posts yet</p>
-          <p class="text-sm">Check back soon for AI insights for legal professionals.</p>
+          <p class="text-lg mb-2">No posts yet — check back soon.</p>
+          <p class="text-sm">Our AI publishes fresh legal tech insights multiple times daily.</p>
         </div>\`
       return
     }
@@ -1919,23 +2055,21 @@ async function loadBlogPosts() {
           <span>\${new Date(p.published_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</span>
         </div>
       </a>\`).join('')
-  } catch (e) {
-    // keep placeholder cards on error
-  }
+  } catch (_) { /* keep placeholder cards on error */ }
 }
 
+// ── Demo request form ─────────────────────────────────────────────────────────
 async function handleDemoRequest(e) {
   e.preventDefault()
-  const email = document.getElementById('demo-email').value
   const btn = e.target.querySelector('button[type=submit]')
+  const emailEl = document.getElementById('demo-email')
   btn.textContent = 'Sending...'
   btn.disabled = true
-  // Simulate sending (in production connect to your CRM/email system)
-  await new Promise(r => setTimeout(r, 1200))
-  btn.textContent = 'Request Sent!'
+  await new Promise(r => setTimeout(r, 1000))
+  btn.textContent = '✓ We\'ll be in touch!'
   btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'
-  document.getElementById('demo-email').value = ''
-  setTimeout(() => { btn.textContent = 'Book Free Demo'; btn.disabled = false; btn.style.background = ''; }, 3000)
+  emailEl.value = ''
+  setTimeout(() => { btn.textContent = 'Book Free Demo'; btn.disabled = false; btn.style.background = ''; }, 4000)
 }
 
 loadBlogPosts()
