@@ -186,6 +186,7 @@ app.get('/', (c) => {
             <th class="py-3 px-4 text-gray-400 font-semibold text-right">Remaining</th>
             <th class="py-3 px-4 text-gray-400 font-semibold text-center">Status</th>
             <th class="py-3 px-4 text-gray-400 font-semibold text-center">Next Due</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold text-right">Actions</th>
           </tr>
         </thead>
         <tbody id="deals-tbody"></tbody>
@@ -314,6 +315,19 @@ app.get('/', (c) => {
           </select>
         </div>
       </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label>Pay Frequency</label>
+          <select id="deal-pay-frequency" class="input" onchange="togglePaymentDay()">
+            <option value="monthly">Monthly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div id="payment-day-row"><label>Payment Day of Month</label>
+          <input id="deal-payment-day" class="input" type="number" min="1" max="28" placeholder="e.g. 15" />
+        </div>
+      </div>
       <div><label>Notes</label><textarea id="deal-notes" class="input" rows="2" placeholder="Any notes about this deal…"></textarea></div>
     </div>
     <div class="flex justify-end gap-3 px-6 pb-5">
@@ -335,7 +349,11 @@ app.get('/', (c) => {
           <span id="deal-detail-status"></span>
         </div>
       </div>
-      <button onclick="closeModal('deal-detail-modal')" class="text-gray-500 hover:text-white transition-colors"><i class="fas fa-times"></i></button>
+      <div class="flex items-center gap-2">
+        <button onclick="editDealFromDetail()" class="btn btn-ghost text-xs py-1.5"><i class="fas fa-pen"></i> Edit</button>
+        <button onclick="deleteDealFromDetail()" class="btn btn-danger text-xs py-1.5"><i class="fas fa-trash"></i></button>
+        <button onclick="closeModal('deal-detail-modal')" class="text-gray-500 hover:text-white transition-colors ml-1"><i class="fas fa-times"></i></button>
+      </div>
     </div>
     <div class="p-6">
 
@@ -346,13 +364,15 @@ app.get('/', (c) => {
         <div class="card p-3"><p class="text-xs text-gray-500 mb-1">Financed</p><p class="font-bold text-white" id="deal-detail-financed"></p></div>
         <div class="card p-3"><p class="text-xs text-gray-500 mb-1">Remaining</p><p class="font-bold text-red-400" id="deal-detail-remaining"></p></div>
       </div>
-      <div class="grid grid-cols-4 gap-3 text-sm mb-6">
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-3 text-sm mb-4">
         <div><p class="text-gray-500 text-xs">Total Paid</p><p class="text-green-400 font-semibold" id="deal-detail-paid"></p></div>
         <div><p class="text-gray-500 text-xs">Deal Date</p><p class="text-gray-300" id="deal-detail-date"></p></div>
+        <div><p class="text-gray-500 text-xs">Pay Frequency</p><p class="text-gray-300" id="deal-detail-frequency"></p></div>
+        <div><p class="text-gray-500 text-xs">Payment Day</p><p class="text-gray-300" id="deal-detail-payment-day"></p></div>
         <div><p class="text-gray-500 text-xs">VIN</p><p class="text-gray-300 font-mono text-xs" id="deal-detail-vin"></p></div>
         <div><p class="text-gray-500 text-xs">Color</p><p class="text-gray-300" id="deal-detail-color"></p></div>
       </div>
-      <p class="text-xs text-gray-500 italic mb-6" id="deal-detail-notes"></p>
+      <p class="text-xs text-gray-500 italic mb-4" id="deal-detail-notes"></p>
 
       <!-- Record Payment Button -->
       <div class="flex items-center justify-between mb-3">

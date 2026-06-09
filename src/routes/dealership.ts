@@ -198,14 +198,14 @@ app.get('/deals/:id', async (c) => {
 
 app.post('/deals', async (c) => {
   const b = await c.req.json()
-  const { customer_id, vehicle_year, vehicle_make, vehicle_model, vehicle_vin, vehicle_color, vehicle_stock, sale_price, down_payment, deal_date, status, notes } = b
+  const { customer_id, vehicle_year, vehicle_make, vehicle_model, vehicle_vin, vehicle_color, vehicle_stock, sale_price, down_payment, deal_date, status, notes, pay_frequency, payment_day } = b
   if (!customer_id || !sale_price || !deal_date) return c.json({ error: 'customer_id, sale_price, deal_date required' }, 400)
   const dp = parseFloat(down_payment) || 0
   const sp = parseFloat(sale_price)
   const financed = sp - dp
   const r = await c.env.DB.prepare(
-    `INSERT INTO dealer_deals (customer_id,vehicle_year,vehicle_make,vehicle_model,vehicle_vin,vehicle_color,vehicle_stock,sale_price,down_payment,amount_financed,deal_date,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).bind(customer_id, vehicle_year||null, vehicle_make||null, vehicle_model||null, vehicle_vin||null, vehicle_color||null, vehicle_stock||null, sp, dp, financed, deal_date, status||'active', notes||null).run()
+    `INSERT INTO dealer_deals (customer_id,vehicle_year,vehicle_make,vehicle_model,vehicle_vin,vehicle_color,vehicle_stock,sale_price,down_payment,amount_financed,deal_date,status,notes,pay_frequency,payment_day) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(customer_id, vehicle_year||null, vehicle_make||null, vehicle_model||null, vehicle_vin||null, vehicle_color||null, vehicle_stock||null, sp, dp, financed, deal_date, status||'active', notes||null, pay_frequency||'monthly', payment_day||null).run()
   const deal = await c.env.DB.prepare('SELECT * FROM dealer_deals WHERE id=?').bind(r.meta.last_row_id).first()
   return c.json(deal, 201)
 })
@@ -213,13 +213,13 @@ app.post('/deals', async (c) => {
 app.put('/deals/:id', async (c) => {
   const id = c.req.param('id')
   const b = await c.req.json()
-  const { vehicle_year, vehicle_make, vehicle_model, vehicle_vin, vehicle_color, vehicle_stock, sale_price, down_payment, deal_date, status, notes } = b
+  const { vehicle_year, vehicle_make, vehicle_model, vehicle_vin, vehicle_color, vehicle_stock, sale_price, down_payment, deal_date, status, notes, pay_frequency, payment_day } = b
   const dp = parseFloat(down_payment) || 0
   const sp = parseFloat(sale_price) || 0
   const financed = sp - dp
   await c.env.DB.prepare(
-    `UPDATE dealer_deals SET vehicle_year=?,vehicle_make=?,vehicle_model=?,vehicle_vin=?,vehicle_color=?,vehicle_stock=?,sale_price=?,down_payment=?,amount_financed=?,deal_date=?,status=?,notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`
-  ).bind(vehicle_year||null, vehicle_make||null, vehicle_model||null, vehicle_vin||null, vehicle_color||null, vehicle_stock||null, sp, dp, financed, deal_date, status, notes||null, id).run()
+    `UPDATE dealer_deals SET vehicle_year=?,vehicle_make=?,vehicle_model=?,vehicle_vin=?,vehicle_color=?,vehicle_stock=?,sale_price=?,down_payment=?,amount_financed=?,deal_date=?,status=?,notes=?,pay_frequency=?,payment_day=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`
+  ).bind(vehicle_year||null, vehicle_make||null, vehicle_model||null, vehicle_vin||null, vehicle_color||null, vehicle_stock||null, sp, dp, financed, deal_date, status, notes||null, pay_frequency||'monthly', payment_day||null, id).run()
   const deal = await c.env.DB.prepare('SELECT * FROM dealer_deals WHERE id=?').bind(id).first()
   return c.json(deal)
 })

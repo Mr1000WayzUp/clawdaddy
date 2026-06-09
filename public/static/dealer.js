@@ -283,13 +283,14 @@ async function loadDeals(statusFilter) {
 
   const tbody = $('deals-tbody');
   if (deals.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-500">No deals yet. Add your first deal!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-500">No deals yet. Add your first deal!</td></tr>';
     return;
   }
   tbody.innerHTML = deals.map(d => {
     const vehicle = [d.vehicle_year, d.vehicle_make, d.vehicle_model].filter(Boolean).join(' ') || 'Vehicle';
     const statusColor = { active: 'bg-green-900 text-green-300', paid_off: 'bg-gray-700 text-gray-400', defaulted: 'bg-red-900 text-red-400' }[d.status] || 'bg-gray-700 text-gray-400';
     const overdueFlag = d.overdue_count > 0 ? '<span class="ml-2 px-1.5 py-0.5 rounded text-xs bg-red-900 text-red-400 font-bold">!' + d.overdue_count + ' OD</span>' : '';
+    const safeName = (d.first_name + ' ' + d.last_name).replace(/'/g, "\\'");
     return `
       <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors" onclick="openDealDetail(${d.id})">
         <td class="py-3 px-4">
@@ -304,24 +305,82 @@ async function loadDeals(statusFilter) {
           <span class="px-2 py-1 rounded-full text-xs font-bold ${statusColor}">${d.status.replace('_', ' ')}</span>
         </td>
         <td class="py-3 px-4 text-center text-gray-400 text-sm">${fmtDate(d.next_due_date) || '—'}</td>
+        <td class="py-3 px-4 text-right">
+          <button onclick="event.stopPropagation();editDeal(${d.id})" class="text-gray-500 hover:text-blue-400 transition-colors mr-3" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+          <button onclick="event.stopPropagation();deleteDeal(${d.id},'${safeName}')" class="text-gray-500 hover:text-red-400 transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></button>
+        </td>
       </tr>`;
   }).join('');
 }
 
 async function showAddDealModal(customerId, customerName) {
   editingDeal = null;
-  // Populate customer dropdown
   const res = await fetch('/api/dealer/customers');
   allCustomers = await res.json();
   const sel = $('deal-customer-select');
   sel.innerHTML = '<option value="">Select customer…</option>' + allCustomers.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
   if (customerId) sel.value = customerId;
   $('deal-modal-title').textContent = 'Add Deal';
-  ['deal-year', 'deal-make', 'deal-model', 'deal-vin', 'deal-color', 'deal-stock', 'deal-sale-price', 'deal-down-payment', 'deal-notes'].forEach(f => { $(f).value = ''; });
+  ['deal-year', 'deal-make', 'deal-model', 'deal-vin', 'deal-color', 'deal-stock', 'deal-sale-price', 'deal-down-payment', 'deal-notes', 'deal-payment-day'].forEach(f => { $(f).value = ''; });
   $('deal-date').value = today();
   $('deal-status-select').value = 'active';
+  $('deal-pay-frequency').value = 'monthly';
   $('deal-financed-display').textContent = '$0.00';
+  togglePaymentDay();
   openModal('add-deal-modal');
+}
+
+async function editDeal(id) {
+  const res = await fetch('/api/dealer/deals/' + id);
+  const { deal } = await res.json();
+  editingDeal = id;
+  const custRes = await fetch('/api/dealer/customers');
+  allCustomers = await custRes.json();
+  const sel = $('deal-customer-select');
+  sel.innerHTML = '<option value="">Select customer…</option>' + allCustomers.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
+  $('deal-modal-title').textContent = 'Edit Deal';
+  sel.value = deal.customer_id;
+  $('deal-year').value = deal.vehicle_year || '';
+  $('deal-make').value = deal.vehicle_make || '';
+  $('deal-model').value = deal.vehicle_model || '';
+  $('deal-vin').value = deal.vehicle_vin || '';
+  $('deal-color').value = deal.vehicle_color || '';
+  $('deal-stock').value = deal.vehicle_stock || '';
+  $('deal-sale-price').value = deal.sale_price || '';
+  $('deal-down-payment').value = deal.down_payment || '';
+  $('deal-date').value = deal.deal_date || '';
+  $('deal-status-select').value = deal.status || 'active';
+  $('deal-notes').value = deal.notes || '';
+  $('deal-pay-frequency').value = deal.pay_frequency || 'monthly';
+  $('deal-payment-day').value = deal.payment_day || '';
+  updateFinanced();
+  togglePaymentDay();
+  openModal('add-deal-modal');
+}
+
+async function deleteDeal(id, name) {
+  if (!confirm('Delete deal for ' + name + '? All schedule entries and payment records will be removed.')) return;
+  await fetch('/api/dealer/deals/' + id, { method: 'DELETE' });
+  showToast('Deal deleted');
+  loadDeals();
+}
+
+function editDealFromDetail() {
+  closeModal('deal-detail-modal');
+  editDeal(currentDealId);
+}
+
+async function deleteDealFromDetail() {
+  if (!confirm('Delete this deal? All schedule entries and payment records will be removed.')) return;
+  await fetch('/api/dealer/deals/' + currentDealId, { method: 'DELETE' });
+  closeModal('deal-detail-modal');
+  showToast('Deal deleted');
+  loadDeals();
+}
+
+function togglePaymentDay() {
+  const freq = $('deal-pay-frequency').value;
+  $('payment-day-row').style.display = freq === 'monthly' ? 'block' : 'none';
 }
 
 function updateFinanced() {
@@ -343,6 +402,8 @@ async function saveDeal() {
     vehicle_model: $('deal-model').value, vehicle_vin: $('deal-vin').value,
     vehicle_color: $('deal-color').value, vehicle_stock: $('deal-stock').value,
     status: $('deal-status-select').value, notes: $('deal-notes').value,
+    pay_frequency: $('deal-pay-frequency').value,
+    payment_day: $('deal-payment-day').value ? parseInt($('deal-payment-day').value) : null,
   };
   const url = editingDeal ? '/api/dealer/deals/' + editingDeal : '/api/dealer/deals';
   const method = editingDeal ? 'PUT' : 'POST';
@@ -374,6 +435,8 @@ function renderDealDetail(deal, schedule, payments) {
   $('deal-detail-vin').textContent = deal.vehicle_vin || '—';
   $('deal-detail-color').textContent = deal.vehicle_color || '—';
   $('deal-detail-date').textContent = fmtDate(deal.deal_date);
+  $('deal-detail-frequency').textContent = capitalize(deal.pay_frequency || 'monthly');
+  $('deal-detail-payment-day').textContent = deal.payment_day ? 'Day ' + deal.payment_day : '—';
   $('deal-detail-sale').textContent = fmt$(deal.sale_price);
   $('deal-detail-down').textContent = fmt$(deal.down_payment);
   $('deal-detail-financed').textContent = fmt$(deal.amount_financed);
