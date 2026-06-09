@@ -11,7 +11,4 @@
       "database_id": "local-db"
     }
   ],
-  "triggers": {
-    "crons": ["0 */4 * * *"]
-  }
 }
