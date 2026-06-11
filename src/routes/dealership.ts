@@ -10,7 +10,7 @@ app.get('/dashboard', async (c) => {
   const today = new Date().toISOString().split('T')[0]
   const in7Days = new Date(Date.now() + 7 * 864e5).toISOString().split('T')[0]
 
-  const [statsCustomers, statsDeals, statsOwed, overdue, dueSoon, recentPayments, upcomingSchedule] = await Promise.all([
+  const [statsCustomers, statsDeals, statsOwed, overdue, dueSoon, recentPayments, upcomingSchedule, expenseStats, overdueExpenses] = await Promise.all([
     db.prepare('SELECT COUNT(*) as cnt FROM dealer_customers').first<{ cnt: number }>(),
     db.prepare("SELECT COUNT(*) as cnt FROM dealer_deals WHERE status='active'").first<{ cnt: number }>(),
     db.prepare(`
@@ -59,6 +59,18 @@ app.get('/dashboard', async (c) => {
       WHERE s.due_date > ? AND s.status NOT IN ('paid')
       ORDER BY s.due_date ASC LIMIT 15
     `).bind(in7Days).all(),
+    db.prepare(`
+      SELECT COALESCE(SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END), 0) as total_unpaid,
+             COUNT(CASE WHEN status != 'paid' AND due_date < ? THEN 1 END) as overdue_count,
+             COALESCE(SUM(CASE WHEN status != 'paid' AND due_date < ? THEN amount ELSE 0 END), 0) as overdue_amount
+      FROM business_expenses
+    `).bind(today, today).first<{ total_unpaid: number; overdue_count: number; overdue_amount: number }>(),
+    db.prepare(`
+      SELECT id, category, description, vendor, amount, due_date, expense_date
+      FROM business_expenses
+      WHERE due_date < ? AND status != 'paid'
+      ORDER BY due_date ASC LIMIT 10
+    `).bind(today).all(),
   ])
 
   return c.json({
@@ -68,11 +80,14 @@ app.get('/dashboard', async (c) => {
       total_owed: statsOwed?.total ?? 0,
       overdue_count: overdue.results.length,
       due_soon_count: dueSoon.results.length,
+      expense_unpaid_total: expenseStats?.total_unpaid ?? 0,
+      expense_overdue_count: expenseStats?.overdue_count ?? 0,
     },
     overdue: overdue.results,
     due_soon: dueSoon.results,
     recent_payments: recentPayments.results,
     upcoming_schedule: upcomingSchedule.results,
+    overdue_expenses: overdueExpenses.results,
   })
 })
 
@@ -326,6 +341,91 @@ app.delete('/payments/:id', async (c) => {
     await c.env.DB.prepare(`UPDATE dealer_payment_schedules SET status='pending', updated_at=CURRENT_TIMESTAMP WHERE id=?`).bind(record.schedule_id).run()
   }
   await c.env.DB.prepare('DELETE FROM dealer_payment_records WHERE id=?').bind(id).run()
+  return c.json({ success: true })
+})
+
+// ─── BUSINESS EXPENSES ───────────────────────────────────────────────────────
+
+app.get('/expenses/summary', async (c) => {
+  const today = new Date().toISOString().split('T')[0]
+  const rows = await c.env.DB.prepare(`
+    SELECT category,
+      COALESCE(SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END), 0) as unpaid_total,
+      COALESCE(SUM(CASE WHEN status  = 'paid' THEN amount ELSE 0 END), 0) as paid_total,
+      COUNT(*) as count
+    FROM business_expenses
+    GROUP BY category
+  `).all()
+  const by_category: Record<string, any> = {}
+  for (const r of rows.results as any[]) {
+    by_category[r.category] = { unpaid_total: r.unpaid_total, paid_total: r.paid_total, count: r.count }
+  }
+  const totals = await c.env.DB.prepare(`
+    SELECT COALESCE(SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END), 0) as total_unpaid,
+           COUNT(CASE WHEN status != 'paid' AND due_date < ? THEN 1 END) as overdue_count,
+           COALESCE(SUM(CASE WHEN status != 'paid' AND due_date < ? THEN amount ELSE 0 END), 0) as overdue_amount
+    FROM business_expenses
+  `).bind(today, today).first<{ total_unpaid: number; overdue_count: number; overdue_amount: number }>()
+  return c.json({ by_category, total_unpaid: totals?.total_unpaid ?? 0, overdue_count: totals?.overdue_count ?? 0, overdue_amount: totals?.overdue_amount ?? 0 })
+})
+
+app.get('/expenses', async (c) => {
+  const { category, status } = c.req.query()
+  let q = `
+    SELECT e.*,
+      d.vehicle_year, d.vehicle_make, d.vehicle_model
+    FROM business_expenses e
+    LEFT JOIN dealer_deals d ON d.id = e.deal_id
+    WHERE 1=1
+  `
+  const params: any[] = []
+  if (category) { q += ' AND e.category=?'; params.push(category) }
+  if (status)   { q += ' AND e.status=?';   params.push(status) }
+  q += ' ORDER BY e.due_date ASC, e.expense_date DESC'
+  const { results } = await c.env.DB.prepare(q).bind(...params).all()
+  return c.json(results)
+})
+
+app.get('/expenses/:id', async (c) => {
+  const expense = await c.env.DB.prepare('SELECT * FROM business_expenses WHERE id=?').bind(c.req.param('id')).first()
+  if (!expense) return c.json({ error: 'Not found' }, 404)
+  return c.json(expense)
+})
+
+app.post('/expenses', async (c) => {
+  const b = await c.req.json()
+  const { category, description, vendor, amount, expense_date, due_date, status, deal_id, payment_method, reference_number, recurring, recur_frequency, notes } = b
+  if (!description || !amount || !expense_date) return c.json({ error: 'description, amount, expense_date required' }, 400)
+  const r = await c.env.DB.prepare(
+    `INSERT INTO business_expenses (category,description,vendor,amount,expense_date,due_date,status,deal_id,payment_method,reference_number,recurring,recur_frequency,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  ).bind(category||'bill', description, vendor||null, parseFloat(amount), expense_date, due_date||null, status||'unpaid', deal_id||null, payment_method||null, reference_number||null, recurring?1:0, recur_frequency||null, notes||null).run()
+  const expense = await c.env.DB.prepare('SELECT * FROM business_expenses WHERE id=?').bind(r.meta.last_row_id).first()
+  return c.json(expense, 201)
+})
+
+app.put('/expenses/:id', async (c) => {
+  const id = c.req.param('id')
+  const b = await c.req.json()
+  const { category, description, vendor, amount, expense_date, due_date, status, deal_id, payment_method, reference_number, recurring, recur_frequency, notes } = b
+  await c.env.DB.prepare(
+    `UPDATE business_expenses SET category=?,description=?,vendor=?,amount=?,expense_date=?,due_date=?,status=?,deal_id=?,payment_method=?,reference_number=?,recurring=?,recur_frequency=?,notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`
+  ).bind(category||'bill', description, vendor||null, parseFloat(amount)||0, expense_date, due_date||null, status||'unpaid', deal_id||null, payment_method||null, reference_number||null, recurring?1:0, recur_frequency||null, notes||null, id).run()
+  const expense = await c.env.DB.prepare('SELECT * FROM business_expenses WHERE id=?').bind(id).first()
+  return c.json(expense)
+})
+
+app.patch('/expenses/:id/pay', async (c) => {
+  const id = c.req.param('id')
+  const today = new Date().toISOString().split('T')[0]
+  await c.env.DB.prepare(
+    `UPDATE business_expenses SET status='paid', expense_date=COALESCE(expense_date,?), updated_at=CURRENT_TIMESTAMP WHERE id=?`
+  ).bind(today, id).run()
+  const expense = await c.env.DB.prepare('SELECT * FROM business_expenses WHERE id=?').bind(id).first()
+  return c.json(expense)
+})
+
+app.delete('/expenses/:id', async (c) => {
+  await c.env.DB.prepare('DELETE FROM business_expenses WHERE id=?').bind(c.req.param('id')).run()
   return c.json({ success: true })
 })
 

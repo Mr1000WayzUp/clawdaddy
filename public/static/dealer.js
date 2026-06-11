@@ -5,6 +5,7 @@ let allCustomers = [];
 let editingCustomer = null;
 let editingDeal = null;
 let currentDealId = null;
+let editingExpense = null;
 
 const $ = id => document.getElementById(id);
 const fmt$ = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,6 +33,7 @@ function setTab(tab) {
   else if (tab === 'customers') loadCustomers();
   else if (tab === 'deals') loadDeals();
   else if (tab === 'payments') loadAllPayments();
+  else if (tab === 'expenses') loadExpenses();
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -39,13 +41,15 @@ function setTab(tab) {
 async function loadDashboard() {
   const res = await fetch('/api/dealer/dashboard');
   const data = await res.json();
-  const { stats, overdue, due_soon, recent_payments, upcoming_schedule } = data;
+  const { stats, overdue, due_soon, recent_payments, upcoming_schedule, overdue_expenses } = data;
 
   // Stats
   $('stat-customers').textContent = stats.total_customers;
   $('stat-deals').textContent = stats.active_deals;
   $('stat-owed').textContent = fmt$(stats.total_owed);
   $('stat-overdue').textContent = stats.overdue_count;
+  $('stat-expense-unpaid').textContent = fmt$(stats.expense_unpaid_total || 0);
+  $('stat-expense-overdue').textContent = stats.expense_overdue_count || 0;
 
   // Alerts banner
   const alertBanner = $('alert-banner');
@@ -105,6 +109,32 @@ async function loadDashboard() {
             <p class="font-bold text-white">${fmt$(p.amount_due)}</p>
             <p class="text-xs ${urgency}">Due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}</p>
             <p class="text-xs text-gray-500">${fmtDate(p.due_date)}</p>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Overdue expenses
+  const overdueExpEl = $('overdue-expenses-list');
+  if (!overdue_expenses || overdue_expenses.length === 0) {
+    overdueExpEl.innerHTML = '<p class="text-gray-500 text-sm py-4 text-center">No overdue bills or expenses</p>';
+  } else {
+    overdueExpEl.innerHTML = overdue_expenses.map(e => {
+      const daysLate = Math.floor((Date.now() - new Date(e.due_date + 'T12:00:00').getTime()) / 864e5);
+      const catColors = { bill: 'bg-blue-900 text-blue-300', repair: 'bg-purple-900 text-purple-300', tax: 'bg-orange-900 text-orange-300', registration: 'bg-teal-900 text-teal-300' };
+      const catBadge = '<span class="px-1.5 py-0.5 rounded text-xs font-bold ' + (catColors[e.category] || 'bg-gray-700 text-gray-400') + '">' + e.category + '</span>';
+      return `
+        <div class="flex items-center justify-between py-3 border-b border-gray-800 last:border-0">
+          <div class="flex items-center gap-3">
+            <div class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></div>
+            <div>
+              <p class="font-semibold text-white">${e.description}</p>
+              <div class="flex items-center gap-2 mt-0.5">${catBadge}${e.vendor ? '<p class="text-xs text-gray-400">' + e.vendor + '</p>' : ''}</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-orange-400">${fmt$(e.amount)}</p>
+            <p class="text-xs text-red-500">${daysLate} day${daysLate !== 1 ? 's' : ''} overdue</p>
           </div>
         </div>`;
     }).join('');
@@ -627,6 +657,168 @@ async function loadAllPayments() {
       <td class="py-3 px-4 text-gray-400 text-sm">${capitalize(p.payment_method)}${p.reference_number ? ' · #' + p.reference_number : ''}</td>
       <td class="py-3 px-4 text-gray-400 text-sm">${p.notes || '—'}</td>
     </tr>`).join('');
+}
+
+// ─── EXPENSES ─────────────────────────────────────────────────────────────────
+
+async function loadExpenses() {
+  const cat = $('expense-category-filter')?.value || '';
+  const status = $('expense-status-filter')?.value || '';
+  let url = '/api/dealer/expenses';
+  const params = [];
+  if (cat) params.push('category=' + cat);
+  if (status) params.push('status=' + status);
+  if (params.length) url += '?' + params.join('&');
+
+  const [expRes, sumRes] = await Promise.all([fetch(url), fetch('/api/dealer/expenses/summary')]);
+  const expenses = await expRes.json();
+  const summary = await sumRes.json();
+
+  // Summary cards
+  const cats = ['bill', 'repair', 'tax', 'registration'];
+  cats.forEach(c => {
+    const el = $('exp-sum-' + c);
+    if (el) el.textContent = fmt$(summary.by_category?.[c]?.unpaid_total || 0);
+  });
+
+  const tbody = $('expenses-tbody');
+  if (expenses.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-500">No expenses yet. Add your first expense!</td></tr>';
+    return;
+  }
+
+  const catColors = { bill: 'bg-blue-900 text-blue-300', repair: 'bg-purple-900 text-purple-300', tax: 'bg-orange-900 text-orange-300', registration: 'bg-teal-900 text-teal-300', other: 'bg-gray-700 text-gray-400' };
+  const statusColors = { paid: 'bg-green-900 text-green-300', unpaid: 'bg-yellow-900 text-yellow-400', overdue: 'bg-red-900 text-red-400' };
+
+  tbody.innerHTML = expenses.map(e => {
+    const catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold ' + (catColors[e.category] || 'bg-gray-700 text-gray-400') + '">' + e.category + '</span>';
+    const statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold ' + (statusColors[e.status] || 'bg-gray-700 text-gray-400') + '">' + e.status + '</span>';
+    const vehicle = e.vehicle_year || e.vehicle_make ? [e.vehicle_year, e.vehicle_make, e.vehicle_model].filter(Boolean).join(' ') : '—';
+    const safeDesc = (e.description || '').replace(/'/g, "\\'");
+    return `
+      <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
+        <td class="py-3 px-4 font-semibold text-white">${e.description}</td>
+        <td class="py-3 px-4">${catBadge}</td>
+        <td class="py-3 px-4 text-gray-400 text-sm">${e.vendor || '—'}</td>
+        <td class="py-3 px-4 text-right font-bold text-white">${fmt$(e.amount)}</td>
+        <td class="py-3 px-4 text-gray-300 text-sm">${fmtDate(e.due_date)}</td>
+        <td class="py-3 px-4 text-center">${statusBadge}</td>
+        <td class="py-3 px-4 text-gray-400 text-sm">${vehicle}</td>
+        <td class="py-3 px-4 text-right whitespace-nowrap">
+          ${e.status !== 'paid' ? '<button onclick="markExpensePaid(' + e.id + ')" class="text-gray-500 hover:text-green-400 transition-colors mr-2" title="Mark Paid"><i class="fas fa-check text-xs"></i></button>' : ''}
+          <button onclick="editExpense(${e.id})" class="text-gray-500 hover:text-blue-400 transition-colors mr-2" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+          <button onclick="deleteExpense(${e.id},'${safeDesc}')" class="text-gray-500 hover:text-red-400 transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+async function showAddExpenseModal() {
+  editingExpense = null;
+  $('expense-modal-title').textContent = 'Add Expense';
+  ['exp-description', 'exp-vendor', 'exp-amount', 'exp-due-date', 'exp-reference', 'exp-notes'].forEach(f => { $(f).value = ''; });
+  $('exp-category').value = 'bill';
+  $('exp-status').value = 'unpaid';
+  $('exp-expense-date').value = today();
+  $('exp-recurring').checked = false;
+  $('exp-recur-frequency').value = 'monthly';
+  await populateDealDropdown();
+  toggleExpenseFields();
+  openModal('add-expense-modal');
+}
+
+async function editExpense(id) {
+  const res = await fetch('/api/dealer/expenses/' + id);
+  if (!res.ok) { showToast('Could not load expense', 'error'); return; }
+  const e = await res.json();
+  editingExpense = id;
+  $('expense-modal-title').textContent = 'Edit Expense';
+  $('exp-category').value = e.category || 'bill';
+  $('exp-status').value = e.status || 'unpaid';
+  $('exp-description').value = e.description || '';
+  $('exp-vendor').value = e.vendor || '';
+  $('exp-amount').value = e.amount || '';
+  $('exp-expense-date').value = e.expense_date || today();
+  $('exp-due-date').value = e.due_date || '';
+  $('exp-payment-method').value = e.payment_method || 'cash';
+  $('exp-reference').value = e.reference_number || '';
+  $('exp-recurring').checked = !!e.recurring;
+  $('exp-recur-frequency').value = e.recur_frequency || 'monthly';
+  $('exp-notes').value = e.notes || '';
+  await populateDealDropdown();
+  $('exp-deal-id').value = e.deal_id || '';
+  toggleExpenseFields();
+  openModal('add-expense-modal');
+}
+
+async function saveExpense() {
+  const description = $('exp-description').value.trim();
+  const amount = $('exp-amount').value;
+  const expense_date = $('exp-expense-date').value;
+  if (!description) { showToast('Description is required', 'error'); return; }
+  if (!amount) { showToast('Amount is required', 'error'); return; }
+  if (!expense_date) { showToast('Expense date is required', 'error'); return; }
+  const body = {
+    category: $('exp-category').value,
+    description,
+    vendor: $('exp-vendor').value.trim(),
+    amount: parseFloat(amount),
+    expense_date,
+    due_date: $('exp-due-date').value || null,
+    status: $('exp-status').value,
+    deal_id: $('exp-deal-id').value ? parseInt($('exp-deal-id').value) : null,
+    payment_method: $('exp-payment-method').value,
+    reference_number: $('exp-reference').value.trim(),
+    recurring: $('exp-recurring').checked ? 1 : 0,
+    recur_frequency: $('exp-recurring').checked ? $('exp-recur-frequency').value : null,
+    notes: $('exp-notes').value.trim(),
+  };
+  const url = editingExpense ? '/api/dealer/expenses/' + editingExpense : '/api/dealer/expenses';
+  const method = editingExpense ? 'PUT' : 'POST';
+  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) { showToast('Error saving expense', 'error'); return; }
+  closeModal('add-expense-modal');
+  showToast(editingExpense ? 'Expense updated' : 'Expense added');
+  editingExpense = null;
+  loadExpenses();
+  if (currentTab === 'dashboard') loadDashboard();
+}
+
+async function deleteExpense(id, desc) {
+  if (!confirm('Delete expense "' + desc + '"?')) return;
+  const res = await fetch('/api/dealer/expenses/' + id, { method: 'DELETE' });
+  if (!res.ok) { showToast('Error deleting expense', 'error'); return; }
+  showToast('Expense deleted');
+  loadExpenses();
+  if (currentTab === 'dashboard') loadDashboard();
+}
+
+async function markExpensePaid(id) {
+  const res = await fetch('/api/dealer/expenses/' + id + '/pay', { method: 'PATCH' });
+  if (!res.ok) { showToast('Error marking expense paid', 'error'); return; }
+  showToast('Marked as paid');
+  loadExpenses();
+  loadDashboard();
+}
+
+function toggleExpenseFields() {
+  const cat = $('exp-category').value;
+  const status = $('exp-status').value;
+  const recurring = $('exp-recurring').checked;
+  const vehicleCats = ['repair', 'tax', 'registration'];
+  $('exp-deal-row').style.display = vehicleCats.includes(cat) ? 'block' : 'none';
+  $('exp-payment-method-row').style.display = status === 'paid' ? 'block' : 'none';
+  $('exp-recur-row').style.display = recurring ? 'block' : 'none';
+}
+
+async function populateDealDropdown() {
+  const res = await fetch('/api/dealer/deals');
+  const deals = await res.json();
+  const sel = $('exp-deal-id');
+  sel.innerHTML = '<option value="">None (not vehicle-specific)</option>' + deals.map(d => {
+    const vehicle = [d.vehicle_year, d.vehicle_make, d.vehicle_model].filter(Boolean).join(' ') || 'Vehicle';
+    return '<option value="' + d.id + '">' + d.first_name + ' ' + d.last_name + ' — ' + vehicle + '</option>';
+  }).join('');
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────

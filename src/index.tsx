@@ -18,7 +18,7 @@ app.get('/', (c) => {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ClawDaddy — Dealership Payment Tracker</title>
+  <title>Cruz Business Information Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css"/>
   <style>
@@ -56,8 +56,8 @@ app.get('/', (c) => {
         <i class="fas fa-car text-white text-sm"></i>
       </div>
       <div>
-        <h1 class="font-black text-white text-lg leading-none">ClawDaddy</h1>
-        <p class="text-xs text-gray-500">In-House Payment Tracker</p>
+        <h1 class="font-black text-white text-lg leading-none">Cruz Business</h1>
+        <p class="text-xs text-gray-500">Information Tracker</p>
       </div>
     </div>
     <nav class="flex items-center gap-1">
@@ -65,6 +65,7 @@ app.get('/', (c) => {
       <button class="nav-btn" data-tab="customers" onclick="setTab('customers')"><i class="fas fa-users text-xs"></i> Customers</button>
       <button class="nav-btn" data-tab="deals" onclick="setTab('deals')"><i class="fas fa-handshake text-xs"></i> Deals</button>
       <button class="nav-btn" data-tab="payments" onclick="setTab('payments')"><i class="fas fa-dollar-sign text-xs"></i> Payments</button>
+      <button class="nav-btn" data-tab="expenses" onclick="setTab('expenses')"><i class="fas fa-receipt text-xs"></i> Expenses</button>
     </nav>
   </div>
 </header>
@@ -81,7 +82,7 @@ app.get('/', (c) => {
   <div id="tab-dashboard" class="tab-panel">
 
     <!-- Stats -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
       <div class="card p-5">
         <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Customers</p>
         <p class="text-3xl font-black text-white" id="stat-customers">—</p>
@@ -91,16 +92,26 @@ app.get('/', (c) => {
         <p class="text-3xl font-black text-blue-400" id="stat-deals">—</p>
       </div>
       <div class="card p-5">
-        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Owed</p>
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Owed (Customer)</p>
         <p class="text-3xl font-black text-white" id="stat-owed">—</p>
       </div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div class="card p-5">
-        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Overdue</p>
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Payments Overdue</p>
         <p class="text-3xl font-black text-red-400" id="stat-overdue">—</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Unpaid Expenses</p>
+        <p class="text-3xl font-black text-orange-400" id="stat-expense-unpaid">—</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Overdue Expenses</p>
+        <p class="text-3xl font-black text-red-400" id="stat-expense-overdue">—</p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
       <!-- Overdue -->
       <div class="card p-5">
         <div class="flex items-center gap-2 mb-4">
@@ -117,6 +128,15 @@ app.get('/', (c) => {
           <h2 class="font-bold text-white">Due Within 7 Days</h2>
         </div>
         <div id="due-soon-list"></div>
+      </div>
+
+      <!-- Overdue Expenses -->
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-3 h-3 rounded-full bg-orange-400"></div>
+          <h2 class="font-bold text-white">Overdue Bills &amp; Expenses</h2>
+        </div>
+        <div id="overdue-expenses-list"></div>
       </div>
     </div>
 
@@ -212,6 +232,65 @@ app.get('/', (c) => {
           </tr>
         </thead>
         <tbody id="payments-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── EXPENSES ── -->
+  <div id="tab-expenses" class="tab-panel" style="display:none">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-bold text-white">Business Expenses</h2>
+      <div class="flex items-center gap-3">
+        <select id="expense-category-filter" class="input w-auto text-sm" onchange="loadExpenses()">
+          <option value="">All Categories</option>
+          <option value="bill">Bills</option>
+          <option value="repair">Repairs</option>
+          <option value="tax">Taxes</option>
+          <option value="registration">Registration</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="expense-status-filter" class="input w-auto text-sm" onchange="loadExpenses()">
+          <option value="">All Statuses</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <button class="btn btn-primary" onclick="showAddExpenseModal()"><i class="fas fa-plus"></i> Add Expense</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="card p-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Bills Unpaid</p>
+        <p class="text-2xl font-black text-blue-400" id="exp-sum-bill">—</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Repairs Unpaid</p>
+        <p class="text-2xl font-black text-purple-400" id="exp-sum-repair">—</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Taxes Unpaid</p>
+        <p class="text-2xl font-black text-orange-400" id="exp-sum-tax">—</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Registrations Unpaid</p>
+        <p class="text-2xl font-black text-teal-400" id="exp-sum-registration">—</p>
+      </div>
+    </div>
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-800 text-left">
+            <th class="py-3 px-4 text-gray-400 font-semibold">Description</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold">Category</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold">Vendor</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold text-right">Amount</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold">Due Date</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold text-center">Status</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold">Vehicle</th>
+            <th class="py-3 px-4 text-gray-400 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-tbody"></tbody>
       </table>
     </div>
   </div>
@@ -481,6 +560,74 @@ app.get('/', (c) => {
     <div class="flex justify-end gap-3 px-6 pb-5">
       <button class="btn btn-ghost" onclick="closeModal('record-payment-modal')">Cancel</button>
       <button class="btn btn-success" onclick="savePayment()"><i class="fas fa-check"></i> Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Expense -->
+<div id="add-expense-modal" class="modal-backdrop" style="display:none">
+  <div class="modal max-w-xl w-full">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <h3 class="font-bold text-white text-lg" id="expense-modal-title">Add Expense</h3>
+      <button onclick="closeModal('add-expense-modal')" class="text-gray-500 hover:text-white transition-colors"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label>Category *</label>
+          <select id="exp-category" class="input" onchange="toggleExpenseFields()">
+            <option value="bill">Bill</option>
+            <option value="repair">Repair</option>
+            <option value="tax">Tax</option>
+            <option value="registration">Registration</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div><label>Status</label>
+          <select id="exp-status" class="input" onchange="toggleExpenseFields()">
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Description *</label><input id="exp-description" class="input" placeholder="Electricity bill, brake job, etc." /></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label>Vendor / Payee</label><input id="exp-vendor" class="input" placeholder="Vendor name" /></div>
+        <div><label>Amount *</label><input id="exp-amount" class="input" type="number" step="0.01" placeholder="0.00" /></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label>Expense Date *</label><input id="exp-expense-date" class="input" type="date" /></div>
+        <div><label>Due Date</label><input id="exp-due-date" class="input" type="date" /></div>
+      </div>
+      <div id="exp-deal-row"><label>Linked Vehicle</label>
+        <select id="exp-deal-id" class="input">
+          <option value="">None (not vehicle-specific)</option>
+        </select>
+      </div>
+      <div id="exp-payment-method-row"><label>Payment Method</label>
+        <select id="exp-payment-method" class="input">
+          <option value="cash">Cash</option>
+          <option value="check">Check</option>
+          <option value="card">Card</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div><label>Reference #</label><input id="exp-reference" class="input" placeholder="Check #, receipt #, etc." /></div>
+      <div class="flex items-center gap-3">
+        <input type="checkbox" id="exp-recurring" class="w-4 h-4 accent-blue-500" onchange="toggleExpenseFields()" />
+        <label class="!mb-0 !text-sm !normal-case !tracking-normal text-gray-300 cursor-pointer" for="exp-recurring">Recurring expense</label>
+      </div>
+      <div id="exp-recur-row" style="display:none"><label>Recur Frequency</label>
+        <select id="exp-recur-frequency" class="input">
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <div><label>Notes</label><textarea id="exp-notes" class="input" rows="2" placeholder="Any notes…"></textarea></div>
+    </div>
+    <div class="flex justify-end gap-3 px-6 pb-5">
+      <button class="btn btn-ghost" onclick="closeModal('add-expense-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()"><i class="fas fa-save"></i> Save Expense</button>
     </div>
   </div>
 </div>
