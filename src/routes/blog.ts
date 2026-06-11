@@ -195,18 +195,18 @@ async function autoGeneratePost(c: any): Promise<Response> {
   // 4. Pick topic (first article if available, otherwise generic fallback)
   const topic = articles.length > 0
     ? `${articles[0].title}\n\n${articles[0].description}`
-    : 'The latest advancements in AI voice agents and how law firms can leverage them to improve client intake'
+    : 'The latest advancements in AI and how businesses can leverage them for business intelligence, automation, and competitive advantage'
 
   const sourceUrls = articles.slice(0, 3).map((a) => a.link)
 
   // 5. Build prompt
-  const systemPrompt = `You are a content writer for Begyn.ai, a company that provides AI Voice Agents and Legal Technology for law firms. Write SEO-optimized blog posts relevant to law firms, legal professionals, or AI adoption in legal practice.`
+  const systemPrompt = `You are a content writer for Begyn.ai, a business intelligence platform that helps entrepreneurs and businesses leverage AI. Write SEO-optimized blog posts about AI, business intelligence, automation, and how modern businesses can use AI to grow.`
 
   const userPrompt = `Write an 800-1200 word SEO-optimized blog post for Begyn.ai based on this AI news topic:
 
 ${topic}
 
-Make the content relevant to law firms, legal professionals, or AI adoption in legal. Return ONLY valid JSON (no markdown, no code fences) with exactly these fields:
+Make the content relevant to entrepreneurs, business owners, and companies adopting AI for business intelligence and automation. Return ONLY valid JSON (no markdown, no code fences) with exactly these fields:
 {
   "title": "...",
   "slug": "kebab-case-slug",
@@ -220,6 +220,7 @@ Make the content relevant to law firms, legal professionals, or AI adoption in l
 
   // 6. Call AI
   let aiResponse = ''
+  let aiError = ''
 
   if (anthropicKey) {
     try {
@@ -237,12 +238,14 @@ Make the content relevant to law firms, legal professionals, or AI adoption in l
           messages: [{ role: 'user', content: userPrompt }],
         }),
       })
+      const data = await resp.json() as any
       if (resp.ok) {
-        const data = await resp.json() as any
         aiResponse = data?.content?.[0]?.text || ''
+      } else {
+        aiError = `Anthropic ${resp.status}: ${JSON.stringify(data)}`
       }
-    } catch {
-      // fall through to OpenAI
+    } catch (e: any) {
+      aiError = `Anthropic fetch error: ${e?.message}`
     }
   }
 
@@ -273,7 +276,7 @@ Make the content relevant to law firms, legal professionals, or AI adoption in l
   }
 
   if (!aiResponse) {
-    return c.json({ error: 'Failed to generate content from AI' }, 500)
+    return c.json({ error: 'Failed to generate content from AI', detail: aiError }, 500)
   }
 
   // 7. Parse JSON from AI response
