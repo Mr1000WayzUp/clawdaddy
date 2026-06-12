@@ -12,6 +12,7 @@ import { builderRouter } from './routes/builder'
 import paymentsRouter from './routes/payments'
 import { settingsRouter } from './routes/settings'
 import { blogRouter } from './routes/blog'
+import { getInternalToken } from './lib/internalAuth'
 
 type Bindings = {
   DB: D1Database
@@ -2639,26 +2640,31 @@ async function runScheduledProspecting(env: CronEnv) {
     }
   } catch (_) { /* builder not configured — skip */ }
 
-  // Step 3: Auto-generate blog post if enabled and API key available
+}
+
+// Blog generation runs independently of the prospector so deployments without
+// a Google Maps key (or with the prospector disabled) still auto-publish.
+async function runScheduledBlogPost(env: CronEnv) {
   try {
     const blogEnabled = await env.DB.prepare("SELECT value FROM blog_settings WHERE key='auto_post_enabled'").first() as any
-    if (blogEnabled?.value === '1') {
-      const anthropicKey = env.ANTHROPIC_API_KEY
-      const openaiKey = env.OPENAI_API_KEY
-      if (anthropicKey || openaiKey) {
-        const blogReq = new Request('https://localhost/api/blog/auto-generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        await app.fetch(blogReq, env)
-      }
-    }
+    if (blogEnabled?.value !== '1') return
+    const blogReq = new Request('https://localhost/api/blog/auto-generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token': getInternalToken(),
+      },
+    })
+    await app.fetch(blogReq, env)
   } catch (_) { /* blog not configured — skip */ }
 }
 
 export default {
   fetch: app.fetch.bind(app),
   async scheduled(event: ScheduledEvent, env: CronEnv, ctx: ExecutionContext) {
-    ctx.waitUntil(runScheduledProspecting(env))
+    ctx.waitUntil(Promise.allSettled([
+      runScheduledProspecting(env),
+      runScheduledBlogPost(env),
+    ]))
   },
 }

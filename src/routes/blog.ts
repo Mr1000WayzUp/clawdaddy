@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
+import { isInternalRequest } from '../lib/internalAuth'
 
 type Env = {
   DB: D1Database
   ANTHROPIC_API_KEY?: string
   OPENAI_API_KEY?: string
+  CRON_SECRET?: string
 }
 
 export const blogRouter = new Hono<{ Bindings: Env }>()
@@ -79,12 +81,16 @@ blogRouter.post('/settings', async (c) => {
 })
 
 // ── GET /api/blog/trigger-cron — manually trigger auto-generate ───────────────
+// Guarded: generation makes paid AI API calls, so only the in-process cron
+// (internal token) or a caller presenting CRON_SECRET may trigger it.
 blogRouter.get('/trigger-cron', async (c) => {
+  if (!isInternalRequest(c)) return c.json({ error: 'Unauthorized' }, 401)
   return autoGeneratePost(c)
 })
 
 // ── POST /api/blog/auto-generate — generate + publish a new AI blog post ──────
 blogRouter.post('/auto-generate', async (c) => {
+  if (!isInternalRequest(c)) return c.json({ error: 'Unauthorized' }, 401)
   return autoGeneratePost(c)
 })
 
@@ -294,6 +300,9 @@ Make the content relevant to entrepreneurs, business owners, and companies adopt
     return c.json({ error: 'AI response missing required fields' }, 500)
   }
 
+  // Model output is untrusted — strip active HTML before it's stored/rendered
+  postData.content = sanitizeArticleHtml(String(postData.content))
+
   // 9. Deduplicate slug
   let slug: string = slugify(postData.slug)
   const existing = await db.prepare('SELECT id FROM blog_posts WHERE slug=?').bind(slug).first()
@@ -343,6 +352,39 @@ function extractTag(xml: string, tag: string): string {
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/gi, ' ').trim().substring(0, 500)
+}
+
+// Allowlist-based sanitizer for AI-generated article HTML. Only basic
+// formatting tags survive; everything else (script, iframe, event handlers,
+// javascript: URLs) is removed. Runs in a Worker, so no DOM parser available.
+const ALLOWED_TAGS = new Set([
+  'h1', 'h2', 'h3', 'h4', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i',
+  'a', 'blockquote', 'code', 'pre', 'br', 'hr', 'table', 'thead', 'tbody',
+  'tr', 'th', 'td',
+])
+
+function sanitizeArticleHtml(html: string): string {
+  // Drop entire script/style/iframe/object/embed blocks including content
+  let out = html.replace(/<(script|style|iframe|object|embed|svg|math|form)[\s\S]*?<\/\1\s*>/gi, '')
+  out = out.replace(/<(script|style|iframe|object|embed|svg|math|form)[^>]*\/?>/gi, '')
+
+  // Rewrite remaining tags: keep allowlisted ones, strip their attributes
+  // (except safe href on <a>), drop everything else
+  out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)((?:\s[^<>]*)?)>/g, (full, tag, attrs) => {
+    const name = tag.toLowerCase()
+    if (!ALLOWED_TAGS.has(name)) return ''
+    const isClosing = full.startsWith('</')
+    if (isClosing) return `</${name}>`
+    if (name === 'a') {
+      const hrefMatch = /href\s*=\s*"([^"]*)"/i.exec(attrs) || /href\s*=\s*'([^']*)'/i.exec(attrs)
+      const href = hrefMatch ? hrefMatch[1].trim() : ''
+      const safeHref = /^(https?:\/\/|\/|#)/i.test(href) ? href : '#'
+      return `<a href="${safeHref.replace(/"/g, '&quot;')}" rel="noopener">`
+    }
+    return `<${name}>`
+  })
+
+  return out
 }
 
 function slugify(text: string): string {
