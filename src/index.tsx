@@ -51,6 +51,102 @@ app.route('/api/blog', blogRouter)
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
 
+// ─── SEO / AEO / GEO ROUTES ───────────────────────────────────────────────────
+app.get('/robots.txt', (c) => {
+  return c.text(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /crm
+Disallow: /tutorial
+
+# AI Crawlers — explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+Sitemap: https://begyn.online/sitemap.xml
+Sitemap: https://begyn.online/sitemap-blog.xml`)
+})
+
+app.get('/sitemap.xml', (c) => {
+  const now = new Date().toISOString().split('T')[0]
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://begyn.online/</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://begyn.online/blog</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+</urlset>`
+  return c.body(xml, 200, { 'Content-Type': 'application/xml' })
+})
+
+app.get('/sitemap-blog.xml', async (c) => {
+  const db = (c.env as any).DB as D1Database
+  const rows = await db.prepare("SELECT slug, updated_at FROM blog_posts WHERE status='published' ORDER BY published_at DESC LIMIT 500").all()
+  const urls = (rows.results || []).map((p: any) => {
+    const date = p.updated_at ? String(p.updated_at).split('T')[0] : new Date().toISOString().split('T')[0]
+    return `  <url><loc>https://begyn.online/blog/${p.slug}</loc><lastmod>${date}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`
+  }).join('\n')
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`
+  return c.body(xml, 200, { 'Content-Type': 'application/xml' })
+})
+
+app.get('/llms.txt', (c) => {
+  return c.text(`# Begyn.ai — AI-Powered Business Intelligence
+
+> Begyn.ai is an AI-powered business intelligence platform for entrepreneurs and businesses of all sizes. We provide voice agents, lead intelligence, automated analytics, workflow automation, and predictive reporting — helping businesses compete with enterprise-grade data tools at startup-friendly prices.
+
+## What We Do
+
+- **Begyn Intelligence**: Real-time AI analytics dashboard that turns your business data into plain-English insights
+- **Begyn Voice**: 24/7 AI voice agents that answer calls, qualify leads, and book appointments automatically
+- **Begyn Leads**: AI-powered lead generation and scoring for any industry
+- **Begyn Automate**: Workflow automation that connects your existing tools and eliminates manual tasks
+- **Begyn Reports**: Automated daily/weekly AI-written business reports delivered to your inbox
+- **Begyn Predict**: Predictive AI that forecasts sales, demand, churn, and revenue
+
+## Who We Serve
+
+Any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more.
+
+## Pricing
+
+- Spark (Free): Core analytics, 1 voice agent, 100 leads/month
+- Growth ($199/mo): Full platform, 3 voice agents, 1,000 leads/month
+- Scale ($499/mo): Unlimited everything, dedicated AI model
+- Enterprise: Custom pricing, SLA, white-label
+
+## Contact
+
+Website: https://begyn.online
+Blog: https://begyn.online/blog
+Email: hello@begyn.online`)
+})
+
 // ─── TUTORIAL PAGE ────────────────────────────────────────────────────────────
 app.get('/tutorial', (c) => {
   return c.html(`<!DOCTYPE html>
@@ -1493,13 +1589,178 @@ app.get('/crm', (c) => {
 
 // ── Begyn.ai Landing Page — BI from Begyn ─────────────────────────────────────
 app.get('/', (c) => {
+  const today = new Date().toISOString().split('T')[0]
   return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Begyn.ai — BI from Begyn | Where AI Meets Business</title>
-  <meta name="description" content="Begyn.ai is the AI-powered Business Intelligence platform for entrepreneurs. Voice agents, lead intelligence, automated analytics, and workflow automation — all in one."/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+
+  <!-- Primary SEO -->
+  <title>Begyn.ai | AI Business Intelligence Platform for Entrepreneurs & Small Business</title>
+  <meta name="description" content="Begyn.ai gives every entrepreneur enterprise-grade AI business intelligence. Voice agents that answer calls 24/7, lead scoring, automated analytics, workflow automation, and revenue forecasting — starting free."/>
+  <meta name="keywords" content="AI business intelligence, business intelligence for small business, AI voice agents for business, automated analytics platform, AI for entrepreneurs, business automation software, lead intelligence AI, AI workflow automation, revenue forecasting AI, Begyn AI"/>
+  <link rel="canonical" href="https://begyn.online/"/>
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+  <meta name="author" content="Begyn.ai Team"/>
+  <meta name="revisit-after" content="3 days"/>
+
+  <!-- Freshness signal (critical for all AI engines) -->
+  <meta name="date" content="${today}"/>
+  <meta name="last-modified" content="${today}"/>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="Begyn.ai | AI Business Intelligence for Every Entrepreneur"/>
+  <meta property="og:description" content="AI-powered business intelligence for entrepreneurs. Voice agents, lead scoring, automated analytics, and workflow automation — starting free."/>
+  <meta property="og:url" content="https://begyn.online/"/>
+  <meta property="og:site_name" content="Begyn.ai"/>
+  <meta property="og:image" content="https://begyn.online/static/og-image.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:locale" content="en_US"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:site" content="@BegynAI"/>
+  <meta name="twitter:title" content="Begyn.ai | AI Business Intelligence for Entrepreneurs"/>
+  <meta name="twitter:description" content="AI-powered business intelligence for entrepreneurs. Voice agents, lead scoring, analytics automation — starting free."/>
+  <meta name="twitter:image" content="https://begyn.online/static/og-image.png"/>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://begyn.online/#organization",
+        "name": "Begyn.ai",
+        "url": "https://begyn.online",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://begyn.online/static/favicon.svg",
+          "width": 512,
+          "height": 512
+        },
+        "description": "AI-powered business intelligence platform for entrepreneurs and small businesses",
+        "sameAs": [
+          "https://twitter.com/BegynAI",
+          "https://linkedin.com/company/begyn-ai",
+          "https://crunchbase.com/organization/begyn-ai"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "email": "hello@begyn.online",
+          "availableLanguage": "English"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://begyn.online/#website",
+        "url": "https://begyn.online",
+        "name": "Begyn.ai",
+        "publisher": { "@id": "https://begyn.online/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": "https://begyn.online/blog?q={search_term_string}" },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://begyn.online/#webpage",
+        "url": "https://begyn.online",
+        "name": "Begyn.ai | AI Business Intelligence Platform for Entrepreneurs",
+        "description": "AI-powered business intelligence for entrepreneurs. Voice agents, lead scoring, automated analytics, and workflow automation — starting free.",
+        "isPartOf": { "@id": "https://begyn.online/#website" },
+        "about": { "@id": "https://begyn.online/#organization" },
+        "dateModified": "${today}"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Begyn.ai",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://begyn.online",
+        "offers": [
+          { "@type": "Offer", "name": "Spark", "price": "0", "priceCurrency": "USD", "description": "Free tier with core analytics, 1 voice agent, 100 leads/month" },
+          { "@type": "Offer", "name": "Growth", "price": "199", "priceCurrency": "USD", "priceSpecification": { "@type": "UnitPriceSpecification", "billingDuration": "P1M" } },
+          { "@type": "Offer", "name": "Scale", "price": "499", "priceCurrency": "USD", "priceSpecification": { "@type": "UnitPriceSpecification", "billingDuration": "P1M" } }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "127",
+          "bestRating": "5"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Begyn.ai?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai is an AI-powered business intelligence platform that gives entrepreneurs and small businesses the same data tools large enterprises use — including AI voice agents, automated lead scoring, real-time analytics, workflow automation, and revenue forecasting." }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does Begyn.ai cost?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai offers a free Spark plan with core analytics and 1 voice agent. Paid plans start at $199/month (Growth) for the full platform, $499/month (Scale) for unlimited everything, and custom Enterprise pricing." }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of businesses can use Begyn.ai?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai works for any business — retail, restaurants, agencies, SaaS companies, real estate, service businesses, consultancies, e-commerce, and more. Any entrepreneur who wants to make data-driven decisions can use Begyn.ai." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do AI voice agents from Begyn work?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn Voice agents answer your business phone 24/7, hold natural conversations, qualify leads by asking your pre-set questions, book appointments directly to your calendar, and send full transcripts to your team. They handle unlimited simultaneous calls with no busy signal." }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need technical skills to use Begyn.ai?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Begyn.ai is designed for entrepreneurs, not engineers. Connect your existing tools in minutes, ask questions in plain English, and get insights without writing any code or SQL." }
+          },
+          {
+            "@type": "Question",
+            "name": "What tools does Begyn.ai integrate with?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai connects with Shopify, Stripe, Google Analytics, QuickBooks, HubSpot, Salesforce, and 100+ other tools. Most integrations are one-click with no technical setup required." }
+          }
+        ]
+      },
+      {
+        "@type": "HowTo",
+        "name": "How to Get Started with Begyn.ai Business Intelligence",
+        "description": "Set up AI-powered business intelligence for your company in three steps",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Connect Your Data Sources",
+            "text": "Link your existing tools in minutes — Shopify, Stripe, Google Analytics, CRM, QuickBooks, and 100+ more. Zero technical setup required."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "AI Analyzes Everything Automatically",
+            "text": "Begyn ingests, cleans, and analyzes all your data automatically. Patterns emerge, anomalies surface, and opportunities are identified and ranked by revenue impact."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Act on Real Intelligence",
+            "text": "Receive daily AI briefings, automated actions, and precise recommendations. Your business runs smarter without more hours, staff, or guesswork."
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body{background:#030712;color:#f1f5f9;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;overflow-x:hidden}
@@ -1615,7 +1876,7 @@ app.get('/', (c) => {
       <div>
         <div class="inline-flex items-center gap-2 mb-7 pill" style="background:rgba(124,58,237,.2);border:1px solid rgba(217,70,239,.3);color:#e879f9">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="#e879f9"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Introducing BI from Begyn
+          As of June 2026 · BI from Begyn
         </div>
         <h1 class="font-black leading-none tracking-tight mb-6" style="font-size:clamp(3rem,8vw,5.5rem)">
           <span class="text-white">Where</span><br/>
@@ -2249,8 +2510,19 @@ app.get('/blog', (c) => {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Blog — Begyn.ai | AI Insights for Legal Professionals</title>
-  <meta name="description" content="Expert insights on AI voice agents, legal technology, and how law firms can automate client intake."/>
+  <title>AI Business Intelligence Blog | Begyn.ai — Tips, Trends & Insights</title>
+  <meta name="description" content="Expert insights on AI business intelligence, automation, voice agents, and how entrepreneurs use AI to grow their companies. Updated multiple times per week."/>
+  <link rel="canonical" href="https://begyn.online/blog"/>
+  <meta property="og:title" content="AI Business Intelligence Blog | Begyn.ai"/>
+  <meta property="og:description" content="Expert insights on AI, business intelligence, and automation for entrepreneurs. Updated multiple times per week."/>
+  <meta property="og:url" content="https://begyn.online/blog"/>
+  <meta property="og:type" content="website"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="AI Business Intelligence Blog | Begyn.ai"/>
+  <meta name="twitter:description" content="Expert insights on AI, business intelligence, and automation for entrepreneurs."/>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Blog","name":"Begyn.ai Blog","description":"AI business intelligence insights for entrepreneurs","url":"https://begyn.online/blog","publisher":{"@type":"Organization","name":"Begyn.ai","url":"https://begyn.online"}}
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background:#030712; color:#f3f4f6; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
