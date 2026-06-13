@@ -2699,16 +2699,63 @@ loadPosts(1, '')
 </html>`)
 })
 
-// ── Individual blog post page ──────────────────────────────────────────────────
+// ── Individual blog post page (SSR for SEO/AEO/GEO) ──────────────────────────
 app.get('/blog/:slug', async (c) => {
   const slug = c.req.param('slug')
+  const db = (c.env as any).DB as D1Database
+  let post: any = null
+  try {
+    post = await db.prepare("SELECT * FROM blog_posts WHERE slug=? AND status='published'").bind(slug).first()
+  } catch(_) {}
+
+  const title = post ? (post.seo_title || post.title) + ' | Begyn.ai Blog' : 'Post Not Found | Begyn.ai Blog'
+  const desc = post ? (post.seo_description || post.excerpt || '') : ''
+  const canonical = `https://begyn.online/blog/${slug}`
+  const datePublished = post?.published_at || post?.created_at || new Date().toISOString()
+  const dateModified = post?.updated_at || datePublished
+  const articleSchema = post ? JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.excerpt || '',
+    "author": { "@type": "Organization", "name": "Begyn.ai Team", "url": "https://begyn.online" },
+    "publisher": { "@type": "Organization", "name": "Begyn.ai", "logo": { "@type": "ImageObject", "url": "https://begyn.online/static/favicon.svg" } },
+    "datePublished": datePublished,
+    "dateModified": dateModified,
+    "url": canonical,
+    "mainEntityOfPage": { "@type": "WebPage", "@id": canonical }
+  }) : '{}'
+  const breadcrumbSchema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://begyn.online" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://begyn.online/blog" },
+      { "@type": "ListItem", "position": 3, "name": post?.title || slug, "item": canonical }
+    ]
+  })
+
   return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title id="page-title">Loading... — Begyn.ai Blog</title>
-  <meta id="page-desc" name="description" content=""/>
+  <title>${title.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>
+  <meta name="description" content="${desc.replace(/"/g, '&quot;').substring(0, 160)}"/>
+  <link rel="canonical" href="${canonical}"/>
+  <meta name="robots" content="${post ? 'index, follow' : 'noindex'}"/>
+  <meta property="og:title" content="${(post?.title || 'Not Found').replace(/"/g, '&quot;')}"/>
+  <meta property="og:description" content="${desc.replace(/"/g, '&quot;').substring(0, 160)}"/>
+  <meta property="og:url" content="${canonical}"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="Begyn.ai"/>
+  <meta property="article:published_time" content="${datePublished}"/>
+  <meta property="article:modified_time" content="${dateModified}"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="${(post?.title || 'Not Found').replace(/"/g, '&quot;')}"/>
+  <meta name="twitter:description" content="${desc.replace(/"/g, '&quot;').substring(0, 160)}"/>
+  <script type="application/ld+json">${articleSchema}</script>
+  <script type="application/ld+json">${breadcrumbSchema}</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background:#030712; color:#f3f4f6; font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
@@ -2716,10 +2763,15 @@ app.get('/blog/:slug', async (c) => {
     .grad-text-purple { background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .card-dark { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
     .prose-content h2 { font-size:1.5rem; font-weight:800; color:#f9fafb; margin:2rem 0 1rem; border-bottom:1px solid #1f2937; padding-bottom:0.5rem; }
+    .prose-content h3 { font-size:1.2rem; font-weight:700; color:#f9fafb; margin:1.5rem 0 0.75rem; }
     .prose-content p { color:#9ca3af; line-height:1.8; margin-bottom:1.25rem; }
-    .prose-content ul { list-style:disc; margin-left:1.5rem; margin-bottom:1.25rem; color:#9ca3af; line-height:1.8; }
-    .prose-content ul li { margin-bottom:0.5rem; }
+    .prose-content ul, .prose-content ol { margin-left:1.5rem; margin-bottom:1.25rem; color:#9ca3af; line-height:1.8; }
+    .prose-content ul { list-style:disc; }
+    .prose-content ol { list-style:decimal; }
+    .prose-content ul li, .prose-content ol li { margin-bottom:0.5rem; }
     .prose-content strong { color:#f3f4f6; font-weight:700; }
+    .prose-content a { color:#a78bfa; text-decoration:underline; }
+    .prose-content blockquote { border-left:3px solid #7c3aed; padding-left:1rem; margin:1.5rem 0; color:#6b7280; }
     ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#111827; } ::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
   </style>
 </head>
@@ -2747,134 +2799,92 @@ app.get('/blog/:slug', async (c) => {
   </div>
 </nav>
 
-<!-- Back link -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-  <a href="/blog" class="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    Back to Blog
-  </a>
+<!-- Breadcrumb (visible + schema) -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+  <nav aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm text-gray-500">
+      <li><a href="/" class="hover:text-white transition-colors">Home</a></li>
+      <li class="text-gray-700">/</li>
+      <li><a href="/blog" class="hover:text-white transition-colors">Blog</a></li>
+      <li class="text-gray-700">/</li>
+      <li class="text-gray-400 truncate max-w-xs">${(post?.title || slug).replace(/</g, '&lt;')}</li>
+    </ol>
+  </nav>
 </div>
 
-<!-- Article content -->
-<div id="post-loading" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-  <!-- Loading skeleton -->
-  <div class="max-w-3xl animate-pulse">
-    <div class="w-24 h-5 bg-gray-700 rounded mb-6"></div>
-    <div class="h-10 bg-gray-700 rounded mb-3"></div>
-    <div class="h-10 bg-gray-700 rounded w-4/5 mb-8"></div>
-    <div class="flex gap-4 mb-10">
-      <div class="w-32 h-4 bg-gray-800 rounded"></div>
-      <div class="w-24 h-4 bg-gray-800 rounded"></div>
+${post ? `
+<!-- Article (SSR for crawlers) -->
+<main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12" id="post-main">
+  <header class="mb-10">
+    <div class="flex items-center gap-3 mb-4 flex-wrap">
+      <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full">${(post.category || 'AI Insights').replace(/</g,'&lt;')}</span>
+      <time datetime="${datePublished}" class="text-xs text-gray-500">Last Updated: ${new Date(dateModified).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</time>
     </div>
-    ${[1,2,3,4,5].map(() => '<div class="h-4 bg-gray-800 rounded mb-3"></div>').join('')}
-  </div>
-</div>
-
-<div id="post-content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-    <!-- Main article -->
-    <main class="lg:col-span-2">
-      <div id="article-header" class="mb-8"></div>
-      <div id="article-body" class="card-dark p-8 sm:p-10 prose-content"></div>
-    </main>
-    <!-- Sidebar -->
-    <aside class="space-y-6">
-      <!-- CTA -->
-      <div class="card-dark p-6 bg-gradient-to-br from-purple-900/20 to-cyan-900/10 border-purple-700/30">
-        <h3 class="font-bold text-white mb-2">Never miss a client call</h3>
-        <p class="text-sm text-gray-400 mb-4">Begyn.ai handles every intake call, 24/7 — so you never lose a lead again.</p>
-        <a href="/#cta" class="block text-center grad-purple text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">Book Free Demo</a>
+    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-6">${post.title.replace(/</g,'&lt;')}</h1>
+    ${post.excerpt ? `<p class="text-lg text-gray-400 leading-relaxed mb-6">${post.excerpt.replace(/</g,'&lt;')}</p>` : ''}
+    <div class="flex items-center gap-3 pb-6 border-b border-gray-800">
+      <div class="w-9 h-9 rounded-full grad-purple flex items-center justify-center text-white font-bold text-sm flex-shrink-0">B</div>
+      <div>
+        <div class="text-sm font-semibold text-white">${(post.author || 'Begyn.ai Team').replace(/</g,'&lt;')}</div>
+        <div class="text-xs text-gray-500">Begyn.ai · AI Business Intelligence</div>
       </div>
-      <!-- Related posts -->
-      <div id="related-posts"></div>
-    </aside>
-  </div>
-</div>
-
-<div id="post-error" class="hidden max-w-3xl mx-auto px-4 py-24 text-center">
-  <div class="text-6xl mb-4">📭</div>
-  <h2 class="text-2xl font-bold text-white mb-2">Post Not Found</h2>
-  <p class="text-gray-400 mb-6">This article may have been moved or deleted.</p>
-  <a href="/blog" class="inline-flex items-center gap-2 grad-purple text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Browse All Posts</a>
-</div>
-
-<!-- Footer -->
-<footer class="border-t border-gray-800 py-8 bg-gray-950">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-    <a href="/" class="flex items-center gap-2"><span class="font-black text-sm grad-text-purple">Begyn.ai</span></a>
-    <div class="flex gap-6 text-sm text-gray-500">
-      <a href="/#features" class="hover:text-white transition-colors">Features</a>
-      <a href="/#pricing" class="hover:text-white transition-colors">Pricing</a>
-      <a href="/blog" class="hover:text-white transition-colors">Blog</a>
     </div>
-    <p class="text-gray-700 text-sm">© 2025 Begyn.ai</p>
-  </div>
+  </header>
+  <article class="prose-content" id="post-content">
+    ${post.content}
+  </article>
+  <!-- Author bio (E-E-A-T signal) -->
+  <aside class="mt-12 p-6 card-dark rounded-2xl border border-purple-900/30">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-full grad-purple flex items-center justify-center text-white font-bold text-lg flex-shrink-0">B</div>
+      <div>
+        <div class="font-bold text-white mb-1">Begyn.ai Team</div>
+        <p class="text-sm text-gray-400 leading-relaxed">The Begyn.ai editorial team produces research-backed content on AI, business intelligence, and automation for entrepreneurs. We test every tool and strategy we write about.</p>
+        <a href="https://begyn.online" class="text-purple-400 text-xs font-semibold mt-2 inline-block hover:text-purple-300 transition-colors">begyn.online →</a>
+      </div>
+    </div>
+  </aside>
+</main>
+` : `
+<div class="max-w-3xl mx-auto px-4 py-24 text-center">
+  <h1 class="text-4xl font-black text-white mb-4">Post Not Found</h1>
+  <p class="text-gray-400 mb-8">This post doesn't exist or has been removed.</p>
+  <a href="/blog" class="grad-purple text-white px-6 py-3 rounded-xl font-semibold inline-block">Back to Blog</a>
+</div>
+`}
+
+<!-- Related posts (loaded client-side) -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-gray-800" id="related-section" style="display:none">
+  <h2 class="text-2xl font-black text-white mb-8">Related Articles</h2>
+  <div class="grid md:grid-cols-3 gap-6" id="related-posts"></div>
+</section>
+
+<footer class="border-t border-gray-800 py-8 text-center mt-16">
+  <a href="/" class="font-black text-lg grad-text-purple">Begyn.ai</a>
+  <p class="text-gray-600 text-xs mt-2">© ${new Date().getFullYear()} Begyn.ai · <a href="/blog" class="hover:text-gray-400 transition-colors">Blog</a> · <a href="/sitemap.xml" class="hover:text-gray-400 transition-colors">Sitemap</a></p>
 </footer>
 
 <script>
-const SLUG = ${JSON.stringify(slug)}
-
-async function loadPost() {
+(async () => {
   try {
-    const res = await fetch('/api/blog/' + SLUG)
-    if (!res.ok) throw new Error('not found')
-    const data = await res.json()
-    const post = data.post
-    const related = data.related || []
-
-    // Update page metadata
-    document.getElementById('page-title').textContent = (post.seo_title || post.title) + ' — Begyn.ai Blog'
-    document.getElementById('page-desc').content = post.seo_description || post.excerpt || ''
-
-    // Build article header
-    const pubDate = new Date(post.published_at).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})
-    const tags = (post.tags || []).map(t => \`<span class="text-xs bg-gray-800 border border-gray-700 text-gray-400 px-2 py-0.5 rounded-full">\${t}</span>\`).join('')
-    document.getElementById('article-header').innerHTML = \`
-      <span class="inline-block text-xs bg-purple-900/30 border border-purple-700/30 text-purple-300 px-3 py-1 rounded-full mb-4">\${post.category || 'AI News'}</span>
-      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-6">\${post.title}</h1>
-      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
-        <span class="flex items-center gap-1.5">
-          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">\${(post.author||'B')[0]}</div>
-          \${post.author || 'Begyn.ai Team'}
-        </span>
-        <span>\${pubDate}</span>
-        <span>\${post.views || 0} views</span>
-      </div>
-      \${tags ? \`<div class="flex flex-wrap gap-2 mt-3">\${tags}</div>\` : ''}
-    \`
-
-    // Article body
-    document.getElementById('article-body').innerHTML = post.content
-
-    // Related posts
-    if (related.length > 0) {
-      document.getElementById('related-posts').innerHTML = \`
-        <div class="card-dark p-5">
-          <h3 class="font-bold text-white mb-4 text-sm uppercase tracking-wide">Related Posts</h3>
-          <div class="space-y-4">
-            \${related.map(r => \`
-              <a href="/blog/\${r.slug}" class="block group">
-                <span class="text-xs text-purple-400">\${r.category || 'AI News'}</span>
-                <p class="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors leading-snug mt-0.5">\${r.title}</p>
-                <p class="text-xs text-gray-600 mt-1">\${new Date(r.published_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
-              </a>
-            \`).join('<div class="border-t border-gray-800"></div>')}
-          </div>
-        </div>\`
+    const r = await fetch('/api/blog/${slug}')
+    if (!r.ok) return
+    const { post, related } = await r.json()
+    if (related && related.length) {
+      document.getElementById('related-section').style.display = ''
+      document.getElementById('related-posts').innerHTML = related.map(p => \`
+        <a href="/blog/\${p.slug}" class="card-dark p-5 rounded-2xl block hover:border-purple-500/40 transition-colors group">
+          <span class="text-xs text-purple-400 font-semibold uppercase tracking-wider">\${p.category || 'AI'}</span>
+          <h3 class="text-sm font-bold text-white mt-2 mb-2 group-hover:text-purple-300 transition-colors leading-snug">\${p.title}</h3>
+          <p class="text-xs text-gray-500">\${p.excerpt ? p.excerpt.substring(0,100)+'…' : ''}</p>
+        </a>
+      \`).join('')
     }
-
-    document.getElementById('post-loading').classList.add('hidden')
-    document.getElementById('post-content').classList.remove('hidden')
-  } catch (e) {
-    document.getElementById('post-loading').classList.add('hidden')
-    document.getElementById('post-error').classList.remove('hidden')
-  }
-}
-
-loadPost()
+  } catch(_) {}
+})()
 </script>
 </body>
-</html>`)
+</html>`, post ? 200 : 404)
 })
 
 // ── Cloudflare Cron Trigger (runs daily at 6am UTC) ─────────────────────────
