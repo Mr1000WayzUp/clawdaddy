@@ -48,6 +48,94 @@ app.route('/api/payments', paymentsRouter)
 app.route('/api/settings', settingsRouter)
 app.route('/api/blog', blogRouter)
 
+// ─── AI CHAT ENDPOINT ─────────────────────────────────────────────────────────
+app.post('/api/chat', async (c) => {
+  let body: { message?: string; history?: { role: string; content: string }[] }
+  try { body = await c.req.json() } catch { return c.json({ error: 'Invalid JSON' }, 400) }
+
+  const message = typeof body.message === 'string' ? body.message.trim().substring(0, 1500) : ''
+  if (!message) return c.json({ error: 'message required' }, 400)
+
+  const rawHistory = Array.isArray(body.history) ? body.history : []
+  const safeHistory = rawHistory
+    .slice(-8)
+    .filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content).substring(0, 600) }))
+
+  const anthropicKey: string = (c.env as any).ANTHROPIC_API_KEY || ''
+  const openaiKey: string = (c.env as any).OPENAI_API_KEY || ''
+
+  const systemPrompt = `You are Bea, the friendly AI assistant for Begyn.ai — an AI-powered business intelligence platform for entrepreneurs and businesses of all sizes. Help visitors understand our products, answer questions, handle customer service issues, and guide people toward the right plan.
+
+## About Begyn.ai
+Begyn.ai provides enterprise-grade AI business intelligence at startup-friendly prices. Tagline: "BI from Begyn — Where AI Meets Business." We help any business compete with Fortune 500 companies using powerful AI tools.
+
+## Our 6 Products
+1. Begyn Intelligence — Real-time AI analytics that turns business data into plain-English insights. No data analyst needed.
+2. Begyn Voice — 24/7 AI voice agents that answer calls, qualify leads, and book appointments automatically.
+3. Begyn Leads — AI-powered lead generation and scoring for any industry. Find best customers before competitors do.
+4. Begyn Automate — Workflow automation that connects existing tools and eliminates manual repetitive tasks.
+5. Begyn Reports — Automated daily/weekly AI-written business performance reports delivered to your inbox.
+6. Begyn Predict — Predictive AI that forecasts sales, demand, churn, and revenue so you can act before problems hit.
+
+## Pricing Plans
+- Spark (Free): Core analytics, 1 AI voice agent, 100 leads/month, basic reports. Great for solopreneurs.
+- Growth ($199/month): Full platform, 3 AI voice agents, 1,000 leads/month, automated reports, all 6 products.
+- Scale ($499/month): Unlimited everything, dedicated AI model, priority support, advanced predictions.
+- Enterprise (Custom pricing): SLA guarantees, white-label options, dedicated account manager.
+
+## Who We Serve
+Any business: retailers, restaurants, agencies, SaaS companies, real estate, e-commerce, service businesses, professional services, healthcare, hospitality, and more.
+
+## Contact & Support
+- Email: hello@begyn.online
+- Website: https://begyn.online
+- Blog: https://begyn.online/blog
+
+## Handling Customer Issues
+- Billing questions: Direct to hello@begyn.online with subject "Billing"
+- Technical issues: Ask for details, provide workarounds where possible, escalate to hello@begyn.online
+- Feature requests: Thank them, say all suggestions are reviewed by the product team
+- Cancellations: Understand their concern first, offer a lower plan or pause before accepting
+- Refunds: Direct to hello@begyn.online — handled case by case within 30 days
+
+## Tone
+Be warm, professional, and enthusiastic about AI and business growth. Keep replies concise (2-4 sentences) unless the user asks for detail. Always end with a helpful next step or offer to answer more.`
+
+  const messages = [...safeHistory, { role: 'user' as const, content: message }]
+  const fallbackReply = "I'm temporarily unavailable. Please email us at hello@begyn.online and we'll get back to you quickly!"
+
+  if (anthropicKey) {
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: systemPrompt, messages }),
+      })
+      if (resp.ok) {
+        const data = await resp.json() as any
+        return c.json({ reply: data?.content?.[0]?.text || fallbackReply })
+      }
+    } catch (_) {}
+  }
+
+  if (openaiKey) {
+    try {
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, ...messages] }),
+      })
+      if (resp.ok) {
+        const data = await resp.json() as any
+        return c.json({ reply: data?.choices?.[0]?.message?.content || fallbackReply })
+      }
+    } catch (_) {}
+  }
+
+  return c.json({ reply: fallbackReply })
+})
+
 // Static assets
 app.use('/static/*', serveStatic({ root: './' }))
 
@@ -146,6 +234,124 @@ Website: https://begyn.online
 Blog: https://begyn.online/blog
 Email: hello@begyn.online`)
 })
+
+// ─── CHAT WIDGET ─────────────────────────────────────────────────────────────
+function chatWidget(): string {
+  return `<div id="bw-root"><style>
+#bw-btn{position:fixed;bottom:24px;right:24px;z-index:9999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 24px rgba(124,58,237,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s}
+#bw-btn:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(124,58,237,.75)}
+#bw-btn svg{width:26px;height:26px;color:#fff;flex-shrink:0}
+.bw-ic-close{display:none}
+#bw-btn.open .bw-ic-chat{display:none}
+#bw-btn.open .bw-ic-close{display:block}
+#bw-panel{position:fixed;bottom:92px;right:24px;z-index:9998;width:360px;max-width:calc(100vw - 48px);height:520px;max-height:calc(100vh - 120px);background:rgba(10,8,20,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(124,58,237,.35);border-radius:20px;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,.7);overflow:hidden;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;transform-origin:bottom right}
+#bw-panel.bw-hidden{transform:scale(.86);opacity:0;pointer-events:none}
+#bw-hdr{padding:14px 16px;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(79,70,229,.1));border-bottom:1px solid rgba(124,58,237,.2);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bw-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.bw-nm{margin:0;font-size:13px;font-weight:700;color:#f3f4f6;font-family:ui-sans-serif,system-ui,sans-serif}
+.bw-st{margin:2px 0 0;font-size:11px;color:#10b981;font-family:ui-sans-serif,system-ui,sans-serif}
+#bw-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+#bw-msgs::-webkit-scrollbar{width:4px}
+#bw-msgs::-webkit-scrollbar-thumb{background:#374151;border-radius:2px}
+.bw-m{max-width:84%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;font-family:ui-sans-serif,system-ui,sans-serif;word-break:break-word;white-space:pre-wrap}
+.bw-m.u{align-self:flex-end;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-bottom-right-radius:4px}
+.bw-m.b{align-self:flex-start;background:rgba(255,255,255,.09);color:#e5e7eb;border-bottom-left-radius:4px}
+.bw-dot{align-self:flex-start;padding:10px 14px;background:rgba(255,255,255,.09);border-radius:14px;border-bottom-left-radius:4px;display:flex;gap:4px;align-items:center}
+.bw-dot span{width:7px;height:7px;border-radius:50%;background:#7c3aed;animation:bw-b 1.2s infinite;display:block}
+.bw-dot span:nth-child(2){animation-delay:.2s}
+.bw-dot span:nth-child(3){animation-delay:.4s}
+@keyframes bw-b{0%,60%,100%{transform:translateY(0);opacity:.6}30%{transform:translateY(-5px);opacity:1}}
+#bw-frm{padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:8px;flex-shrink:0;background:rgba(0,0,0,.3);align-items:flex-end}
+#bw-inp{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:9px 12px;color:#f3f4f6;font-size:13px;font-family:ui-sans-serif,system-ui,sans-serif;outline:none;resize:none;min-height:38px;max-height:100px;line-height:1.4}
+#bw-inp:focus{border-color:rgba(124,58,237,.7);background:rgba(255,255,255,.09)}
+#bw-inp::placeholder{color:#6b7280}
+#bw-snd{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+#bw-snd:hover{opacity:.85}
+#bw-snd:disabled{opacity:.4;cursor:not-allowed}
+#bw-snd svg{width:16px;height:16px;color:#fff}
+</style>
+<button id="bw-btn" aria-label="Chat with Begyn AI" onclick="bwToggle()">
+<svg class="bw-ic-chat" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+<svg class="bw-ic-close" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
+<div id="bw-panel" class="bw-hidden" role="dialog" aria-label="Begyn AI Chat">
+<div id="bw-hdr">
+<div class="bw-av">🤖</div>
+<div><p class="bw-nm">Bea — Begyn AI Assistant</p><p class="bw-st">● Online · Replies instantly</p></div>
+</div>
+<div id="bw-msgs">
+<div class="bw-m b">Hi! I'm Bea, Begyn.ai's AI assistant 👋 Ask me anything about our AI business intelligence tools, pricing, or how we can help your business grow!</div>
+</div>
+<form id="bw-frm" onsubmit="bwSend(event)">
+<textarea id="bw-inp" placeholder="Ask me anything…" rows="1" maxlength="1000"></textarea>
+<button type="submit" id="bw-snd" aria-label="Send">
+<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+</button>
+</form>
+</div>
+<script>
+(function(){
+var bwHistory=[];
+var bwOpen=false;
+window.bwToggle=function(){
+  bwOpen=!bwOpen;
+  document.getElementById('bw-btn').classList.toggle('open',bwOpen);
+  document.getElementById('bw-panel').classList.toggle('bw-hidden',!bwOpen);
+  if(bwOpen)setTimeout(function(){document.getElementById('bw-inp').focus()},260);
+};
+window.bwSend=async function(e){
+  e.preventDefault();
+  var inp=document.getElementById('bw-inp');
+  var msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';
+  inp.style.height='';
+  bwAppend(msg,'u');
+  document.getElementById('bw-snd').disabled=true;
+  var dot=bwDots();
+  try{
+    var r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:bwHistory.slice(-8)})});
+    var d=await r.json();
+    dot.remove();
+    var rep=d.reply||'Sorry, something went wrong. Email us at hello@begyn.online!';
+    bwAppend(rep,'b');
+    bwHistory.push({role:'user',content:msg},{role:'assistant',content:rep});
+  }catch(err){
+    dot.remove();
+    bwAppend('Connection error. Please email hello@begyn.online for help!','b');
+  }finally{
+    document.getElementById('bw-snd').disabled=false;
+    inp.focus();
+  }
+};
+function bwAppend(txt,cls){
+  var m=document.getElementById('bw-msgs');
+  var d=document.createElement('div');
+  d.className='bw-m '+cls;
+  d.textContent=txt;
+  m.appendChild(d);
+  m.scrollTop=m.scrollHeight;
+}
+function bwDots(){
+  var m=document.getElementById('bw-msgs');
+  var d=document.createElement('div');
+  d.className='bw-dot';
+  d.innerHTML='<span></span><span></span><span></span>';
+  m.appendChild(d);
+  m.scrollTop=m.scrollHeight;
+  return d;
+}
+var inp=document.getElementById('bw-inp');
+inp.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px';});
+inp.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    document.getElementById('bw-frm').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+  }
+});
+})();
+</script></div>`
+}
 
 // ─── TUTORIAL PAGE ────────────────────────────────────────────────────────────
 app.get('/tutorial', (c) => {
@@ -2499,6 +2705,7 @@ document.querySelectorAll('#mnav a').forEach(a => a.addEventListener('click', ()
 
 loadBlog()
 </script>
+${chatWidget()}
 </body>
 </html>`)
 })
@@ -2695,6 +2902,7 @@ function changePage(delta) {
 
 loadPosts(1, '')
 </script>
+${chatWidget()}
 </body>
 </html>`)
 })
@@ -2883,6 +3091,7 @@ ${post ? `
   } catch(_) {}
 })()
 </script>
+${chatWidget()}
 </body>
 </html>`, post ? 200 : 404)
 })
