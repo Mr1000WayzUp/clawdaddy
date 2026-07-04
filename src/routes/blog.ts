@@ -95,6 +95,26 @@ blogRouter.post('/auto-generate', async (c) => {
   return autoGeneratePost(c)
 })
 
+// ── POST /api/blog/update-post — edit a published post (internal only) ───────
+blogRouter.post('/update-post', async (c) => {
+  if (!isInternalRequest(c)) return c.json({ error: 'Unauthorized' }, 401)
+  const body = await c.req.json<{ slug: string; find?: string; replace?: string }>()
+  if (!body.slug || !body.find || body.replace === undefined) {
+    return c.json({ error: 'slug, find, replace required' }, 400)
+  }
+  const result = await env_db(c)
+    .prepare(
+      `UPDATE blog_posts SET
+         title=REPLACE(title,?1,?2), seo_title=REPLACE(seo_title,?1,?2),
+         excerpt=REPLACE(excerpt,?1,?2), seo_description=REPLACE(seo_description,?1,?2),
+         content=REPLACE(content,?1,?2), updated_at=?3
+       WHERE slug=?4`
+    )
+    .bind(body.find, body.replace, new Date().toISOString(), body.slug)
+    .run()
+  return c.json({ ok: true, changed: result.meta?.changes ?? 0 })
+})
+
 // ── GET /api/blog/:slug — get post by slug ────────────────────────────────────
 blogRouter.get('/:slug', async (c) => {
   const slug = c.req.param('slug')
@@ -207,7 +227,9 @@ async function autoGeneratePost(c: any): Promise<Response> {
   const sourceUrls = articles.slice(0, 3).map((a) => a.link)
 
   // 5. Build prompt
-  const systemPrompt = `You are a content writer for Begyn.ai, a business intelligence platform that helps entrepreneurs and businesses leverage AI. Write SEO-optimized blog posts about AI, business intelligence, automation, and how modern businesses can use AI to grow.`
+  const today = new Date()
+  const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const systemPrompt = `You are a content writer for Begyn.ai, a business intelligence platform that helps entrepreneurs and businesses leverage AI. Write SEO-optimized blog posts about AI, business intelligence, automation, and how modern businesses can use AI to grow. Today's date is ${dateStr} — when referencing the current year or writing timely content, use ${today.getFullYear()}, never an earlier year.`
 
   const userPrompt = `Write an 800-1200 word SEO-optimized blog post for Begyn.ai based on this AI news topic:
 
