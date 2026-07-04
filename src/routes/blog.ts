@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { isInternalRequest } from '../lib/internalAuth'
+import { submitToIndexNow } from '../lib/indexnow'
 
 type Env = {
   DB: D1Database
@@ -338,6 +339,13 @@ Make the content relevant to entrepreneurs, business owners, and companies adopt
     .prepare("INSERT OR REPLACE INTO blog_settings (key, value) VALUES ('last_auto_post', ?)")
     .bind(now)
     .run()
+
+  // 12. Instant-index the new post + refreshed listing (best-effort)
+  await submitToIndexNow([
+    `https://begyn.online/blog/${slug}`,
+    'https://begyn.online/blog',
+    'https://begyn.online/',
+  ])
 
   return c.json({ ok: true, slug, title: postData.title })
 }

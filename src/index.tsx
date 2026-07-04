@@ -12,7 +12,8 @@ import { builderRouter } from './routes/builder'
 import paymentsRouter from './routes/payments'
 import { settingsRouter } from './routes/settings'
 import { blogRouter } from './routes/blog'
-import { getInternalToken } from './lib/internalAuth'
+import { getInternalToken, isInternalRequest } from './lib/internalAuth'
+import { INDEXNOW_KEY, submitToIndexNow } from './lib/indexnow'
 
 type Bindings = {
   DB: D1Database
@@ -201,6 +202,22 @@ app.get('/sitemap-blog.xml', async (c) => {
 ${urls}
 </urlset>`
   return c.body(xml, 200, { 'Content-Type': 'application/xml' })
+})
+
+// IndexNow ownership key file (protocol requires it at /<key>.txt)
+app.get(`/${INDEXNOW_KEY}.txt`, (c) => c.text(INDEXNOW_KEY))
+
+// Manually (re)submit all site URLs to IndexNow — guarded like the blog cron
+app.post('/api/seo/indexnow-submit', async (c) => {
+  if (!isInternalRequest(c)) return c.json({ error: 'Unauthorized' }, 401)
+  const db = (c.env as any).DB as D1Database
+  const urls = ['https://begyn.online/', 'https://begyn.online/blog']
+  try {
+    const rows = await db.prepare("SELECT slug FROM blog_posts WHERE status='published' ORDER BY published_at DESC LIMIT 90").all()
+    for (const p of (rows.results || []) as any[]) urls.push(`https://begyn.online/blog/${p.slug}`)
+  } catch (_) {}
+  const ok = await submitToIndexNow(urls)
+  return c.json({ ok, submitted: urls.length })
 })
 
 app.get('/llms.txt', (c) => {
