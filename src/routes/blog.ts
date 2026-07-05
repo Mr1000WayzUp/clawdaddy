@@ -115,6 +115,18 @@ blogRouter.post('/update-post', async (c) => {
   return c.json({ ok: true, changed: result.meta?.changes ?? 0 })
 })
 
+// ── POST /api/blog/unpublish — set a post back to draft (internal only) ──────
+blogRouter.post('/unpublish', async (c) => {
+  if (!isInternalRequest(c)) return c.json({ error: 'Unauthorized' }, 401)
+  const body = await c.req.json<{ slug: string }>()
+  if (!body.slug) return c.json({ error: 'slug required' }, 400)
+  const result = await env_db(c)
+    .prepare("UPDATE blog_posts SET status='draft', updated_at=? WHERE slug=?")
+    .bind(new Date().toISOString(), body.slug)
+    .run()
+  return c.json({ ok: true, changed: result.meta?.changes ?? 0 })
+})
+
 // ── GET /api/blog/:slug — get post by slug ────────────────────────────────────
 blogRouter.get('/:slug', async (c) => {
   const slug = c.req.param('slug')
@@ -211,20 +223,46 @@ async function autoGeneratePost(c: any): Promise<Response> {
         if (title) {
           articles.push({ title, description: stripHtml(description || ''), link: link || feedUrl })
         }
-        if (articles.length >= 5) break
       }
-      if (articles.length >= 5) break
     } catch {
       // skip failed feed
     }
   }
 
-  // 4. Pick topic (first article if available, otherwise generic fallback)
-  const topic = articles.length > 0
-    ? `${articles[0].title}\n\n${articles[0].description}`
-    : 'The latest advancements in AI and how businesses can leverage them for business intelligence, automation, and competitive advantage'
+  // 4. Pick a topic we haven't already covered. RSS feeds repeat stories for
+  // days and the generic fallback used to produce near-identical posts every
+  // run — compare against recent post titles and skip anything too similar.
+  const recentRows = await db
+    .prepare('SELECT title FROM blog_posts ORDER BY published_at DESC LIMIT 20')
+    .all()
+  const recentTitles = ((recentRows.results || []) as any[]).map((r) => String(r.title))
+  const isCovered = (candidate: string) =>
+    recentTitles.some((t) => titleSimilarity(t, candidate) >= 0.5)
 
-  const sourceUrls = articles.slice(0, 3).map((a) => a.link)
+  const FALLBACK_TOPICS = [
+    'How small businesses can use AI-powered analytics to make better decisions without hiring a data team',
+    'AI voice agents vs traditional answering services: costs, capabilities, and when to switch',
+    'Using predictive AI to forecast sales and demand for small and mid-size businesses',
+    'Practical workflow automations that eliminate repetitive admin work for entrepreneurs',
+    'How AI lead scoring helps businesses focus on the customers most likely to buy',
+    'Turning raw business data into plain-English insights: a guide to modern BI dashboards',
+    'How restaurants, retailers, and service businesses are using AI to compete with big chains',
+    'Measuring ROI on AI tools: what business owners should track in the first 90 days',
+  ]
+
+  const freshArticle = articles.find((a) => !isCovered(a.title))
+  let topic: string
+  let sourceUrls: string[] = []
+  if (freshArticle) {
+    topic = `${freshArticle.title}\n\n${freshArticle.description}`
+    sourceUrls = [freshArticle.link]
+  } else {
+    const fallback = FALLBACK_TOPICS.find((t) => !isCovered(t))
+    if (!fallback) {
+      return c.json({ error: 'No fresh topic available — all candidates too similar to recent posts' }, 409)
+    }
+    topic = fallback
+  }
 
   // 5. Build prompt
   const today = new Date()
@@ -323,6 +361,12 @@ Make the content relevant to entrepreneurs, business owners, and companies adopt
     return c.json({ error: 'AI response missing required fields' }, 500)
   }
 
+  // Safety net: even from a fresh source topic the model can converge on a
+  // title we've already published — don't store a near-duplicate.
+  if (isCovered(String(postData.title))) {
+    return c.json({ error: 'Generated title too similar to a recent post', title: postData.title }, 409)
+  }
+
   // Model output is untrusted — strip active HTML before it's stored/rendered
   postData.content = sanitizeArticleHtml(String(postData.content))
 
@@ -415,6 +459,26 @@ function sanitizeArticleHtml(html: string): string {
   })
 
   return out
+}
+
+// Jaccard similarity of significant title words (stopwords removed).
+// 0 = unrelated, 1 = identical word sets.
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'for', 'of', 'in', 'on', 'to', 'is', 'are',
+  'your', 'you', 'how', 'what', 'why', 'with', 'it', 'its', 'this', 'that',
+])
+
+function titleSimilarity(a: string, b: string): number {
+  const words = (s: string) =>
+    new Set(
+      s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 1 && !STOPWORDS.has(w))
+    )
+  const wa = words(a)
+  const wb = words(b)
+  if (!wa.size || !wb.size) return 0
+  let inter = 0
+  for (const w of wa) if (wb.has(w)) inter++
+  return inter / (wa.size + wb.size - inter)
 }
 
 function slugify(text: string): string {
