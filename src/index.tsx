@@ -220,36 +220,39 @@ app.post('/api/seo/indexnow-submit', async (c) => {
   return c.json({ ok, submitted: urls.length })
 })
 
-app.get('/llms.txt', (c) => {
+app.get('/llms.txt', async (c) => {
+  // llms.txt spec (llmstxt.org): H1 title, blockquote summary, H2 sections
+  // containing Markdown link lists. Blog links are pulled live from D1.
+  let postLinks = ''
+  try {
+    const db = (c.env as any).DB as D1Database
+    const rows = await db
+      .prepare("SELECT title, slug, excerpt FROM blog_posts WHERE status='published' ORDER BY published_at DESC LIMIT 20")
+      .all()
+    postLinks = ((rows.results || []) as any[])
+      .map((p) => `- [${p.title}](https://begyn.online/blog/${p.slug}): ${String(p.excerpt || '').replace(/\n/g, ' ')}`)
+      .join('\n')
+  } catch (_) {}
+
   return c.text(`# Begyn.ai — AI-Powered Business Intelligence
 
 > Begyn.ai is an AI-powered business intelligence platform for entrepreneurs and businesses of all sizes. We provide voice agents, lead intelligence, automated analytics, workflow automation, and predictive reporting — helping businesses compete with enterprise-grade data tools at startup-friendly prices.
 
-## What We Do
+Begyn.ai serves any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more. Plans: Spark (free), Growth ($199/mo), Scale ($499/mo), and custom Enterprise. Contact: hello@begyn.online.
 
-- **Begyn Intelligence**: Real-time AI analytics dashboard that turns your business data into plain-English insights
-- **Begyn Voice**: 24/7 AI voice agents that answer calls, qualify leads, and book appointments automatically
-- **Begyn Leads**: AI-powered lead generation and scoring for any industry
-- **Begyn Automate**: Workflow automation that connects your existing tools and eliminates manual tasks
-- **Begyn Reports**: Automated daily/weekly AI-written business reports delivered to your inbox
-- **Begyn Predict**: Predictive AI that forecasts sales, demand, churn, and revenue
+## Main Pages
 
-## Who We Serve
+- [Home](https://begyn.online/): Platform overview — Begyn Intelligence (real-time AI analytics), Begyn Voice (24/7 AI voice agents), Begyn Leads (AI lead generation and scoring), Begyn Automate (workflow automation), Begyn Reports (automated AI-written business reports), and Begyn Predict (sales, demand, churn, and revenue forecasting) — plus pricing and FAQ
+- [Blog](https://begyn.online/blog): AI business intelligence articles, updated multiple times daily
 
-Any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more.
+## Blog Posts
 
-## Pricing
+${postLinks || '- [Blog](https://begyn.online/blog): Latest AI business intelligence articles'}
 
-- Spark (Free): Core analytics, 1 voice agent, 100 leads/month
-- Growth ($199/mo): Full platform, 3 voice agents, 1,000 leads/month
-- Scale ($499/mo): Unlimited everything, dedicated AI model
-- Enterprise: Custom pricing, SLA, white-label
+## Optional
 
-## Contact
-
-Website: https://begyn.online
-Blog: https://begyn.online/blog
-Email: hello@begyn.online`)
+- [Sitemap](https://begyn.online/sitemap.xml): Index of main site pages
+- [Blog sitemap](https://begyn.online/sitemap-blog.xml): Index of all published blog posts`)
 })
 
 // ─── CHAT WIDGET ─────────────────────────────────────────────────────────────
@@ -2070,7 +2073,7 @@ app.get('/', (c) => {
         <a href="#cta" class="text-sm text-gray-400 hover:text-white transition-colors font-medium px-4 py-2">Sign In</a>
         <a href="#cta" class="gb-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/40 hover:opacity-90 transition-opacity">Start Free →</a>
       </div>
-      <button onclick="document.getElementById('mnav').classList.toggle('open')" class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg">
+      <button onclick="document.getElementById('mnav').classList.toggle('open')" aria-label="Toggle navigation menu" aria-controls="mnav" class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg">
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
@@ -2799,9 +2802,9 @@ app.get('/blog', (c) => {
   <div id="category-tabs" class="flex flex-wrap gap-2 mb-10">
     <button onclick="filterPosts('')" id="cat-all" class="px-4 py-2 rounded-full text-sm font-semibold bg-purple-600 text-white transition-all">All</button>
     <button onclick="filterPosts('AI News')" id="cat-ai-news" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">AI News</button>
-    <button onclick="filterPosts('Legal Technology')" id="cat-legal-tech" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Legal Technology</button>
-    <button onclick="filterPosts('Client Intake')" id="cat-client-intake" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Client Intake</button>
-    <button onclick="filterPosts('Law Firm Tips')" id="cat-tips" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Law Firm Tips</button>
+    <button onclick="filterPosts('Business Intelligence')" id="cat-business-intelligence" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">Business Intelligence</button>
+    <button onclick="filterPosts('AI Automation')" id="cat-ai-automation" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">AI Automation</button>
+    <button onclick="filterPosts('AI Voice')" id="cat-ai-voice" class="px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all">AI Voice</button>
   </div>
 
   <!-- Posts Grid -->
