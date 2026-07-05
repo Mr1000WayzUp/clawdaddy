@@ -1,0 +1,6 @@
+{
+  "name": "begyn-blog-cron",
+  "main": "index.js",
+  "compatibility_date": "2026-04-13",
+  "triggers": { "crons": ["0 */4 * * *"] }
+}

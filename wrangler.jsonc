@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
+  "name": "begyn-seo",
   "compatibility_date": "2026-04-13",
   "pages_build_output_dir": "./dist",
   "compatibility_flags": ["nodejs_compat"],
@@ -8,10 +8,7 @@
     {
       "binding": "DB",
       "database_name": "webapp-production",
-      "database_id": "local-db"
+      "database_id": "545fe6d6-59ee-4905-bb09-7030493f13ba"
     }
   ],
-  "triggers": {
-    "crons": ["0 6 * * *"]
-  }
 }
