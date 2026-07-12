@@ -78,6 +78,8 @@ Begyn.ai provides enterprise-grade AI business intelligence at startup-friendly 
 4. Begyn Automate — Workflow automation that connects existing tools and eliminates manual repetitive tasks.
 5. Begyn Reports — Automated daily/weekly AI-written business performance reports delivered to your inbox.
 6. Begyn Predict — Predictive AI that forecasts sales, demand, churn, and revenue so you can act before problems hit.
+7. Begyn Studio — Autonomous marketing engine: SEO articles, video content, and social posts researched, created, and published daily by AI.
+8. Begyn Build — AI coding agents that create and ship websites, apps, games, and digital products from a plain-English prompt.
 
 ## Pricing Plans
 - 7-Day Free Trial: Full Scale-tier access for 7 days. No credit card required, cancel anytime, keep your data.
@@ -235,15 +237,15 @@ app.get('/llms.txt', async (c) => {
       .join('\n')
   } catch (_) {}
 
-  return c.text(`# Begyn.ai — AI-Powered Business Intelligence
+  return c.text(`# Begyn.ai — The Autonomous AI Business System
 
-> Begyn.ai is an AI-powered business intelligence platform for entrepreneurs and businesses of all sizes. We provide voice agents, lead intelligence, automated analytics, workflow automation, and predictive reporting — helping businesses compete with enterprise-grade data tools at startup-friendly prices.
+> Begyn.ai is a complete AI-run business system: SEO articles, video content, chat and voice agents, websites, apps, code, digital products, workflow automation, and revenue forecasting — everything that can be done online, done autonomously from one app. We're here to give you your time back.
 
 Begyn.ai serves any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more. Plans: Growth ($199/mo), Scale ($499/mo), and custom Enterprise — every plan starts with a 7-day full-access free trial, no credit card required. Contact: hello@begyn.online.
 
 ## Main Pages
 
-- [Home](https://begyn.online/): Platform overview — Begyn Intelligence (real-time AI analytics), Begyn Voice (24/7 AI voice agents), Begyn Leads (AI lead generation and scoring), Begyn Automate (workflow automation), Begyn Reports (automated AI-written business reports), and Begyn Predict (sales, demand, churn, and revenue forecasting) — plus pricing and FAQ
+- [Home](https://begyn.online/): Platform overview — Begyn Studio (autonomous SEO articles, video, and social content), Begyn Voice (24/7 AI voice agents), Begyn Leads (AI lead generation and scoring), Begyn Build (AI-built websites, apps, games, and products), Begyn Automate (workflow automation), Begyn Intelligence (real-time AI analytics), Begyn Reports (AI-written business reports), and Begyn Predict (sales, demand, churn, and revenue forecasting) — plus pricing and FAQ
 - [Blog](https://begyn.online/blog): AI business intelligence articles, updated multiple times daily
 
 ## Blog Posts
@@ -1825,9 +1827,9 @@ app.get('/', (c) => {
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 
   <!-- Primary SEO -->
-  <title>Begyn.ai | AI Business Intelligence Platform for Entrepreneurs & Small Business</title>
-  <meta name="description" content="Begyn.ai is the AI revenue operating system for small business. AI voice agents answer every call 24/7 while predictive intelligence forecasts your revenue. 7-day free trial — no credit card."/>
-  <meta name="keywords" content="AI business intelligence, business intelligence for small business, AI voice agents for business, automated analytics platform, AI for entrepreneurs, business automation software, lead intelligence AI, AI workflow automation, revenue forecasting AI, Begyn AI"/>
+  <title>Begyn.ai | The Autonomous AI System That Runs Your Entire Business</title>
+  <meta name="description" content="Begyn.ai runs your entire business with AI — SEO, video content, chat & voice agents, websites, apps, code, and revenue forecasting. Autonomous, 24/7, from one app. 7-day free trial — no credit card."/>
+  <meta name="keywords" content="autonomous AI business system, AI runs your business, AI business automation, AI voice agents for business, AI SEO content automation, AI website builder for business, AI app builder, AI video content for business, revenue forecasting AI, business intelligence for small business, AI for entrepreneurs, Begyn AI"/>
   <link rel="canonical" href="https://begyn.online/"/>
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
   <meta name="author" content="Begyn.ai Team"/>
@@ -1839,8 +1841,8 @@ app.get('/', (c) => {
 
   <!-- Open Graph -->
   <meta property="og:type" content="website"/>
-  <meta property="og:title" content="Begyn.ai | Answers Every Call. Predicts Every Dollar."/>
-  <meta property="og:description" content="The AI revenue operating system for small business: 24/7 AI voice agents + predictive revenue intelligence in one platform. 7-day free trial, no credit card."/>
+  <meta property="og:title" content="Begyn.ai | One AI Runs Your Business. You Get Your Time Back."/>
+  <meta property="og:description" content="The autonomous AI business system: SEO, content, video, chat & voice agents, websites, apps, code, and forecasting — all from one app, running 24/7. 7-day free trial, no credit card."/>
   <meta property="og:url" content="https://begyn.online/"/>
   <meta property="og:site_name" content="Begyn.ai"/>
   <meta property="og:image" content="https://begyn.online/static/og-image.png"/>
@@ -1851,8 +1853,8 @@ app.get('/', (c) => {
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:site" content="@BegynAI"/>
-  <meta name="twitter:title" content="Begyn.ai | Answers Every Call. Predicts Every Dollar."/>
-  <meta name="twitter:description" content="24/7 AI voice agents + predictive revenue intelligence in one platform. 7-day free trial, no credit card."/>
+  <meta name="twitter:title" content="Begyn.ai | One AI Runs Your Business. You Get Your Time Back."/>
+  <meta name="twitter:description" content="SEO, content, video, agents, websites, apps, code, forecasting — one autonomous AI system. 7-day free trial, no credit card."/>
   <meta name="twitter:image" content="https://begyn.online/static/og-image.png"/>
 
   <!-- JSON-LD Structured Data -->
@@ -1871,7 +1873,7 @@ app.get('/', (c) => {
           "width": 512,
           "height": 512
         },
-        "description": "AI-powered business intelligence platform for entrepreneurs and small businesses",
+        "description": "The autonomous AI business system — SEO, content, video, chat and voice agents, websites, apps, code, and revenue forecasting, all run by AI from one app",
         "sameAs": [
           "https://twitter.com/BegynAI",
           "https://linkedin.com/company/begyn-ai",
@@ -1930,7 +1932,7 @@ app.get('/', (c) => {
           {
             "@type": "Question",
             "name": "What is Begyn.ai?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai is an AI-powered business intelligence platform that gives entrepreneurs and small businesses the same data tools large enterprises use — including AI voice agents, automated lead scoring, real-time analytics, workflow automation, and revenue forecasting." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai is a complete autonomous AI business system. One AI runs your entire business from a single app: SEO articles and video content published automatically, chat and voice agents that answer every customer, websites, apps, and digital products built by AI coding agents, workflow automation, and revenue forecasting. If it can be done online, Begyn does it — infinitely, autonomously, and efficiently, so you get your time back." }
           },
           {
             "@type": "Question",
@@ -2079,7 +2081,7 @@ app.get('/', (c) => {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0f05" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <span class="font-black text-lg text-white disp">Begyn<span class="tv">.ai</span></span>
-        <span class="pill hidden sm:inline-flex" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">Revenue OS</span>
+        <span class="pill hidden sm:inline-flex" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">Business OS</span>
       </a>
       <div class="hidden md:flex items-center gap-8">
         <a href="#platform" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Platform</a>
@@ -2123,14 +2125,14 @@ app.get('/', (c) => {
       <div>
         <div class="inline-flex items-center gap-2.5 mb-7 pill" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">
           <span class="vw" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
-          The AI Revenue Operating System for Small Business
+          The Autonomous AI Business System
         </div>
         <h1 class="font-black leading-none tracking-tight mb-6" style="font-size:clamp(2.7rem,7vw,4.9rem)">
-          <span class="text-white">Answers every call.</span><br/>
-          <span class="tv">Predicts every dollar.<span class="cur"></span></span>
+          <span class="text-white">One AI runs your business.</span><br/>
+          <span class="tv">You get your time back.<span class="cur"></span></span>
         </h1>
         <p class="text-gray-400 leading-relaxed mb-9 max-w-xl" style="font-size:1.15rem">
-          Begyn.ai is your 24/7 AI Employee — it answers your phones, follows up with every lead, and tells you exactly where next month's revenue is coming from. Live in 30 minutes.
+          SEO, content, video, chat &amp; voice agents, websites, apps, code, products — if it can be done online, Begyn does it. Autonomously, 24/7, from one app. Live in 30 minutes.
         </p>
         <div class="flex flex-wrap gap-4 mb-7">
           <a href="#pricing" class="btn-volt inline-flex items-center gap-2 font-bold px-8 py-4 rounded-2xl" style="font-size:1rem">
@@ -2234,7 +2236,7 @@ app.get('/', (c) => {
 <!-- ═══ SCALE PROOF COUNTERS ═══ -->
 <section class="py-14 border-y" style="background:rgba(200,242,49,.03);border-color:var(--line)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest mb-8">We're in the business of growing your business</p>
+    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest mb-8">We're here to give you your time back</p>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
       ${[
         {target:'3200',suffix:'+',label:'Businesses Powered',sub:'across 10+ industries'},
@@ -2270,29 +2272,35 @@ app.get('/', (c) => {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12 rv">
       <p class="tv text-sm font-bold uppercase tracking-widest mb-3">The Platform</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">One AI Employee.<br/>Five Jobs. Zero Busywork.</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Everything you need to capture, convert, and keep customers — plus the one thing nobody else gives you: knowing what happens next.</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">One System.<br/>Your Entire Business.</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">If it can be done online, Begyn does it — marketing, sales, building, operations — running infinitely and autonomously from one app, plus the one thing nobody else gives you: knowing what happens next.</p>
     </div>
     <div class="flex flex-wrap justify-center gap-2.5 mb-10 rv" role="tablist" aria-label="Platform capabilities">
-      ${['Capture','Convert','Operate','Predict','Grow'].map((t,i) => `
+      ${['Market','Sell','Build','Operate','Predict'].map((t,i) => `
       <button role="tab" aria-selected="${i===0}" id="ftab-${i}" onclick="fnTab(${i})" class="ftab${i===0?' on':''} px-6 py-3 rounded-full text-sm font-bold">${t}${t==='Predict'?' ◆':''}</button>`).join('')}
     </div>
     ${[
       {
-        head:'Never miss another lead',
-        body:'Every call answered in one ring, every website visitor greeted, every missed opportunity texted back — 24/7, weekends and holidays included.',
-        feats:['AI Voice Agents answer calls 24/7 — no busy signal, unlimited simultaneous calls','Missed-call text-back wins the lead before they dial a competitor','AI website chat greets, answers, and books while you sleep','Smart forms & booking pages that fill your calendar','Every call transcribed, summarized, and logged automatically','One inbox for calls, chats, and messages'],
-        mock:[['📞','Inbound call — answered in 0.8s','var(--volt)'],['💬','Website chat: pricing question → answered','#9ca3af'],['📅','Appointment booked · Tue 2:30 PM','var(--volt)'],['✉️','Missed-call text sent · lead recovered','#9ca3af']]
+        head:'Get found everywhere, automatically',
+        body:'Your marketing engine never sleeps. Begyn researches, writes, publishes, and promotes — SEO articles, video content, social posts — every single day, without you touching a thing.',
+        feats:['SEO articles researched, written, and published on autopilot','AI video content generated for socials, ads, and product pages','Visibility in AI search — ChatGPT, Perplexity, and Google AI Overviews','Social posts drafted and scheduled across every channel','Ad copy and creatives tested and rotated by performance','Keyword and competitor tracking with weekly moves ranked by impact'],
+        mock:[['📝','SEO article published · indexed in 4 min','var(--volt)'],['🎬','Product video rendered · posted to socials','#9ca3af'],['🔍','Ranking up: 3 keywords hit page one','var(--volt)'],['📣','This week: 12 posts, 2 videos, 5 articles — all AI','#9ca3af']]
       },
       {
-        head:'Turn conversations into customers',
-        body:'Begyn scores every lead, follows up automatically, and keeps your pipeline moving — so the hottest opportunities never go cold.',
-        feats:['AI lead scoring ranks every prospect by revenue potential','Automated follow-up sequences via text and email','Self-booking calendars synced to your team','Visual sales pipeline updated by AI, not data entry','Instant quotes and payment links in chat or text','Reminders that cut no-shows by double digits'],
-        mock:[['🔥','Sarah M. — lead score 94 · ready to buy','var(--volt)'],['📤','Follow-up #2 sent · opened twice','#9ca3af'],['💳','Quote accepted — $2,400 paid','var(--volt)'],['📊','Pipeline: 12 deals · $38K in motion','#9ca3af']]
+        head:'Convert around the clock',
+        body:'Voice agents, chat agents, and smart forms greet every visitor and answer every call — then score, follow up, book, and collect payment while you sleep.',
+        feats:['AI voice agents answer calls 24/7 — no busy signal, unlimited simultaneous calls','AI chat agents greet, answer, and book on your website and socials','Smart forms and booking pages that fill your calendar','AI lead scoring ranks every prospect by revenue potential','Automated follow-up sequences via text and email','Instant quotes and payment links in chat or text'],
+        mock:[['📞','Inbound call — answered in 0.8s','var(--volt)'],['💬','Chat agent: pricing question → booked demo','#9ca3af'],['🔥','Sarah M. — lead score 94 · ready to buy','var(--volt)'],['💳','Quote accepted — $2,400 paid','#9ca3af']]
+      },
+      {
+        head:'Ship anything you can imagine',
+        body:'Websites, apps, games, digital products — describe it once and Begyn\'s coding agents build it, test it, and put it live. Your next product launch is a sentence, not a six-month project.',
+        feats:['Websites and landing pages built and deployed from a prompt','Full apps and tools coded, tested, and shipped by AI agents','Games and interactive experiences for marketing or product','Digital products created, packaged, and put up for sale','Every build SEO-ready, mobile-ready, and connected to your data','Iterate in plain English — "make the checkout one step" — done'],
+        mock:[['🌐','New landing page deployed · begyn.link/spring','var(--volt)'],['🧑‍💻','App build passing · v1.3 shipped','#9ca3af'],['🎮','Promo game published · 1,200 plays','var(--volt)'],['📦','Digital product live · first sale 14 min later','#9ca3af']]
       },
       {
         head:'Run your week on autopilot',
-        body:'The repetitive work that eats your evenings — reports, review requests, task routing, data entry — happens by itself.',
+        body:'The repetitive work that eats your evenings — reports, review requests, task routing, data entry — happens by itself. Infinitely, autonomously, efficiently.',
         feats:['Workflow automations connect 100+ tools you already use','Daily AI briefing: what happened, what matters, what to do','Reports written by AI and delivered to your inbox','Automatic review requests after every happy visit','Tasks routed to the right person at the right time','Zero code, zero SQL, zero consultants'],
         mock:[['🌅','Daily briefing delivered · 7:00 AM','var(--volt)'],['⭐','Review request sent to 8 customers','#9ca3af'],['🔁','Invoice → QuickBooks · synced','#9ca3af'],['✅','Weekly report generated & emailed','var(--volt)']]
       },
@@ -2302,12 +2310,6 @@ app.get('/', (c) => {
         feats:['Revenue forecasting at 94% accuracy — see next month today','Churn-risk alerts flag customers about to leave','Slow-day predictions so you can promote before the dip','Anomaly detection catches problems while they are small','Cash-flow outlook across every location','Ask your data anything — in plain English'],
         mock:[['📈','Forecast: $127K next 30 days · 94% conf.','var(--volt)'],['⚠️','2 accounts at churn risk · save plan ready','#f59e0b'],['📉','Thursday dip predicted · promo drafted','#9ca3af'],['💡','Anomaly: ad spend up, leads flat → fix','var(--volt)']],
         badge:'ONLY ON BEGYN'
-      },
-      {
-        head:'Compound every win',
-        body:'Growth is not an accident — it is a loop. Begyn turns happy customers into reviews, referrals, and repeat revenue, then measures exactly what worked.',
-        feats:['Reputation engine grows your Google reviews on autopilot','Reactivation campaigns wake up past customers','Referral tracking that rewards your best fans','Industry benchmarks show where you stand','Weekly growth playbook ranked by revenue impact','ROI tracking on every campaign, call, and dollar'],
-        mock:[['⭐','New 5-star review · Google','var(--volt)'],['📣','Reactivation: 214 past customers reached','#9ca3af'],['🎯','Playbook: 3 moves worth $9.2K this week','var(--volt)'],['🏆','You are top 12% in your industry','#9ca3af']]
       },
     ].map(({head,body,feats,mock,badge},i) => `
     <div id="fpanel-${i}" role="tabpanel" aria-labelledby="ftab-${i}" class="fpanel${i===0?' on':''} lg:grid-cols-2 gap-10 items-center">
@@ -2555,7 +2557,7 @@ app.get('/', (c) => {
   </svg>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
     <div class="glass p-12 sm:p-16" style="border-color:var(--volt-line)">
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Your Revenue Has a Pulse.<br/><span class="tv">Start Reading It.</span></h2>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Your Business, On Autopilot.<br/><span class="tv">Your Time, Back.</span></h2>
       <p class="text-gray-400 text-xl mb-10">7 days. Every feature. No credit card. Join 3,200+ businesses that run on Begyn.</p>
       <form onsubmit="handleDemo(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
         <input id="demo-email" type="email" required placeholder="you@yourbusiness.com" aria-label="Business email"
@@ -2582,7 +2584,7 @@ app.get('/', (c) => {
           </div>
           <span class="font-black text-white disp">Begyn<span class="tv">.ai</span></span>
         </div>
-        <p class="text-gray-600 text-xs leading-relaxed mb-4">The AI revenue operating system<br/>for small business.</p>
+        <p class="text-gray-600 text-xs leading-relaxed mb-4">The autonomous AI system that<br/>runs your entire business.</p>
         <div class="flex gap-3">
           <a href="#" class="text-gray-600 hover:text-white transition-colors" aria-label="X / Twitter">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -2596,7 +2598,7 @@ app.get('/', (c) => {
       <div>
         <p class="text-white font-bold text-sm mb-4">Platform</p>
         <div class="space-y-2.5">
-          ${['Intelligence','Voice Agents','Lead AI','Automate','Reports','Predict'].map(l => `<a href="#platform" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+          ${['Studio','Voice Agents','Lead AI','Build','Automate','Intelligence','Predict'].map(l => `<a href="#platform" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
         </div>
       </div>
       <!-- Solutions -->
@@ -2623,7 +2625,7 @@ app.get('/', (c) => {
     </div>
     <div class="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color:rgba(255,255,255,.06)">
       <p class="text-gray-700 text-xs">© 2026 Begyn.ai. All rights reserved.</p>
-      <p class="text-gray-700 text-xs">Answers every call. Predicts every dollar.</p>
+      <p class="text-gray-700 text-xs">One AI runs your business. You get your time back.</p>
     </div>
   </div>
 </footer>
