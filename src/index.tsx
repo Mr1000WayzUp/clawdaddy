@@ -400,12 +400,16 @@ app.get('/', (c) => {
             <option value="monthly">Monthly</option>
             <option value="biweekly">Bi-Weekly</option>
             <option value="weekly">Weekly</option>
+            <option value="daily">Daily</option>
             <option value="custom">Custom</option>
           </select>
         </div>
-        <div id="payment-day-row"><label>Payment Day of Month</label>
-          <input id="deal-payment-day" class="input" type="number" min="1" max="28" placeholder="e.g. 15" />
+        <div><label>Payment Amount</label>
+          <input id="deal-payment-amount" class="input" type="number" step="0.01" placeholder="0.00" />
         </div>
+      </div>
+      <div id="payment-day-row"><label>Payment Day of Month</label>
+        <input id="deal-payment-day" class="input" type="number" min="1" max="28" placeholder="e.g. 15" />
       </div>
       <div><label>Notes</label><textarea id="deal-notes" class="input" rows="2" placeholder="Any notes about this deal…"></textarea></div>
     </div>
@@ -446,10 +450,10 @@ app.get('/', (c) => {
       <div class="grid grid-cols-3 md:grid-cols-6 gap-3 text-sm mb-4">
         <div><p class="text-gray-500 text-xs">Total Paid</p><p class="text-green-400 font-semibold" id="deal-detail-paid"></p></div>
         <div><p class="text-gray-500 text-xs">Deal Date</p><p class="text-gray-300" id="deal-detail-date"></p></div>
-        <div><p class="text-gray-500 text-xs">Pay Frequency</p><p class="text-gray-300" id="deal-detail-frequency"></p></div>
+        <div><p class="text-gray-500 text-xs">Frequency</p><p class="text-gray-300" id="deal-detail-frequency"></p></div>
+        <div><p class="text-gray-500 text-xs">Payment Amt</p><p class="text-blue-300 font-semibold" id="deal-detail-payment-amount"></p></div>
         <div><p class="text-gray-500 text-xs">Payment Day</p><p class="text-gray-300" id="deal-detail-payment-day"></p></div>
         <div><p class="text-gray-500 text-xs">VIN</p><p class="text-gray-300 font-mono text-xs" id="deal-detail-vin"></p></div>
-        <div><p class="text-gray-500 text-xs">Color</p><p class="text-gray-300" id="deal-detail-color"></p></div>
       </div>
       <p class="text-xs text-gray-500 italic mb-4" id="deal-detail-notes"></p>
 

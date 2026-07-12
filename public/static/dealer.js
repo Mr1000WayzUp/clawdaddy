@@ -320,7 +320,7 @@ async function loadDeals(statusFilter) {
     const vehicle = [d.vehicle_year, d.vehicle_make, d.vehicle_model].filter(Boolean).join(' ') || 'Vehicle';
     const statusColor = { active: 'bg-green-900 text-green-300', paid_off: 'bg-gray-700 text-gray-400', defaulted: 'bg-red-900 text-red-400' }[d.status] || 'bg-gray-700 text-gray-400';
     const overdueFlag = d.overdue_count > 0 ? '<span class="ml-2 px-1.5 py-0.5 rounded text-xs bg-red-900 text-red-400 font-bold">!' + d.overdue_count + ' OD</span>' : '';
-    const safeName = (d.first_name + ' ' + d.last_name).replace(/'/g, "\\'");
+    const safeName = (d.first_name + ' ' + d.last_name).replace(/'/g, "\\'" );
     return `
       <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors" onclick="openDealDetail(${d.id})">
         <td class="py-3 px-4">
@@ -351,7 +351,7 @@ async function showAddDealModal(customerId, customerName) {
   sel.innerHTML = '<option value="">Select customer…</option>' + allCustomers.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
   if (customerId) sel.value = customerId;
   $('deal-modal-title').textContent = 'Add Deal';
-  ['deal-year', 'deal-make', 'deal-model', 'deal-vin', 'deal-color', 'deal-stock', 'deal-sale-price', 'deal-down-payment', 'deal-notes', 'deal-payment-day'].forEach(f => { $(f).value = ''; });
+  ['deal-year', 'deal-make', 'deal-model', 'deal-vin', 'deal-color', 'deal-stock', 'deal-sale-price', 'deal-down-payment', 'deal-notes', 'deal-payment-day', 'deal-payment-amount'].forEach(f => { $(f).value = ''; });
   $('deal-date').value = today();
   $('deal-status-select').value = 'active';
   $('deal-pay-frequency').value = 'monthly';
@@ -383,6 +383,7 @@ async function editDeal(id) {
   $('deal-notes').value = deal.notes || '';
   $('deal-pay-frequency').value = deal.pay_frequency || 'monthly';
   $('deal-payment-day').value = deal.payment_day || '';
+  $('deal-payment-amount').value = deal.payment_amount || '';
   updateFinanced();
   togglePaymentDay();
   openModal('add-deal-modal');
@@ -413,6 +414,10 @@ function togglePaymentDay() {
   $('payment-day-row').style.display = freq === 'monthly' ? 'block' : 'none';
 }
 
+function payFreqLabel(freq) {
+  return { monthly: 'Monthly', biweekly: 'Bi-Weekly', weekly: 'Weekly', daily: 'Daily', custom: 'Custom' }[freq] || freq;
+}
+
 function updateFinanced() {
   const sp = parseFloat($('deal-sale-price').value) || 0;
   const dp = parseFloat($('deal-down-payment').value) || 0;
@@ -434,6 +439,7 @@ async function saveDeal() {
     status: $('deal-status-select').value, notes: $('deal-notes').value,
     pay_frequency: $('deal-pay-frequency').value,
     payment_day: $('deal-payment-day').value ? parseInt($('deal-payment-day').value) : null,
+    payment_amount: $('deal-payment-amount').value ? parseFloat($('deal-payment-amount').value) : null,
   };
   const url = editingDeal ? '/api/dealer/deals/' + editingDeal : '/api/dealer/deals';
   const method = editingDeal ? 'PUT' : 'POST';
@@ -465,7 +471,8 @@ function renderDealDetail(deal, schedule, payments) {
   $('deal-detail-vin').textContent = deal.vehicle_vin || '—';
   $('deal-detail-color').textContent = deal.vehicle_color || '—';
   $('deal-detail-date').textContent = fmtDate(deal.deal_date);
-  $('deal-detail-frequency').textContent = capitalize(deal.pay_frequency || 'monthly');
+  $('deal-detail-frequency').textContent = payFreqLabel(deal.pay_frequency || 'monthly');
+  $('deal-detail-payment-amount').textContent = deal.payment_amount ? fmt$(deal.payment_amount) : '—';
   $('deal-detail-payment-day').textContent = deal.payment_day ? 'Day ' + deal.payment_day : '—';
   $('deal-detail-sale').textContent = fmt$(deal.sale_price);
   $('deal-detail-down').textContent = fmt$(deal.down_payment);
@@ -694,7 +701,7 @@ async function loadExpenses() {
     const catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold ' + (catColors[e.category] || 'bg-gray-700 text-gray-400') + '">' + e.category + '</span>';
     const statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold ' + (statusColors[e.status] || 'bg-gray-700 text-gray-400') + '">' + e.status + '</span>';
     const vehicle = e.vehicle_year || e.vehicle_make ? [e.vehicle_year, e.vehicle_make, e.vehicle_model].filter(Boolean).join(' ') : '—';
-    const safeDesc = (e.description || '').replace(/'/g, "\\'");
+    const safeDesc = (e.description || '').replace(/'/g, "\\'" );
     return `
       <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
         <td class="py-3 px-4 font-semibold text-white">${e.description}</td>
