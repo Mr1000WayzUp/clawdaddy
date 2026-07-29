@@ -78,12 +78,15 @@ Begyn.ai provides enterprise-grade AI business intelligence at startup-friendly 
 4. Begyn Automate — Workflow automation that connects existing tools and eliminates manual repetitive tasks.
 5. Begyn Reports — Automated daily/weekly AI-written business performance reports delivered to your inbox.
 6. Begyn Predict — Predictive AI that forecasts sales, demand, churn, and revenue so you can act before problems hit.
+7. Begyn Studio — Autonomous marketing engine: SEO articles, video content, and social posts researched, created, and published daily by AI.
+8. Begyn Build — AI coding agents that create and ship websites, apps, games, and digital products from a plain-English prompt.
 
 ## Pricing Plans
-- Spark (Free): Core analytics, 1 AI voice agent, 100 leads/month, basic reports. Great for solopreneurs.
+- 7-Day Free Trial: Full Scale-tier access for 7 days. No credit card required, cancel anytime, keep your data.
 - Growth ($199/month): Full platform, 3 AI voice agents, 1,000 leads/month, automated reports, all 6 products.
 - Scale ($499/month): Unlimited everything, dedicated AI model, priority support, advanced predictions.
 - Enterprise (Custom pricing): SLA guarantees, white-label options, dedicated account manager.
+All plans are all-inclusive — no per-minute voice fees, no AI add-on charges, no surprise bills.
 
 ## Who We Serve
 Any business: retailers, restaurants, agencies, SaaS companies, real estate, e-commerce, service businesses, professional services, healthcare, hospitality, and more.
@@ -234,15 +237,15 @@ app.get('/llms.txt', async (c) => {
       .join('\n')
   } catch (_) {}
 
-  return c.text(`# Begyn.ai — AI-Powered Business Intelligence
+  return c.text(`# Begyn.ai — The Autonomous AI Business System
 
-> Begyn.ai is an AI-powered business intelligence platform for entrepreneurs and businesses of all sizes. We provide voice agents, lead intelligence, automated analytics, workflow automation, and predictive reporting — helping businesses compete with enterprise-grade data tools at startup-friendly prices.
+> Begyn.ai is a complete AI-run business system: SEO articles, video content, chat and voice agents, websites, apps, code, digital products, workflow automation, and revenue forecasting — everything that can be done online, done autonomously from one app. We're here to give you your time back.
 
-Begyn.ai serves any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more. Plans: Spark (free), Growth ($199/mo), Scale ($499/mo), and custom Enterprise. Contact: hello@begyn.online.
+Begyn.ai serves any entrepreneur or business owner who wants enterprise-grade intelligence without enterprise complexity: retailers, restaurants, agencies, SaaS companies, real estate firms, service businesses, and more. Plans: Growth ($199/mo), Scale ($499/mo), and custom Enterprise — every plan starts with a 7-day full-access free trial, no credit card required. Contact: hello@begyn.online.
 
 ## Main Pages
 
-- [Home](https://begyn.online/): Platform overview — Begyn Intelligence (real-time AI analytics), Begyn Voice (24/7 AI voice agents), Begyn Leads (AI lead generation and scoring), Begyn Automate (workflow automation), Begyn Reports (automated AI-written business reports), and Begyn Predict (sales, demand, churn, and revenue forecasting) — plus pricing and FAQ
+- [Home](https://begyn.online/): Platform overview — Begyn Studio (autonomous SEO articles, video, and social content), Begyn Voice (24/7 AI voice agents), Begyn Leads (AI lead generation and scoring), Begyn Build (AI-built websites, apps, games, and products), Begyn Automate (workflow automation), Begyn Intelligence (real-time AI analytics), Begyn Reports (AI-written business reports), and Begyn Predict (sales, demand, churn, and revenue forecasting) — plus pricing and FAQ
 - [Blog](https://begyn.online/blog): AI business intelligence articles, updated multiple times daily
 
 ## Blog Posts
@@ -258,37 +261,37 @@ ${postLinks || '- [Blog](https://begyn.online/blog): Latest AI business intellig
 // ─── CHAT WIDGET ─────────────────────────────────────────────────────────────
 function chatWidget(): string {
   return `<div id="bw-root"><style>
-#bw-btn{position:fixed;bottom:24px;right:24px;z-index:9999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 24px rgba(124,58,237,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s}
-#bw-btn:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(124,58,237,.75)}
+#bw-btn{position:fixed;bottom:24px;right:24px;z-index:9999;width:56px;height:56px;border-radius:50%;background:#c8f231;color:#0a0f05;border:none;cursor:pointer;box-shadow:0 4px 24px rgba(200,242,49,.4);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s}
+#bw-btn:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(200,242,49,.6)}
 #bw-btn svg{width:26px;height:26px;color:#fff;flex-shrink:0}
 .bw-ic-close{display:none}
 #bw-btn.open .bw-ic-chat{display:none}
 #bw-btn.open .bw-ic-close{display:block}
-#bw-panel{position:fixed;bottom:92px;right:24px;z-index:9998;width:360px;max-width:calc(100vw - 48px);height:520px;max-height:calc(100vh - 120px);background:rgba(10,8,20,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(124,58,237,.35);border-radius:20px;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,.7);overflow:hidden;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;transform-origin:bottom right}
+#bw-panel{position:fixed;bottom:92px;right:24px;z-index:9998;width:360px;max-width:calc(100vw - 48px);height:520px;max-height:calc(100vh - 120px);background:rgba(8,12,7,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(200,242,49,.28);border-radius:20px;display:flex;flex-direction:column;box-shadow:0 8px 48px rgba(0,0,0,.7);overflow:hidden;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;transform-origin:bottom right}
 #bw-panel.bw-hidden{transform:scale(.86);opacity:0;pointer-events:none}
-#bw-hdr{padding:14px 16px;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(79,70,229,.1));border-bottom:1px solid rgba(124,58,237,.2);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.bw-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+#bw-hdr{padding:14px 16px;background:rgba(200,242,49,.08);border-bottom:1px solid rgba(200,242,49,.18);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bw-av{width:36px;height:36px;border-radius:50%;background:#c8f231;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
 .bw-nm{margin:0;font-size:13px;font-weight:700;color:#f3f4f6;font-family:ui-sans-serif,system-ui,sans-serif}
 .bw-st{margin:2px 0 0;font-size:11px;color:#10b981;font-family:ui-sans-serif,system-ui,sans-serif}
 #bw-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
 #bw-msgs::-webkit-scrollbar{width:4px}
 #bw-msgs::-webkit-scrollbar-thumb{background:#374151;border-radius:2px}
 .bw-m{max-width:84%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;font-family:ui-sans-serif,system-ui,sans-serif;word-break:break-word;white-space:pre-wrap}
-.bw-m.u{align-self:flex-end;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-bottom-right-radius:4px}
+.bw-m.u{align-self:flex-end;background:#c8f231;color:#0a0f05;border-bottom-right-radius:4px}
 .bw-m.b{align-self:flex-start;background:rgba(255,255,255,.09);color:#e5e7eb;border-bottom-left-radius:4px}
 .bw-dot{align-self:flex-start;padding:10px 14px;background:rgba(255,255,255,.09);border-radius:14px;border-bottom-left-radius:4px;display:flex;gap:4px;align-items:center}
-.bw-dot span{width:7px;height:7px;border-radius:50%;background:#7c3aed;animation:bw-b 1.2s infinite;display:block}
+.bw-dot span{width:7px;height:7px;border-radius:50%;background:#c8f231;animation:bw-b 1.2s infinite;display:block}
 .bw-dot span:nth-child(2){animation-delay:.2s}
 .bw-dot span:nth-child(3){animation-delay:.4s}
 @keyframes bw-b{0%,60%,100%{transform:translateY(0);opacity:.6}30%{transform:translateY(-5px);opacity:1}}
 #bw-frm{padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:8px;flex-shrink:0;background:rgba(0,0,0,.3);align-items:flex-end}
-#bw-inp{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:9px 12px;color:#f3f4f6;font-size:13px;font-family:ui-sans-serif,system-ui,sans-serif;outline:none;resize:none;min-height:38px;max-height:100px;line-height:1.4}
-#bw-inp:focus{border-color:rgba(124,58,237,.7);background:rgba(255,255,255,.09)}
+#bw-inp{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(200,242,49,.25);border-radius:10px;padding:9px 12px;color:#f3f4f6;font-size:13px;font-family:ui-sans-serif,system-ui,sans-serif;outline:none;resize:none;min-height:38px;max-height:100px;line-height:1.4}
+#bw-inp:focus{border-color:rgba(200,242,49,.55);background:rgba(255,255,255,.09)}
 #bw-inp::placeholder{color:#6b7280}
-#bw-snd{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+#bw-snd{width:38px;height:38px;border-radius:10px;background:#c8f231;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
 #bw-snd:hover{opacity:.85}
 #bw-snd:disabled{opacity:.4;cursor:not-allowed}
-#bw-snd svg{width:16px;height:16px;color:#fff}
+#bw-snd svg{width:16px;height:16px;color:#0a0f05}
 </style>
 <button id="bw-btn" aria-label="Chat with Begyn AI" onclick="bwToggle()">
 <svg class="bw-ic-chat" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -1824,9 +1827,9 @@ app.get('/', (c) => {
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 
   <!-- Primary SEO -->
-  <title>Begyn.ai | AI Business Intelligence Platform for Entrepreneurs & Small Business</title>
-  <meta name="description" content="Begyn.ai gives every entrepreneur enterprise-grade AI business intelligence. Voice agents that answer calls 24/7, lead scoring, automated analytics, workflow automation, and revenue forecasting — starting free."/>
-  <meta name="keywords" content="AI business intelligence, business intelligence for small business, AI voice agents for business, automated analytics platform, AI for entrepreneurs, business automation software, lead intelligence AI, AI workflow automation, revenue forecasting AI, Begyn AI"/>
+  <title>Begyn.ai | The Autonomous AI System That Runs Your Entire Business</title>
+  <meta name="description" content="Begyn.ai runs your entire business with AI — SEO, video content, chat & voice agents, websites, apps, code, and revenue forecasting. Autonomous, 24/7, from one app. 7-day free trial — no credit card."/>
+  <meta name="keywords" content="autonomous AI business system, AI runs your business, AI business automation, AI voice agents for business, AI SEO content automation, AI website builder for business, AI app builder, AI video content for business, revenue forecasting AI, business intelligence for small business, AI for entrepreneurs, Begyn AI"/>
   <link rel="canonical" href="https://begyn.online/"/>
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
   <meta name="author" content="Begyn.ai Team"/>
@@ -1838,8 +1841,8 @@ app.get('/', (c) => {
 
   <!-- Open Graph -->
   <meta property="og:type" content="website"/>
-  <meta property="og:title" content="Begyn.ai | AI Business Intelligence for Every Entrepreneur"/>
-  <meta property="og:description" content="AI-powered business intelligence for entrepreneurs. Voice agents, lead scoring, automated analytics, and workflow automation — starting free."/>
+  <meta property="og:title" content="Begyn.ai | One AI Runs Your Business. You Get Your Time Back."/>
+  <meta property="og:description" content="The autonomous AI business system: SEO, content, video, chat & voice agents, websites, apps, code, and forecasting — all from one app, running 24/7. 7-day free trial, no credit card."/>
   <meta property="og:url" content="https://begyn.online/"/>
   <meta property="og:site_name" content="Begyn.ai"/>
   <meta property="og:image" content="https://begyn.online/static/og-image.png"/>
@@ -1850,8 +1853,8 @@ app.get('/', (c) => {
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:site" content="@BegynAI"/>
-  <meta name="twitter:title" content="Begyn.ai | AI Business Intelligence for Entrepreneurs"/>
-  <meta name="twitter:description" content="AI-powered business intelligence for entrepreneurs. Voice agents, lead scoring, analytics automation — starting free."/>
+  <meta name="twitter:title" content="Begyn.ai | One AI Runs Your Business. You Get Your Time Back."/>
+  <meta name="twitter:description" content="SEO, content, video, agents, websites, apps, code, forecasting — one autonomous AI system. 7-day free trial, no credit card."/>
   <meta name="twitter:image" content="https://begyn.online/static/og-image.png"/>
 
   <!-- JSON-LD Structured Data -->
@@ -1870,7 +1873,7 @@ app.get('/', (c) => {
           "width": 512,
           "height": 512
         },
-        "description": "AI-powered business intelligence platform for entrepreneurs and small businesses",
+        "description": "The autonomous AI business system — SEO, content, video, chat and voice agents, websites, apps, code, and revenue forecasting, all run by AI from one app",
         "sameAs": [
           "https://twitter.com/BegynAI",
           "https://linkedin.com/company/begyn-ai",
@@ -1912,7 +1915,7 @@ app.get('/', (c) => {
         "operatingSystem": "Web",
         "url": "https://begyn.online",
         "offers": [
-          { "@type": "Offer", "name": "Spark", "price": "0", "priceCurrency": "USD", "description": "Free tier with core analytics, 1 voice agent, 100 leads/month" },
+          { "@type": "Offer", "name": "7-Day Free Trial", "price": "0", "priceCurrency": "USD", "description": "7 days of full Scale-tier access — no credit card required, cancel anytime" },
           { "@type": "Offer", "name": "Growth", "price": "199", "priceCurrency": "USD", "priceSpecification": { "@type": "UnitPriceSpecification", "billingDuration": "P1M" } },
           { "@type": "Offer", "name": "Scale", "price": "499", "priceCurrency": "USD", "priceSpecification": { "@type": "UnitPriceSpecification", "billingDuration": "P1M" } }
         ],
@@ -1929,12 +1932,17 @@ app.get('/', (c) => {
           {
             "@type": "Question",
             "name": "What is Begyn.ai?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai is an AI-powered business intelligence platform that gives entrepreneurs and small businesses the same data tools large enterprises use — including AI voice agents, automated lead scoring, real-time analytics, workflow automation, and revenue forecasting." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai is a complete autonomous AI business system. One AI runs your entire business from a single app: SEO articles and video content published automatically, chat and voice agents that answer every customer, websites, apps, and digital products built by AI coding agents, workflow automation, and revenue forecasting. If it can be done online, Begyn does it — infinitely, autonomously, and efficiently, so you get your time back." }
           },
           {
             "@type": "Question",
             "name": "How much does Begyn.ai cost?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Begyn.ai offers a free Spark plan with core analytics and 1 voice agent. Paid plans start at $199/month (Growth) for the full platform, $499/month (Scale) for unlimited everything, and custom Enterprise pricing." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Every Begyn.ai plan starts with a 7-day free trial with full platform access — no credit card required. Paid plans are $199/month (Growth) for the full platform, $499/month (Scale) for unlimited everything, and custom Enterprise pricing. All plans are all-inclusive with no per-minute voice fees or AI add-on charges." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Begyn.ai offer a free trial?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Begyn.ai offers a 7-day free trial with full Scale-tier access to every feature — AI voice agents, business intelligence, automations, and forecasting. No credit card is required to start, you can cancel anytime, and your data and reports export free even if you don't continue." }
           },
           {
             "@type": "Question",
@@ -1988,181 +1996,212 @@ app.get('/', (c) => {
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
   <style>
-    body{background:#030712;color:#f1f5f9;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;overflow-x:hidden}
-    /* Gradient text */
-    .gt-primary{background:linear-gradient(135deg,#8b5cf6,#d946ef,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .gt-gold{background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .gt-white-purple{background:linear-gradient(135deg,#ffffff,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    /* Gradient backgrounds */
-    .gb-primary{background:linear-gradient(135deg,#7c3aed,#d946ef)}
-    .gb-dark{background:linear-gradient(135deg,#1e1b4b,#2e1065)}
-    /* Animated hero mesh */
+    :root{--volt:#c8f231;--volt-soft:rgba(200,242,49,.14);--volt-line:rgba(200,242,49,.22);--ink:#05080c;--card:rgba(255,255,255,.035);--line:rgba(255,255,255,.08)}
+    body{background:var(--ink);color:#eef1e9;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;overflow-x:hidden}
+    h1,h2,h3,.disp{font-family:'Space Grotesk',Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:-.02em}
+    /* Accent text + buttons */
+    .tv{color:var(--volt)}
+    .gt-primary{color:var(--volt);-webkit-text-fill-color:var(--volt)}
+    .gb-primary{background:var(--volt);color:#0a0f05!important}
+    .btn-volt{background:var(--volt);color:#0a0f05;transition:transform .18s,box-shadow .18s}
+    .btn-volt:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(200,242,49,.35)}
+    .btn-ghost{border:1.5px solid var(--line);color:#eef1e9;transition:border-color .2s,background .2s}
+    .btn-ghost:hover{border-color:var(--volt-line);background:var(--volt-soft)}
+    /* Hero aurora */
     @keyframes mesh{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-    .hero-mesh{background:linear-gradient(-45deg,#030712,#0d0628,#06102e,#0f0520,#030712);background-size:400% 400%;animation:mesh 18s ease infinite}
-    /* Orbs */
-    .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;opacity:.45}
-    @keyframes ob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-28px) scale(1.06)}}
-    .ob-a{animation:ob 13s ease-in-out infinite}
-    .ob-b{animation:ob 16s ease-in-out infinite reverse}
-    .ob-c{animation:ob 11s ease-in-out infinite 4s}
-    /* Glass cards */
-    .glass{background:rgba(17,24,39,.65);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(139,92,246,.18);border-radius:1.25rem}
-    .glass-sm{background:rgba(17,24,39,.5);backdrop-filter:blur(8px);border:1px solid rgba(139,92,246,.12);border-radius:.875rem}
+    .hero-mesh{background:linear-gradient(-45deg,#05080c,#0a1408,#05080c,#081006,#05080c);background-size:400% 400%;animation:mesh 20s ease infinite}
+    .orb{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;opacity:.35}
+    @keyframes ob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-26px) scale(1.05)}}
+    .ob-a{animation:ob 14s ease-in-out infinite}
+    .ob-b{animation:ob 17s ease-in-out infinite reverse}
+    .ob-c{animation:ob 12s ease-in-out infinite 4s}
+    /* Signature pulse line (EKG) */
+    .ekg path{stroke-dasharray:900;stroke-dashoffset:900;animation:ekgd 5.5s linear infinite}
+    @keyframes ekgd{0%{stroke-dashoffset:900}55%{stroke-dashoffset:0}100%{stroke-dashoffset:-900}}
+    /* Cards */
+    .glass{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:1.25rem}
+    .glass-sm{background:rgba(255,255,255,.03);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.06);border-radius:.875rem}
+    .gh{transition:border-color .3s,box-shadow .3s,transform .25s}
+    .gh:hover{border-color:var(--volt-line)!important;box-shadow:0 0 44px rgba(200,242,49,.1);transform:translateY(-3px)}
     /* Scroll reveal */
     .rv{opacity:0;transform:translateY(32px);transition:opacity .65s ease,transform .65s ease}
     .rv.in{opacity:1;transform:none}
     .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
-    /* Bento */
-    .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:1.25rem}
-    .b4{grid-column:span 4}.b6{grid-column:span 6}.b8{grid-column:span 8}.b12{grid-column:span 12}
-    @media(max-width:1024px){.b4,.b6,.b8{grid-column:span 12}}
-    @media(min-width:640px) and (max-width:1024px){.b4{grid-column:span 6}}
-    /* Glow hover */
-    .gh{transition:border-color .3s,box-shadow .3s,transform .25s}
-    .gh:hover{border-color:rgba(139,92,246,.5)!important;box-shadow:0 0 40px rgba(124,58,237,.18);transform:translateY(-2px)}
+    /* Marquee */
+    .mq{overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+    .mq-track{display:flex;gap:.75rem;width:max-content;animation:mqs 36s linear infinite}
+    .mq:hover .mq-track{animation-play-state:paused}
+    @keyframes mqs{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    /* Funnel tabs */
+    .ftab{border:1px solid var(--line);color:#9aa596;transition:all .25s;cursor:pointer;white-space:nowrap}
+    .ftab.on{background:var(--volt);color:#0a0f05;border-color:var(--volt);font-weight:800}
+    .fpanel{display:none}
+    .fpanel.on{display:grid;animation:fin .45s ease}
+    @keyframes fin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
     /* Bar chart */
-    .bar{border-radius:3px 3px 0 0;background:linear-gradient(to top,#7c3aed,#d946ef);transition:height .6s ease}
-    /* Dashboard pulse */
+    .bar{border-radius:3px 3px 0 0;background:linear-gradient(to top,#5c7a10,var(--volt));transition:height .6s ease}
     @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
     .pdot{animation:pdot 2s ease-in-out infinite}
+    /* Voice wave bars */
+    .vw{display:flex;align-items:center;gap:2.5px;height:16px}
+    .vw span{width:3px;border-radius:2px;background:var(--volt);animation:vwb 1s ease-in-out infinite}
+    .vw span:nth-child(2){animation-delay:.15s}.vw span:nth-child(3){animation-delay:.3s}.vw span:nth-child(4){animation-delay:.45s}.vw span:nth-child(5){animation-delay:.6s}
+    @keyframes vwb{0%,100%{height:4px}50%{height:15px}}
     /* FAQ */
     .faq-body{max-height:0;overflow:hidden;transition:max-height .38s ease}
-    .faq-body.open{max-height:360px}
+    .faq-body.open{max-height:420px}
     .faq-ico{transition:transform .3s}
     .faq-item.open .faq-ico{transform:rotate(45deg)}
     /* Typing cursor */
     @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-    .cur{display:inline-block;width:3px;height:1em;background:#d946ef;vertical-align:text-bottom;border-radius:1px;animation:blink 1s step-end infinite;margin-left:2px}
+    .cur{display:inline-block;width:3px;height:1em;background:var(--volt);vertical-align:text-bottom;border-radius:1px;animation:blink 1s step-end infinite;margin-left:2px}
     /* Mobile nav */
     #mnav{display:none}
     #mnav.open{display:block}
-    /* Float CTA */
     #float-cta{display:none}
-    /* Scrollbar */
-    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#030712}::-webkit-scrollbar-thumb{background:#374151;border-radius:9px}
-    /* Misc */
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--ink)}::-webkit-scrollbar-thumb{background:#2c3529;border-radius:9px}
     .pill{display:inline-flex;align-items:center;gap:.375rem;padding:.28rem .85rem;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.04em}
     .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .cl3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    /* Counter */
-    @keyframes cin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-    .cnt{animation:cin .5s ease forwards}
+    @media (prefers-reduced-motion:reduce){.ekg path,.mq-track,.orb,.hero-mesh,.vw span{animation:none!important}}
   </style>
 </head>
 <body class="min-h-screen">
 
 <!-- ═══ NAV ═══ -->
-<nav class="sticky top-0 z-50 border-b border-white/5" style="background:rgba(3,7,18,.88);backdrop-filter:blur(20px)">
+<nav class="sticky top-0 z-50 border-b border-white/5" style="background:rgba(5,8,12,.9);backdrop-filter:blur(20px)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
-        <div class="w-8 h-8 rounded-xl gb-primary flex items-center justify-center shadow-lg shadow-purple-900/50 flex-shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--volt);box-shadow:0 0 24px rgba(200,242,49,.35)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0f05" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
-        <span class="font-black text-lg text-white">Begyn<span class="gt-primary">.ai</span></span>
-        <span class="pill hidden sm:inline-flex" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">BI Platform</span>
+        <span class="font-black text-lg text-white disp">Begyn<span class="tv">.ai</span></span>
+        <span class="pill hidden sm:inline-flex" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">Business OS</span>
       </a>
       <div class="hidden md:flex items-center gap-8">
         <a href="#platform" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Platform</a>
-        <a href="#industries" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Solutions</a>
+        <a href="#why" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Why Begyn</a>
         <a href="#pricing" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Pricing</a>
         <a href="/blog" class="text-sm text-gray-400 hover:text-white transition-colors font-medium">Blog</a>
       </div>
       <div class="hidden md:flex items-center gap-3">
         <a href="#cta" class="text-sm text-gray-400 hover:text-white transition-colors font-medium px-4 py-2">Sign In</a>
-        <a href="#cta" class="gb-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/40 hover:opacity-90 transition-opacity">Start Free →</a>
+        <a href="#cta" class="btn-volt text-sm font-bold px-5 py-2.5 rounded-xl">Start Free Trial →</a>
       </div>
       <button onclick="document.getElementById('mnav').classList.toggle('open')" aria-label="Toggle navigation menu" aria-controls="mnav" class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg">
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
   </div>
-  <div id="mnav" class="md:hidden border-t border-white/5 px-4 py-4 space-y-1" style="background:rgba(3,7,18,.97)">
+  <div id="mnav" class="md:hidden border-t border-white/5 px-4 py-4 space-y-1" style="background:rgba(5,8,12,.97)">
     <a href="#platform" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Platform</a>
-    <a href="#industries" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Solutions</a>
+    <a href="#why" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Why Begyn</a>
     <a href="#pricing" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Pricing</a>
     <a href="/blog" class="block text-gray-300 hover:text-white py-2.5 px-3 rounded-lg hover:bg-white/5 text-sm font-medium">Blog</a>
-    <a href="#cta" class="block gb-primary text-white text-sm font-bold px-5 py-3 rounded-xl text-center mt-3">Start Free →</a>
+    <a href="#cta" class="block btn-volt text-sm font-bold px-5 py-3 rounded-xl text-center mt-3">Start 7-Day Free Trial →</a>
   </div>
 </nav>
 
 <!-- ═══ HERO ═══ -->
 <section class="hero-mesh relative overflow-hidden min-h-screen flex items-center">
-  <div class="orb ob-a w-96 h-96 sm:w-[600px] sm:h-[600px] top-[-150px] left-[-150px]" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
-  <div class="orb ob-b w-72 h-72 sm:w-96 sm:h-96 top-[-80px] right-[-80px]" style="background:radial-gradient(circle,#d946ef,transparent 70%)"></div>
-  <div class="orb ob-c w-80 h-80 bottom-[-100px] left-1/2 -translate-x-1/2" style="background:radial-gradient(circle,#06b6d4,transparent 70%)"></div>
-  <!-- Subtle grid -->
-  <div class="absolute inset-0 opacity-[0.025]" style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:52px 52px"></div>
+  <div class="orb ob-a w-96 h-96 sm:w-[600px] sm:h-[600px] top-[-150px] left-[-150px]" style="background:radial-gradient(circle,#3c5a10,transparent 70%)"></div>
+  <div class="orb ob-b w-72 h-72 sm:w-96 sm:h-96 top-[-80px] right-[-80px]" style="background:radial-gradient(circle,#c8f231,transparent 70%);opacity:.16"></div>
+  <div class="orb ob-c w-80 h-80 bottom-[-100px] left-1/2 -translate-x-1/2" style="background:radial-gradient(circle,#1e3a24,transparent 70%)"></div>
+  <div class="absolute inset-0 opacity-[0.03]" style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:52px 52px"></div>
+  <!-- Signature pulse line -->
+  <svg class="ekg absolute bottom-10 left-0 w-full h-14 opacity-40" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,30 H260 L285,30 296,6 314,54 330,30 H640 L665,30 676,10 694,50 710,30 H1030 L1055,30 1066,8 1084,52 1100,30 H1200" fill="none" stroke="var(--volt)" stroke-width="2"/>
+  </svg>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 w-full">
     <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
       <!-- Left: Copy -->
       <div>
-        <div class="inline-flex items-center gap-2 mb-7 pill" style="background:rgba(124,58,237,.2);border:1px solid rgba(217,70,239,.3);color:#e879f9">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#e879f9"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          As of June 2026 · BI from Begyn
+        <div class="inline-flex items-center gap-2.5 mb-7 pill" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">
+          <span class="vw" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+          The Autonomous AI Business System
         </div>
-        <h1 class="font-black leading-none tracking-tight mb-6" style="font-size:clamp(3rem,8vw,5.5rem)">
-          <span class="text-white">Where</span><br/>
-          <span class="text-white">AI Meets</span><br/>
-          <span class="gt-primary">Business<span class="cur"></span></span>
+        <h1 class="font-black leading-none tracking-tight mb-6" style="font-size:clamp(2.7rem,7vw,4.9rem)">
+          <span class="text-white">One AI runs your business.</span><br/>
+          <span class="tv">You get your time back.<span class="cur"></span></span>
         </h1>
-        <p class="text-gray-400 leading-relaxed mb-10 max-w-xl" style="font-size:1.15rem">
-          Begyn.ai gives every entrepreneur the AI-powered Business Intelligence they need to outthink, outpace, and outperform — at any stage, in any industry.
+        <p class="text-gray-400 leading-relaxed mb-9 max-w-xl" style="font-size:1.15rem">
+          SEO, content, video, chat &amp; voice agents, websites, apps, code, products — if it can be done online, Begyn does it. Autonomously, 24/7, from one app. Live in 30 minutes.
         </p>
-        <div class="flex flex-wrap gap-4 mb-8">
-          <a href="#cta" class="inline-flex items-center gap-2 gb-primary text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-purple-900/40 hover:opacity-90 transition-opacity" style="font-size:1rem">
-            Start Free
+        <div class="flex flex-wrap gap-4 mb-7">
+          <a href="#pricing" class="btn-volt inline-flex items-center gap-2 font-bold px-8 py-4 rounded-2xl" style="font-size:1rem">
+            Start 7-Day Free Trial
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
-          <a href="#platform" class="inline-flex items-center gap-2 border-2 border-gray-700 hover:border-purple-500/60 text-white font-bold px-8 py-4 rounded-2xl transition-colors" style="font-size:1rem">
-            See the Platform
-          </a>
+          <button onclick="try{if(document.getElementById('bw-panel').classList.contains('bw-hidden'))bwToggle()}catch(e){}" class="btn-ghost inline-flex items-center gap-2.5 font-bold px-8 py-4 rounded-2xl" style="font-size:1rem">
+            <span class="vw" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+            Talk to Our AI — Live
+          </button>
         </div>
-        <div class="flex flex-wrap gap-5 text-sm text-gray-500">
-          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>No credit card</span>
-          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Setup in 30 min</span>
-          <span class="flex items-center gap-1.5"><svg width="14" height="14" fill="#4ade80" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>3,200+ businesses</span>
+        <div class="flex flex-wrap gap-5 text-sm text-gray-500 mb-5">
+          <span class="flex items-center gap-1.5"><span class="tv">✓</span>No credit card</span>
+          <span class="flex items-center gap-1.5"><span class="tv">✓</span>Full platform access</span>
+          <span class="flex items-center gap-1.5"><span class="tv">✓</span>Live in 30 minutes</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <span style="color:#fbbf24;letter-spacing:2px">★★★★★</span>
+          <span class="text-gray-400 font-semibold">4.9</span>
+          <span class="text-gray-600">from 127 businesses</span>
         </div>
       </div>
 
-      <!-- Right: Mock BI Dashboard -->
+      <!-- Right: Live product mock -->
       <div class="hidden lg:block relative">
-        <!-- Glow behind card -->
-        <div class="absolute inset-0 gb-primary opacity-10 blur-3xl rounded-3xl"></div>
-        <div class="glass relative rounded-3xl p-5 shadow-2xl shadow-purple-900/30">
-          <!-- Dashboard header -->
+        <div class="absolute inset-0 opacity-15 blur-3xl rounded-3xl" style="background:var(--volt)"></div>
+        <div class="glass relative rounded-3xl p-5 shadow-2xl" style="box-shadow:0 30px 80px rgba(0,0,0,.5)">
           <div class="flex items-center justify-between mb-4">
             <div>
               <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Begyn Intelligence</p>
-              <p class="text-white font-bold text-sm">Business Dashboard</p>
+              <p class="text-white font-bold text-sm">Revenue Command Center</p>
             </div>
             <div class="flex items-center gap-1.5 glass-sm px-3 py-1.5 rounded-full">
-              <div class="w-2 h-2 rounded-full bg-green-400 pdot"></div>
-              <span class="text-xs text-green-400 font-bold">LIVE</span>
+              <div class="w-2 h-2 rounded-full pdot" style="background:var(--volt)"></div>
+              <span class="text-xs font-bold tv">LIVE</span>
+            </div>
+          </div>
+          <!-- Incoming call card -->
+          <div class="glass-sm p-3 rounded-xl mb-3 flex items-center gap-3" style="border-color:var(--volt-line)">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--volt-soft)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-xs font-bold text-white">Begyn Voice answering…</p>
+                <span class="vw" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+              </div>
+              <p class="text-xs text-gray-500 truncate">Lead qualified → appointment booked for 2:30 PM</p>
             </div>
           </div>
           <!-- 4 stat cards -->
           <div class="grid grid-cols-4 gap-2 mb-4">
             ${[
-              {label:'Revenue',val:'+23%',color:'text-green-400'},
-              {label:'Leads',val:'142',color:'text-purple-400'},
-              {label:'Conv.',val:'67%',color:'text-cyan-400'},
-              {label:'ROI',val:'4.2×',color:'text-fuchsia-400'},
-            ].map(({label,val,color}) => `
+              {label:'Revenue',val:'+23%'},
+              {label:'Leads',val:'142'},
+              {label:'Calls',val:'100%'},
+              {label:'ROI',val:'4.2×'},
+            ].map(({label,val}) => `
             <div class="glass-sm p-2.5 text-center">
               <p class="text-xs text-gray-500 mb-1">${label}</p>
-              <p class="font-black text-sm ${color}">${val}</p>
+              <p class="font-black text-sm tv">${val}</p>
             </div>`).join('')}
           </div>
           <!-- Bar chart -->
           <div class="glass-sm p-3 rounded-xl mb-3">
-            <p class="text-xs text-gray-500 font-semibold mb-3">Revenue vs Target — Last 8 Weeks</p>
+            <p class="text-xs text-gray-500 font-semibold mb-3">Revenue vs Forecast — Last 8 Weeks</p>
             <div class="flex items-end gap-1.5 h-16">
               ${[40,65,80,55,90,70,85,60].map((h,i) => `
-              <div class="flex-1 flex flex-col justify-end gap-0.5">
+              <div class="flex-1 h-full flex flex-col justify-end gap-0.5">
                 <div class="bar w-full" style="height:${h}%;opacity:${0.6+i*0.05}"></div>
               </div>`).join('')}
             </div>
@@ -2170,216 +2209,156 @@ app.get('/', (c) => {
           <!-- AI insights -->
           <div class="space-y-1.5">
             ${[
-              {dot:'bg-green-400',text:'Revenue up 23% — best month in 18 months'},
-              {dot:'bg-fuchsia-400',text:'3 high-value leads identified · follow up today'},
-              {dot:'bg-cyan-400',text:'Forecast: $127K next 30 days (+18% MoM)'},
-            ].map(({dot,text}) => `
+              'Forecast: $127K next 30 days (94% confidence)',
+              '3 high-value leads identified · follow up today',
+              'Thursday slowdown predicted · promo drafted',
+            ].map((text) => `
             <div class="flex items-center gap-2.5 glass-sm px-3 py-2 rounded-lg">
-              <div class="w-2 h-2 rounded-full ${dot} flex-shrink-0"></div>
+              <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:var(--volt)"></div>
               <p class="text-xs text-gray-300">${text}</p>
             </div>`).join('')}
           </div>
         </div>
         <!-- Float badges -->
-        <div class="absolute -top-4 -right-4 glass-sm px-3 py-2 rounded-2xl border-yellow-500/20 flex items-center gap-2 shadow-lg">
-          <span class="text-yellow-400 font-black text-sm">↑ 34%</span>
+        <div class="absolute -top-4 -right-4 glass-sm px-3 py-2 rounded-2xl flex items-center gap-2 shadow-lg" style="border-color:var(--volt-line)">
+          <span class="font-black text-sm tv">↑ 34%</span>
           <span class="text-gray-400 text-xs">MoM Growth</span>
         </div>
         <div class="absolute -bottom-4 -left-4 glass-sm px-3 py-2 rounded-2xl flex items-center gap-2 shadow-lg">
-          <span class="text-lg">🤖</span>
-          <span class="text-purple-300 text-xs font-bold">AI Generated</span>
+          <span class="font-black text-sm tv">94%</span>
+          <span class="text-gray-400 text-xs">Forecast accuracy</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ INDUSTRY BAR ═══ -->
-<section class="py-10 border-y border-white/5" style="background:rgba(17,24,39,.3)">
+<!-- ═══ SCALE PROOF COUNTERS ═══ -->
+<section class="py-14 border-y" style="background:rgba(200,242,49,.03);border-color:var(--line)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest mb-5">Entrepreneurs in every industry choose Begyn.ai</p>
-    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-      ${['Legal & Law Firms','Healthcare','Real Estate','Restaurant & Hospitality','E-Commerce','SaaS & Tech','Financial Services','Retail','Marketing Agencies','Manufacturing','Education','Consulting'].map(name =>
-        `<span class="text-gray-500 text-xs font-semibold px-3 py-1.5 rounded-full" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">${name}</span>`
-      ).join('')}
-    </div>
-  </div>
-</section>
-
-<!-- ═══ PROBLEM ═══ -->
-<section class="py-24 relative overflow-hidden">
-  <div class="absolute inset-0 opacity-[0.03]" style="background:radial-gradient(ellipse at center,#7c3aed,transparent 65%)"></div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14 rv">
-      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">The Gap</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Data Without Intelligence<br/>is Just Noise</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Most businesses have more data than ever — and less clarity than ever. Begyn.ai closes the gap.</p>
-    </div>
-    <div class="grid md:grid-cols-3 gap-6">
+    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest mb-8">We're here to give you your time back</p>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
       ${[
-        {stat:'87%',desc:'of business data collected by SMBs goes completely unanalyzed every month',from:'from-red-900/20',border:'border-red-800/30',tc:'text-red-400'},
-        {stat:'$500K+',desc:'wasted annually on manual reporting, data prep, and consultant fees by growing businesses',from:'from-orange-900/20',border:'border-orange-800/30',tc:'text-orange-400'},
-        {stat:'3 Weeks',desc:'average delay between a business insight becoming available and a decision being made on it',from:'from-yellow-900/20',border:'border-yellow-800/30',tc:'text-yellow-400'},
-      ].map(({stat,desc,from,border,tc},i) => `
-      <div class="rv d${i+1} glass gh bg-gradient-to-br ${from} border ${border} p-8 text-center">
-        <div class="text-5xl font-black ${tc} mb-4">${stat}</div>
-        <p class="text-gray-400 leading-relaxed">${desc}</p>
+        {target:'3200',suffix:'+',label:'Businesses Powered',sub:'across 10+ industries'},
+        {target:'127',prefix:'$',suffix:'M+',label:'Revenue Attributed',sub:'by Begyn customers'},
+        {target:'94',suffix:'%',label:'Forecast Accuracy',sub:'across all AI models'},
+        {target:'30',suffix:' min',label:'To First Insight',sub:'avg from signup to aha'},
+      ].map(({target,prefix,suffix,label,sub},i) => `
+      <div class="rv d${i+1}">
+        <div class="text-4xl sm:text-5xl font-black tv mb-1 disp" data-counter="${target}" data-prefix="${prefix||''}" data-suffix="${suffix||''}">${prefix||''}0${suffix||''}</div>
+        <div class="text-white font-bold text-sm">${label}</div>
+        <div class="text-gray-500 text-xs mt-0.5">${sub}</div>
       </div>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- ═══ PLATFORM / BENTO ═══ -->
-<section id="platform" class="py-24" style="background:rgba(17,24,39,.25)">
+<!-- ═══ INDUSTRY MARQUEE ═══ -->
+<section class="py-9 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5">
+    <p class="text-center text-xs font-bold text-gray-600 uppercase tracking-widest">Trusted by owners in every industry</p>
+  </div>
+  <div class="mq">
+    <div class="mq-track">
+      ${['Legal & Law Firms','Healthcare','Real Estate','Restaurants & Hospitality','E-Commerce','SaaS & Tech','Financial Services','Retail','Marketing Agencies','Manufacturing','Home Services & HVAC','Education','Consulting','Auto & Dealerships','Legal & Law Firms','Healthcare','Real Estate','Restaurants & Hospitality','E-Commerce','SaaS & Tech','Financial Services','Retail','Marketing Agencies','Manufacturing','Home Services & HVAC','Education','Consulting','Auto & Dealerships'].map(name =>
+        `<span class="text-gray-500 text-sm font-semibold px-5 py-2.5 rounded-full flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)">${name}</span>`
+      ).join('')}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FUNNEL TABS (Platform) ═══ -->
+<section id="platform" class="py-24 relative overflow-hidden">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16 rv">
-      <span class="pill mb-4 inline-flex" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">BI from Begyn</span>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Complete Business<br/>Intelligence Platform</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Six AI-powered modules. One unified platform. Built for entrepreneurs who refuse to fly blind.</p>
+    <div class="text-center mb-12 rv">
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">The Platform</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">One System.<br/>Your Entire Business.</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">If it can be done online, Begyn does it — marketing, sales, building, operations — running infinitely and autonomously from one app, plus the one thing nobody else gives you: knowing what happens next.</p>
     </div>
-    <div class="bento">
-      <!-- Begyn Intelligence — span 8 -->
-      <div class="b8 rv glass gh p-7" style="background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(217,70,239,.08))">
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <span class="text-3xl mb-3 block">🧠</span>
-            <h3 class="text-xl font-black text-white mb-2">Begyn Intelligence</h3>
-            <p class="text-gray-400 leading-relaxed max-w-lg">Real-time AI analytics across all your business data. Automated dashboards, competitive intelligence, anomaly detection, and daily AI briefings that tell you exactly what to focus on.</p>
-          </div>
-          <span class="pill flex-shrink-0" style="background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">Core Platform</span>
-        </div>
-        <!-- Mini forecast chart -->
-        <div class="glass-sm p-3 rounded-xl mt-4">
-          <p class="text-xs text-gray-500 mb-2">AI Revenue Forecast — Next 90 Days</p>
-          <div class="flex items-end gap-1 h-10">
-            ${[50,58,54,67,72,69,80,85,90,88,95,100].map((h,i) => `
-            <div class="flex-1" style="height:${h}%;background:linear-gradient(to top,rgba(124,58,237,.6),rgba(217,70,239,.6));border-radius:2px 2px 0 0;opacity:${.5+i*.04}"></div>`).join('')}
-          </div>
-          <div class="flex items-center gap-2 mt-2">
-            <div class="w-2 h-2 rounded-full bg-green-400"></div>
-            <p class="text-xs text-green-400 font-semibold">+34% predicted growth · 94% confidence</p>
-          </div>
-        </div>
-      </div>
-      <!-- Begyn Voice — span 4 -->
-      <div class="b4 rv d1 glass gh p-7">
-        <span class="text-3xl mb-3 block">🎙️</span>
-        <h3 class="text-xl font-black text-white mb-2">Begyn Voice</h3>
-        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI voice agents that answer every call, qualify every lead, and book every meeting — 24/7, for any business and any industry.</p>
-        <span class="pill" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#22d3ee">Voice AI</span>
-      </div>
-      <!-- Begyn Leads — span 4 -->
-      <div class="b4 rv d2 glass gh p-7">
-        <span class="text-3xl mb-3 block">🎯</span>
-        <h3 class="text-xl font-black text-white mb-2">Begyn Leads</h3>
-        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI discovers, enriches, and scores prospects from 50+ data sources. Fresh qualified leads delivered to your pipeline every morning.</p>
-        <span class="pill" style="background:rgba(217,70,239,.15);border:1px solid rgba(217,70,239,.3);color:#e879f9">Lead Intelligence</span>
-      </div>
-      <!-- Begyn Automate — span 8 -->
-      <div class="b8 rv d1 glass gh p-7" style="background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(124,58,237,.08))">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <span class="text-3xl mb-3 block">⚡</span>
-            <h3 class="text-xl font-black text-white mb-2">Begyn Automate</h3>
-            <p class="text-gray-400 leading-relaxed max-w-lg">End-to-end workflow automation powered by AI. Connect your CRM, email, calendar, Slack, and 100+ tools. Eliminate repetitive work. Let AI handle the busywork while you focus on growth.</p>
-            <div class="flex flex-wrap gap-2 mt-4">
-              ${['HubSpot','Salesforce','Shopify','Stripe','QuickBooks','Slack','Google Workspace','Zapier'].map(t => `<span class="text-xs text-gray-400 px-2 py-1 rounded-lg" style="background:rgba(255,255,255,.06)">${t}</span>`).join('')}
-            </div>
-          </div>
-          <span class="pill flex-shrink-0" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#22d3ee">Automation</span>
-        </div>
-      </div>
-      <!-- Begyn Reports — span 6 -->
-      <div class="b6 rv glass gh p-7">
-        <span class="text-3xl mb-3 block">📊</span>
-        <h3 class="text-xl font-black text-white mb-2">Begyn Reports</h3>
-        <p class="text-gray-400 text-sm leading-relaxed mb-4">One-click boardroom-quality reports from your live data. Auto-generated daily, weekly, or monthly. Share with your team, investors, or board in seconds — no analyst required.</p>
-        <span class="pill" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fbbf24">Reporting</span>
-      </div>
-      <!-- Begyn Predict — span 6 -->
-      <div class="b6 rv d1 glass gh p-7">
-        <span class="text-3xl mb-3 block">🔮</span>
-        <h3 class="text-xl font-black text-white mb-2">Begyn Predict</h3>
-        <p class="text-gray-400 text-sm leading-relaxed mb-4">AI forecasting for revenue, churn, inventory, and demand. Know what's coming before it arrives. Make proactive decisions, not reactive ones. The future, made actionable today.</p>
-        <span class="pill" style="background:rgba(124,58,237,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">Forecasting</span>
-      </div>
+    <div class="flex flex-wrap justify-center gap-2.5 mb-10 rv" role="tablist" aria-label="Platform capabilities">
+      ${['Market','Sell','Build','Operate','Predict'].map((t,i) => `
+      <button role="tab" aria-selected="${i===0}" id="ftab-${i}" onclick="fnTab(${i})" class="ftab${i===0?' on':''} px-6 py-3 rounded-full text-sm font-bold">${t}${t==='Predict'?' ◆':''}</button>`).join('')}
     </div>
+    ${[
+      {
+        head:'Get found everywhere, automatically',
+        body:'Your marketing engine never sleeps. Begyn researches, writes, publishes, and promotes — SEO articles, video content, social posts — every single day, without you touching a thing.',
+        feats:['SEO articles researched, written, and published on autopilot','AI video content generated for socials, ads, and product pages','Visibility in AI search — ChatGPT, Perplexity, and Google AI Overviews','Social posts drafted and scheduled across every channel','Ad copy and creatives tested and rotated by performance','Keyword and competitor tracking with weekly moves ranked by impact'],
+        mock:[['📝','SEO article published · indexed in 4 min','var(--volt)'],['🎬','Product video rendered · posted to socials','#9ca3af'],['🔍','Ranking up: 3 keywords hit page one','var(--volt)'],['📣','This week: 12 posts, 2 videos, 5 articles — all AI','#9ca3af']]
+      },
+      {
+        head:'Convert around the clock',
+        body:'Voice agents, chat agents, and smart forms greet every visitor and answer every call — then score, follow up, book, and collect payment while you sleep.',
+        feats:['AI voice agents answer calls 24/7 — no busy signal, unlimited simultaneous calls','AI chat agents greet, answer, and book on your website and socials','Smart forms and booking pages that fill your calendar','AI lead scoring ranks every prospect by revenue potential','Automated follow-up sequences via text and email','Instant quotes and payment links in chat or text'],
+        mock:[['📞','Inbound call — answered in 0.8s','var(--volt)'],['💬','Chat agent: pricing question → booked demo','#9ca3af'],['🔥','Sarah M. — lead score 94 · ready to buy','var(--volt)'],['💳','Quote accepted — $2,400 paid','#9ca3af']]
+      },
+      {
+        head:'Ship anything you can imagine',
+        body:'Websites, apps, games, digital products — describe it once and Begyn\'s coding agents build it, test it, and put it live. Your next product launch is a sentence, not a six-month project.',
+        feats:['Websites and landing pages built and deployed from a prompt','Full apps and tools coded, tested, and shipped by AI agents','Games and interactive experiences for marketing or product','Digital products created, packaged, and put up for sale','Every build SEO-ready, mobile-ready, and connected to your data','Iterate in plain English — "make the checkout one step" — done'],
+        mock:[['🌐','New landing page deployed · begyn.link/spring','var(--volt)'],['🧑‍💻','App build passing · v1.3 shipped','#9ca3af'],['🎮','Promo game published · 1,200 plays','var(--volt)'],['📦','Digital product live · first sale 14 min later','#9ca3af']]
+      },
+      {
+        head:'Run your week on autopilot',
+        body:'The repetitive work that eats your evenings — reports, review requests, task routing, data entry — happens by itself. Infinitely, autonomously, efficiently.',
+        feats:['Workflow automations connect 100+ tools you already use','Daily AI briefing: what happened, what matters, what to do','Reports written by AI and delivered to your inbox','Automatic review requests after every happy visit','Tasks routed to the right person at the right time','Zero code, zero SQL, zero consultants'],
+        mock:[['🌅','Daily briefing delivered · 7:00 AM','var(--volt)'],['⭐','Review request sent to 8 customers','#9ca3af'],['🔁','Invoice → QuickBooks · synced','#9ca3af'],['✅','Weekly report generated & emailed','var(--volt)']]
+      },
+      {
+        head:'Know what happens next',
+        body:'This is what no answering service, marketing platform, or agency tool can do: Begyn reads your revenue like a pulse and tells you what is coming — before it happens.',
+        feats:['Revenue forecasting at 94% accuracy — see next month today','Churn-risk alerts flag customers about to leave','Slow-day predictions so you can promote before the dip','Anomaly detection catches problems while they are small','Cash-flow outlook across every location','Ask your data anything — in plain English'],
+        mock:[['📈','Forecast: $127K next 30 days · 94% conf.','var(--volt)'],['⚠️','2 accounts at churn risk · save plan ready','#f59e0b'],['📉','Thursday dip predicted · promo drafted','#9ca3af'],['💡','Anomaly: ad spend up, leads flat → fix','var(--volt)']],
+        badge:'ONLY ON BEGYN'
+      },
+    ].map(({head,body,feats,mock,badge},i) => `
+    <div id="fpanel-${i}" role="tabpanel" aria-labelledby="ftab-${i}" class="fpanel${i===0?' on':''} lg:grid-cols-2 gap-10 items-center">
+      <div>
+        ${badge ? `<span class="pill mb-4" style="background:var(--volt);color:#0a0f05">◆ ${badge}</span>` : ''}
+        <h3 class="text-3xl sm:text-4xl font-black text-white mb-4">${head}</h3>
+        <p class="text-gray-400 text-lg leading-relaxed mb-7">${body}</p>
+        <ul class="space-y-3 text-sm text-gray-300 mb-8">
+          ${feats.map(f => `<li class="flex gap-3"><span class="tv mt-0.5 flex-shrink-0 font-bold">✓</span>${f}</li>`).join('')}
+        </ul>
+        <a href="#pricing" class="btn-volt inline-flex items-center gap-2 font-bold px-6 py-3.5 rounded-xl text-sm">Start 7-Day Free Trial <span>→</span></a>
+      </div>
+      <div class="glass p-6 rounded-3xl">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Live Activity</p>
+          <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full pdot" style="background:var(--volt)"></div><span class="text-xs font-bold tv">LIVE</span></div>
+        </div>
+        <div class="space-y-2.5">
+          ${mock.map(([ico,txt,col]) => `
+          <div class="flex items-center gap-3 glass-sm px-4 py-3.5 rounded-xl">
+            <span class="text-lg flex-shrink-0">${ico}</span>
+            <p class="text-sm text-gray-300 flex-1">${txt}</p>
+            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:${col}"></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`).join('')}
   </div>
 </section>
 
-<!-- ═══ THE PARADIGM ═══ -->
-<section class="py-24 relative overflow-hidden hero-mesh">
-  <div class="orb ob-a w-96 h-96 opacity-20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-    <div class="text-center mb-16 rv">
-      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">The New Paradigm</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">A New Way to Run a Business</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">The old playbook is obsolete. AI changes everything — for those willing to begin.</p>
-    </div>
-    <div class="grid md:grid-cols-3 gap-px overflow-hidden rounded-2xl" style="background:rgba(139,92,246,.15)">
-      <!-- Before -->
-      <div class="rv p-8" style="background:rgba(3,7,18,.9)">
-        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-xs">✕</span>
-          Before Begyn
-        </p>
-        <div class="space-y-4">
-          ${['Manual spreadsheets & gut feeling','Expensive consultants & analysts','Decisions made blind, weeks late','Reporting takes days to compile','Reactive management, always behind'].map(t => `
-          <div class="flex items-start gap-3"><span class="text-red-500 mt-0.5 flex-shrink-0">✕</span><span class="text-gray-500 text-sm">${t}</span></div>`).join('')}
-        </div>
-      </div>
-      <!-- With Begyn -->
-      <div class="rv d1 p-8 relative" style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(217,70,239,.15))">
-        <div class="absolute inset-x-0 top-0 h-0.5" style="background:linear-gradient(90deg,#7c3aed,#d946ef,#06b6d4)"></div>
-        <p class="text-sm font-bold text-purple-300 uppercase tracking-wider mb-6 flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full gb-primary flex items-center justify-center text-xs text-white">✦</span>
-          With Begyn BI
-        </p>
-        <div class="space-y-4">
-          ${['AI analyzes everything, automatically','Intelligence on demand, instantly','Data-driven decisions in seconds','Reports write themselves, daily','Proactive AI alerts before issues hit'].map(t => `
-          <div class="flex items-start gap-3"><span class="text-purple-400 mt-0.5 flex-shrink-0">✦</span><span class="text-white text-sm font-medium">${t}</span></div>`).join('')}
-        </div>
-      </div>
-      <!-- The Advantage -->
-      <div class="rv d2 p-8" style="background:rgba(3,7,18,.9)">
-        <p class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-cyan-900 flex items-center justify-center text-xs">↑</span>
-          The Advantage
-        </p>
-        <div class="space-y-4">
-          ${['10× faster decision-making','70% reduction in operational costs','3× higher lead conversion rate','Real-time intelligence, 24/7/365','Predict outcomes before they happen'].map(t => `
-          <div class="flex items-start gap-3"><span class="text-green-400 mt-0.5 flex-shrink-0">↑</span><span class="text-gray-300 text-sm">${t}</span></div>`).join('')}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ INDUSTRIES ═══ -->
-<section id="industries" class="py-24" style="background:rgba(17,24,39,.25)">
+<!-- ═══ WHY SWITCH ═══ -->
+<section id="why" class="py-24" style="background:rgba(255,255,255,.015)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-14 rv">
-      <p class="text-cyan-400 text-sm font-bold uppercase tracking-widest mb-3">Solutions</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Built for Every Business</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">From solo founders to 500-person companies — Begyn.ai adapts to your industry and scale.</p>
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">Why Begyn</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Other Platforms Do the Work.<br/>Begyn Also Does the Thinking.</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">We studied every tool in this industry. Here's what business owners told us they couldn't find anywhere else.</p>
     </div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div class="grid sm:grid-cols-2 gap-6">
       ${[
-        {icon:'⚖️',name:'Legal',desc:'Automate client intake & case analytics'},
-        {icon:'🏥',name:'Healthcare',desc:'Patient scheduling & practice BI'},
-        {icon:'🏠',name:'Real Estate',desc:'Lead scoring & market intelligence'},
-        {icon:'🍽️',name:'Restaurant',desc:'Demand forecasting & retention AI'},
-        {icon:'🛒',name:'E-Commerce',desc:'Conversion & inventory prediction'},
-        {icon:'💻',name:'SaaS & Tech',desc:'Churn prediction & growth analytics'},
-        {icon:'💰',name:'Finance',desc:'Risk analysis & client intelligence'},
-        {icon:'🏪',name:'Retail',desc:'Sales intelligence & stock AI'},
-        {icon:'🎯',name:'Agencies',desc:'Campaign ROI & client reporting'},
-        {icon:'🏭',name:'Manufacturing',desc:'Supply chain & quality analytics'},
-      ].map(({icon,name,desc},i) => `
-      <div class="rv d${(i%4)+1} glass gh p-5 text-center">
-        <div class="text-3xl mb-3">${icon}</div>
-        <p class="text-white font-bold text-sm mb-1">${name}</p>
-        <p class="text-gray-500 text-xs leading-relaxed">${desc}</p>
+        {icon:'🧠',title:'Decision AI, not just busywork AI',desc:'Answering calls and sending texts is table stakes — plenty of tools do it. Only Begyn adds the intelligence layer: revenue forecasting, churn alerts, and a daily answer to "what should I do next?"'},
+        {icon:'💸',title:'All-inclusive pricing. Actually.',desc:'No per-minute voice fees. No AI add-on table. No $500/mo "premium support" upsell. The price on the pricing page is the price on your invoice — usage included.'},
+        {icon:'🧑‍🔧',title:'Built for owners, not agencies',desc:'No sub-accounts, snapshots, or reseller jargon to translate. Begyn speaks plain English to the person who actually runs the business — you.'},
+        {icon:'🔓',title:'Try everything before paying anything',desc:'Most competitors gate their product behind a sales demo or a credit-card trial that auto-bills. Begyn gives you 7 days of full access — no card, no auto-charge, and your data exports free either way.'},
+      ].map(({icon,title,desc},i) => `
+      <div class="rv d${(i%2)+1} glass gh p-8">
+        <div class="text-3xl mb-4">${icon}</div>
+        <h3 class="text-xl font-black text-white mb-3">${title}</h3>
+        <p class="text-gray-400 leading-relaxed text-sm">${desc}</p>
       </div>`).join('')}
     </div>
   </div>
@@ -2389,19 +2368,19 @@ app.get('/', (c) => {
 <section class="py-24 relative overflow-hidden">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-16 rv">
-      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">How It Works</p>
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">How It Works</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Zero to Intelligence<br/>in 30 Minutes</h2>
       <p class="text-gray-400 text-xl max-w-2xl mx-auto">Three steps from signup to your first AI-powered business insight.</p>
     </div>
     <div class="grid md:grid-cols-3 gap-6 relative">
-      <div class="hidden md:block absolute top-16 left-1/3 right-1/3 h-px" style="background:linear-gradient(90deg,#7c3aed,#06b6d4)"></div>
+      <div class="hidden md:block absolute top-16 left-1/3 right-1/3 h-px" style="background:linear-gradient(90deg,transparent,var(--volt),transparent)"></div>
       ${[
-        {num:'01',icon:'⚡',title:'Connect Your Data',desc:'Link your existing tools in minutes — Shopify, Stripe, Google Analytics, CRM, QuickBooks, and 100+ more. Zero technical setup required.',color:'from-purple-900/30',border:'border-purple-700/30',tc:'text-purple-400'},
-        {num:'02',icon:'🧠',title:'AI Analyzes Everything',desc:'Begyn ingests, cleans, and analyzes all your data automatically. Patterns emerge. Anomalies surface. Opportunities are identified and ranked by impact.',color:'from-fuchsia-900/30',border:'border-fuchsia-700/30',tc:'text-fuchsia-400'},
-        {num:'03',icon:'🚀',title:'Act on Real Intelligence',desc:'Receive daily AI briefings, automated actions, and precise recommendations. Your business runs smarter — without more hours, staff, or guesswork.',color:'from-cyan-900/30',border:'border-cyan-700/30',tc:'text-cyan-400'},
-      ].map(({num,icon,title,desc,color,border,tc},i) => `
-      <div class="rv d${i+1} glass bg-gradient-to-br ${color} border ${border} p-8 text-center relative z-10">
-        <div class="text-5xl font-black ${tc} opacity-20 mb-2">${num}</div>
+        {num:'01',icon:'⚡',title:'Connect Your Data',desc:'Link your existing tools in minutes — Shopify, Stripe, Google Analytics, CRM, QuickBooks, and 100+ more. Zero technical setup required.'},
+        {num:'02',icon:'🧠',title:'AI Analyzes Everything',desc:'Begyn ingests, cleans, and analyzes all your data automatically. Patterns emerge. Anomalies surface. Opportunities are identified and ranked by impact.'},
+        {num:'03',icon:'🚀',title:'Act on Real Intelligence',desc:'Receive daily AI briefings, automated actions, and precise recommendations. Your business runs smarter — without more hours, staff, or guesswork.'},
+      ].map(({num,icon,title,desc},i) => `
+      <div class="rv d${i+1} glass gh p-8 text-center relative z-10">
+        <div class="text-5xl font-black tv opacity-25 mb-2 disp">${num}</div>
         <div class="text-4xl mb-4">${icon}</div>
         <h3 class="text-xl font-black text-white mb-3">${title}</h3>
         <p class="text-gray-400 leading-relaxed">${desc}</p>
@@ -2410,47 +2389,32 @@ app.get('/', (c) => {
   </div>
 </section>
 
-<!-- ═══ METRICS STRIP ═══ -->
-<section class="py-16 border-y" style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(217,70,239,.08),rgba(6,182,212,.08));border-color:rgba(139,92,246,.2)">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-      ${[
-        {val:'3,200',suffix:'+',label:'Businesses Powered',sub:'across 10+ industries'},
-        {val:'127',prefix:'$',suffix:'M',label:'Revenue Attributed',sub:'by Begyn BI customers'},
-        {val:'94',suffix:'%',label:'AI Prediction Accuracy',sub:'across all forecast models'},
-        {val:'30',suffix:' min',label:'Time to First Insight',sub:'avg from signup to aha'},
-      ].map(({val,prefix,suffix,label,sub},i) => `
-      <div class="rv d${i+1}">
-        <div class="text-3xl sm:text-4xl font-black gt-primary mb-1" data-counter="${val}" data-prefix="${prefix||''}" data-suffix="${suffix||''}">${prefix||''}${val}${suffix||''}</div>
-        <div class="text-white font-bold text-sm">${label}</div>
-        <div class="text-gray-500 text-xs mt-0.5">${sub}</div>
-      </div>`).join('')}
-    </div>
-  </div>
-</section>
-
-<!-- ═══ TESTIMONIALS ═══ -->
-<section class="py-24" style="background:rgba(17,24,39,.25)">
+<!-- ═══ TESTIMONIALS (metric-first) ═══ -->
+<section class="py-24" style="background:rgba(255,255,255,.015)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-14 rv">
-      <p class="text-fuchsia-400 text-sm font-bold uppercase tracking-widest mb-3">Testimonials</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Entrepreneurs Who<br/>Chose to Begyn</h2>
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">Results</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">The Numbers Speak.<br/>Then the Owners Do.</h2>
     </div>
     <div class="grid md:grid-cols-3 gap-6">
       ${[
-        {name:'Dominique R.',role:'Founder, DRK Consulting',init:'DR',quote:'We went from spending 3 days a month on reports to 3 hours. Begyn\'s AI catches things my team never would have. Our close rate went from 18% to 41% in 90 days.'},
-        {name:'Marcus T.',role:'Owner, Taíno Restaurant Group',init:'MT',quote:'I run 4 locations and used to manage it all on gut feeling. Now I have real intelligence. Begyn predicted a Thursday slowdown 2 weeks out — I ran a promotion and had our best Thursday ever.'},
-        {name:'Priya K.',role:'CEO, NovaSphere SaaS',init:'PK',quote:'Churn was killing us silently. Begyn Predict flagged 23 at-risk accounts before they churned. We saved $180K in ARR in a single quarter. This platform pays for itself every month.'},
-      ].map(({name,role,init,quote},i) => `
-      <div class="rv d${i+1} glass gh p-7">
-        <div class="flex gap-1 mb-4">${'★★★★★'.split('').map(() => '<span class="text-yellow-400">★</span>').join('')}</div>
-        <p class="text-gray-300 leading-relaxed mb-6 italic">"${quote}"</p>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full gb-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">${init}</div>
-          <div>
-            <p class="font-bold text-white text-sm">${name}</p>
-            <p class="text-xs text-gray-500">${role}</p>
+        {metric:'18% → 41%',mlabel:'close rate in 90 days',name:'Dominique R.',role:'Founder, DRK Consulting',init:'DR',quote:'We went from spending 3 days a month on reports to 3 hours. Begyn\'s AI catches things my team never would have.'},
+        {metric:'$180K',mlabel:'ARR saved in one quarter',name:'Priya K.',role:'CEO, NovaSphere SaaS',init:'PK',quote:'Churn was killing us silently. Begyn Predict flagged 23 at-risk accounts before they churned. This platform pays for itself every month.'},
+        {metric:'4 locations',mlabel:'run on intelligence, not gut',name:'Marcus T.',role:'Owner, Taíno Restaurant Group',init:'MT',quote:'Begyn predicted a Thursday slowdown 2 weeks out — I ran a promotion and had our best Thursday ever.'},
+      ].map(({metric,mlabel,name,role,init,quote},i) => `
+      <div class="rv d${i+1} glass gh p-7 flex flex-col">
+        <div class="text-4xl font-black tv disp mb-1">${metric}</div>
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wide mb-5">${mlabel}</p>
+        <p class="text-gray-300 leading-relaxed mb-6 flex-1">"${quote}"</p>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:var(--volt);color:#0a0f05">${init}</div>
+            <div>
+              <p class="font-bold text-white text-sm">${name}</p>
+              <p class="text-xs text-gray-500">${role}</p>
+            </div>
           </div>
+          <div style="color:#fbbf24;font-size:.8rem;letter-spacing:1px">★★★★★</div>
         </div>
       </div>`).join('')}
     </div>
@@ -2459,74 +2423,82 @@ app.get('/', (c) => {
 
 <!-- ═══ PRICING ═══ -->
 <section id="pricing" class="py-24 relative overflow-hidden">
-  <div class="orb ob-c w-96 h-96 opacity-15 bottom-0 right-0" style="background:radial-gradient(circle,#06b6d4,transparent 70%)"></div>
+  <div class="orb ob-c w-96 h-96 opacity-10 bottom-0 right-0" style="background:radial-gradient(circle,var(--volt),transparent 70%)"></div>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-    <div class="text-center mb-14 rv">
-      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">Pricing</p>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Built for Entrepreneurs</h2>
-      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Start free. Scale as you grow. No surprise bills, no lock-in.</p>
+    <div class="text-center mb-8 rv">
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">Pricing</p>
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Try Everything Free for 7 Days</h2>
+      <p class="text-gray-400 text-xl max-w-2xl mx-auto">Full platform access, then pick the plan that fits. No credit card to start, no surprises later.</p>
+    </div>
+    <div class="rv glass-sm max-w-2xl mx-auto text-center px-6 py-3.5 rounded-full mb-12" style="border-color:var(--volt-line)">
+      <p class="text-sm text-gray-300"><span class="tv font-bold">All-inclusive:</span> voice minutes, AI, automations & forecasting included — no per-minute fees, no add-on table, no surprise bills.</p>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      <!-- Spark / Free -->
-      <div class="rv glass gh p-6">
-        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Spark</p>
-        <p class="text-4xl font-black text-white mb-0.5">Free</p>
-        <p class="text-gray-500 text-xs mb-5">Forever — no card needed</p>
-        <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
-          ${['1 user','3 AI agents','Basic analytics','500 records','Community support'].map(f => `<li class="flex gap-2"><span class="text-green-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
-        </ul>
-        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Get Started</a>
+      <!-- 7-Day Trial -->
+      <div class="rv relative rounded-2xl p-px" style="background:linear-gradient(160deg,var(--volt),transparent 60%)">
+        <div class="rounded-2xl p-6 h-full" style="background:#0a0e08">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm font-bold tv uppercase tracking-wide">Free Trial</p>
+            <span class="pill" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt);font-size:.65rem">START HERE</span>
+          </div>
+          <p class="text-4xl font-black text-white mb-0.5 disp">$0<span class="text-xl font-normal text-gray-500"> · 7 days</span></p>
+          <p class="text-gray-500 text-xs mb-5">Full Scale-tier access. Everything unlocked.</p>
+          <ul class="space-y-2.5 text-sm text-gray-300 mb-6">
+            ${['Every feature, no limits','Unlimited AI voice agents','Full BI + forecasting suite','No credit card required','Concierge onboarding call','Keep your data & reports'].map(f => `<li class="flex gap-2"><span class="tv mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+          </ul>
+          <a href="#cta" class="block text-center btn-volt font-bold py-3 rounded-xl text-sm">Start Free Trial →</a>
+        </div>
       </div>
       <!-- Growth — Most Popular -->
-      <div class="rv d1 relative rounded-2xl p-px sm:col-span-1" style="background:linear-gradient(135deg,#7c3aed,#d946ef,#06b6d4);box-shadow:0 0 50px rgba(124,58,237,.3)">
-        <div class="rounded-2xl p-6 h-full" style="background:#0d0520">
+      <div class="rv d1 relative rounded-2xl p-px" style="background:var(--volt);box-shadow:0 0 50px rgba(200,242,49,.18)">
+        <div class="rounded-2xl p-6 h-full" style="background:#0a0e08">
           <div class="flex items-center justify-between mb-2">
-            <p class="text-sm font-bold text-purple-300 uppercase tracking-wide">Growth</p>
-            <span class="pill" style="background:linear-gradient(135deg,#7c3aed,#d946ef);color:white;font-size:.65rem">POPULAR</span>
+            <p class="text-sm font-bold text-white uppercase tracking-wide">Growth</p>
+            <span class="pill" style="background:var(--volt);color:#0a0f05;font-size:.65rem">MOST POPULAR</span>
           </div>
-          <p class="text-4xl font-black text-white mb-0.5">$199<span class="text-xl font-normal text-gray-500">/mo</span></p>
+          <p class="text-4xl font-black text-white mb-0.5 disp">$199<span class="text-xl font-normal text-gray-500">/mo</span></p>
           <p class="text-gray-500 text-xs mb-5">For growing businesses</p>
           <ul class="space-y-2.5 text-sm text-gray-300 mb-6">
-            ${['5 users','15 AI agents','Full BI suite','Unlimited records','All integrations','Priority support','Custom voice personas'].map(f => `<li class="flex gap-2"><span class="text-purple-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+            ${['5 users','15 AI agents','Full BI suite','Unlimited records','All integrations','Priority support','Custom voice personas'].map(f => `<li class="flex gap-2"><span class="tv mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
           </ul>
-          <a href="#cta" class="block text-center gb-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity text-sm">Get Started</a>
+          <a href="#cta" class="block text-center btn-volt font-bold py-3 rounded-xl text-sm">Start 7-Day Free Trial</a>
         </div>
       </div>
       <!-- Scale -->
       <div class="rv d2 glass gh p-6">
         <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Scale</p>
-        <p class="text-4xl font-black text-white mb-0.5">$499<span class="text-xl font-normal text-gray-500">/mo</span></p>
+        <p class="text-4xl font-black text-white mb-0.5 disp">$499<span class="text-xl font-normal text-gray-500">/mo</span></p>
         <p class="text-gray-500 text-xs mb-5">For scaling companies</p>
         <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
-          ${['25 users','Unlimited AI agents','Predictive analytics','Custom reports','API access','Dedicated onboarding','Advanced forecasting'].map(f => `<li class="flex gap-2"><span class="text-cyan-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+          ${['25 users','Unlimited AI agents','Predictive analytics','Custom reports','API access','Dedicated onboarding','Advanced forecasting'].map(f => `<li class="flex gap-2"><span class="tv mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
         </ul>
-        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Get Started</a>
+        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm btn-ghost">Start 7-Day Free Trial</a>
       </div>
       <!-- Enterprise -->
       <div class="rv d3 glass gh p-6">
         <p class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Enterprise</p>
-        <p class="text-4xl font-black text-white mb-0.5">Custom</p>
+        <p class="text-4xl font-black text-white mb-0.5 disp">Custom</p>
         <p class="text-gray-500 text-xs mb-5">For large organizations</p>
         <ul class="space-y-2.5 text-sm text-gray-400 mb-6">
-          ${['Unlimited users','White-label platform','Custom AI training','SLA guarantee','Dedicated account manager','On-prem deployment option'].map(f => `<li class="flex gap-2"><span class="text-fuchsia-400 mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
+          ${['Unlimited users','White-label platform','Custom AI training','SLA guarantee','Dedicated account manager','On-prem deployment option'].map(f => `<li class="flex gap-2"><span class="tv mt-0.5 flex-shrink-0">✓</span>${f}</li>`).join('')}
         </ul>
-        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm" style="background:rgba(255,255,255,.06);color:#d1d5db;border:1px solid rgba(255,255,255,.08)">Contact Sales</a>
+        <a href="#cta" class="block text-center font-bold py-3 rounded-xl transition-colors text-sm btn-ghost">Contact Sales</a>
       </div>
     </div>
-    <p class="text-center text-gray-600 text-sm mt-8">All plans include a 14-day free trial · No credit card required · Cancel anytime</p>
+    <p class="text-center text-gray-600 text-sm mt-8">7-day full-access free trial · No credit card · Cancel anytime · Your data exports free, even if you walk away</p>
   </div>
 </section>
 
 <!-- ═══ BLOG PREVIEW ═══ -->
-<section id="blog" class="py-24" style="background:rgba(17,24,39,.25)">
+<section id="blog" class="py-24" style="background:rgba(255,255,255,.015)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-end justify-between mb-12 rv">
       <div>
-        <p class="text-cyan-400 text-sm font-bold uppercase tracking-widest mb-3">Blog</p>
+        <p class="tv text-sm font-bold uppercase tracking-widest mb-3">Blog</p>
         <h2 class="text-4xl font-black text-white">Intelligence from<br/>the Begyn Blog</h2>
         <p class="text-gray-400 mt-2">AI & business intelligence insights for entrepreneurs</p>
       </div>
-      <a href="/blog" class="hidden sm:flex items-center gap-2 text-purple-400 hover:text-purple-300 font-semibold transition-colors text-sm">
+      <a href="/blog" class="hidden sm:flex items-center gap-2 tv hover:opacity-80 font-semibold transition-opacity text-sm">
         View All Posts
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
@@ -2542,7 +2514,7 @@ app.get('/', (c) => {
       </div>`).join('')}
     </div>
     <div class="sm:hidden text-center mt-8">
-      <a href="/blog" class="text-purple-400 hover:text-purple-300 font-semibold text-sm">View All Posts →</a>
+      <a href="/blog" class="tv font-semibold text-sm">View All Posts →</a>
     </div>
   </div>
 </section>
@@ -2551,18 +2523,18 @@ app.get('/', (c) => {
 <section class="py-24">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-14 rv">
-      <p class="text-purple-400 text-sm font-bold uppercase tracking-widest mb-3">FAQ</p>
+      <p class="tv text-sm font-bold uppercase tracking-widest mb-3">FAQ</p>
       <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Common Questions</h2>
-      <p class="text-gray-400 text-xl">Everything entrepreneurs ask before getting started.</p>
+      <p class="text-gray-400 text-xl">Everything owners ask before starting the trial.</p>
     </div>
     <div class="space-y-3">
       ${[
-        {q:'Is this just for large companies?',a:'Not at all. Begyn.ai is built from the ground up for entrepreneurs — solo founders, small teams, growing businesses. The Spark plan is free forever. Most users start seeing ROI within their first week. We scale with you, not against you.'},
+        {q:'What happens after my 7-day free trial ends?',a:'You pick a plan — or you walk away. Because we never take a credit card up front, there is no auto-charge and nothing to cancel. If Begyn earned your business, choose Growth, Scale, or Enterprise and keep going without losing a single report. If not, your data and reports export free.'},
+        {q:'Do I need a credit card to start the trial?',a:'No. The 7-day trial is full Scale-tier access — every AI agent, the entire BI suite, forecasting, automations — with no payment details required. We want you to judge the product by what it does for your business in week one, not by whether you remembered to cancel.'},
+        {q:'Are there usage fees or add-on charges?',a:'No. Voice minutes, AI processing, automations, and forecasting are included in every plan. Many platforms in this space advertise a low sticker price and then bill AI as a per-account add-on, meter your calls per minute, and sell support at up to $500/month. Begyn is all-inclusive: the price on this page is the price on your invoice.'},
+        {q:'How is Begyn different from GoHighLevel or Podium?',a:'Those are strong execution platforms — they answer messages, send campaigns, and manage reviews. Begyn does that work too, but adds the layer they don\'t have: decision intelligence. Revenue forecasting at 94% accuracy, churn-risk alerts, anomaly detection, and a daily answer to "what should I do next?" We\'re also all-inclusive on pricing and built for business owners directly — no agency jargon, no add-on tables, and a trial that doesn\'t require a credit card.'},
         {q:'How does Begyn AI learn my business?',a:'During a 30-minute onboarding, you connect your existing tools (CRM, accounting, analytics, etc.). Begyn AI ingests your historical data, identifies patterns specific to your business model, and calibrates its models to your industry and context. No manual training required.'},
-        {q:'What integrations are available?',a:'100+ integrations including Shopify, Stripe, HubSpot, Salesforce, QuickBooks, Xero, Google Analytics, Google Workspace, Slack, Notion, Zapier, Airtable, and many more. Custom integrations available on Scale and Enterprise plans.'},
-        {q:'Can it replace my analyst or operations team?',a:'It augments more than replaces. Begyn handles the data wrangling, reporting, and pattern detection that would otherwise take your team days. Your people can focus on strategy, relationships, and execution — the things AI can\'t do. Most customers tell us their team feels supercharged, not replaced.'},
         {q:'Is my business data secure?',a:'Your data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are SOC 2 Type II certified. We never sell or share your data, and we never use your business data to train shared models. You own your data 100% — exportable at any time.'},
-        {q:'What if I only need one feature like Voice Agents?',a:'Each Begyn module works standalone. You can start with just Begyn Voice, just Begyn Leads, or just Intelligence reporting. As your needs grow, add modules in minutes. There\'s no pressure to use everything — only pay for what you use.'},
       ].map(({q,a},i) => `
       <div class="rv d${(i%3)+1} glass faq-item">
         <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
@@ -2579,38 +2551,40 @@ app.get('/', (c) => {
 
 <!-- ═══ CTA ═══ -->
 <section id="cta" class="py-24 hero-mesh relative overflow-hidden">
-  <div class="orb ob-a w-96 h-96 opacity-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background:radial-gradient(circle,#7c3aed,transparent 70%)"></div>
+  <div class="orb ob-a w-96 h-96 opacity-25 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background:radial-gradient(circle,#3c5a10,transparent 70%)"></div>
+  <svg class="ekg absolute top-8 left-0 w-full h-12 opacity-25" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,30 H260 L285,30 296,6 314,54 330,30 H640 L665,30 676,10 694,50 710,30 H1030 L1055,30 1066,8 1084,52 1100,30 H1200" fill="none" stroke="var(--volt)" stroke-width="2"/>
+  </svg>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-    <div class="glass p-12 sm:p-16" style="border-color:rgba(139,92,246,.25)">
-      <div class="text-4xl mb-4">🚀</div>
-      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Your Business Intelligence<br/>Starts Now</h2>
-      <p class="text-gray-400 text-xl mb-10">Join 3,200+ entrepreneurs who chose to Begyn.</p>
+    <div class="glass p-12 sm:p-16" style="border-color:var(--volt-line)">
+      <h2 class="text-4xl sm:text-5xl font-black text-white mb-4">Your Business, On Autopilot.<br/><span class="tv">Your Time, Back.</span></h2>
+      <p class="text-gray-400 text-xl mb-10">7 days. Every feature. No credit card. Join 3,200+ businesses that run on Begyn.</p>
       <form onsubmit="handleDemo(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-        <input id="demo-email" type="email" required placeholder="you@yourbusiness.com"
+        <input id="demo-email" type="email" required placeholder="you@yourbusiness.com" aria-label="Business email"
           class="flex-1 px-5 py-4 rounded-xl outline-none text-white placeholder-gray-500 transition-colors text-sm"
-          style="background:rgba(17,24,39,.8);border:1px solid rgba(139,92,246,.25)" onfocus="this.style.borderColor='rgba(139,92,246,.6)'" onblur="this.style.borderColor='rgba(139,92,246,.25)'"/>
-        <button type="submit" class="gb-primary text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap shadow-lg shadow-purple-900/40 text-sm">Start Free →</button>
+          style="background:rgba(255,255,255,.05);border:1px solid var(--line)" onfocus="this.style.borderColor='var(--volt-line)'" onblur="this.style.borderColor='var(--line)'"/>
+        <button type="submit" class="btn-volt font-bold px-8 py-4 rounded-xl whitespace-nowrap text-sm">Start My Free Trial →</button>
       </form>
       <div class="flex flex-wrap justify-center gap-5 mt-6 text-xs text-gray-600">
-        <span>✓ Free to start</span><span>✓ 30-min setup</span><span>✓ Cancel anytime</span>
+        <span>✓ Full access for 7 days</span><span>✓ No credit card</span><span>✓ Cancel anytime</span>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ═══ FOOTER ═══ -->
-<footer class="border-t py-16" style="background:#030712;border-color:rgba(255,255,255,.06)">
+<footer class="border-t py-16" style="background:var(--ink);border-color:rgba(255,255,255,.06)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
       <!-- Brand -->
       <div class="col-span-2 md:col-span-1">
         <div class="flex items-center gap-2 mb-3">
-          <div class="w-7 h-7 rounded-xl gb-primary flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center" style="background:var(--volt)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0f05" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
-          <span class="font-black text-white">Begyn<span class="gt-primary">.ai</span></span>
+          <span class="font-black text-white disp">Begyn<span class="tv">.ai</span></span>
         </div>
-        <p class="text-gray-600 text-xs leading-relaxed mb-4">BI from Begyn —<br/>Where AI meets business.</p>
+        <p class="text-gray-600 text-xs leading-relaxed mb-4">The autonomous AI system that<br/>runs your entire business.</p>
         <div class="flex gap-3">
           <a href="#" class="text-gray-600 hover:text-white transition-colors" aria-label="X / Twitter">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -2624,14 +2598,14 @@ app.get('/', (c) => {
       <div>
         <p class="text-white font-bold text-sm mb-4">Platform</p>
         <div class="space-y-2.5">
-          ${['Intelligence','Voice Agents','Lead AI','Automate','Reports','Predict'].map(l => `<a href="#platform" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+          ${['Studio','Voice Agents','Lead AI','Build','Automate','Intelligence','Predict'].map(l => `<a href="#platform" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
         </div>
       </div>
       <!-- Solutions -->
       <div>
         <p class="text-white font-bold text-sm mb-4">Solutions</p>
         <div class="space-y-2.5">
-          ${['By Industry','By Company Size','Integrations','API Docs','Case Studies'].map(l => `<a href="#industries" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
+          ${['By Industry','By Company Size','Integrations','API Docs','Case Studies'].map(l => `<a href="#why" class="block text-gray-500 hover:text-white text-xs transition-colors">${l}</a>`).join('')}
         </div>
       </div>
       <!-- Company -->
@@ -2651,14 +2625,14 @@ app.get('/', (c) => {
     </div>
     <div class="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color:rgba(255,255,255,.06)">
       <p class="text-gray-700 text-xs">© 2026 Begyn.ai. All rights reserved.</p>
-      <p class="text-gray-700 text-xs">Where AI meets business.</p>
+      <p class="text-gray-700 text-xs">One AI runs your business. You get your time back.</p>
     </div>
   </div>
 </footer>
 
 <!-- Floating mobile CTA -->
 <div id="float-cta" class="fixed bottom-4 inset-x-4 z-50">
-  <a href="#cta" class="block gb-primary text-white text-center font-bold py-4 rounded-2xl shadow-2xl shadow-purple-900/60 text-sm">Start Free — No Credit Card →</a>
+  <a href="#cta" class="block btn-volt text-center font-bold py-4 rounded-2xl shadow-2xl text-sm">Start 7-Day Free Trial →</a>
 </div>
 
 <script>
@@ -2667,6 +2641,37 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } })
 }, { threshold: 0.1 })
 document.querySelectorAll('.rv').forEach(el => obs.observe(el))
+
+// Count-up counters
+const cobs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return
+    cobs.unobserve(e.target)
+    const el = e.target
+    const target = parseInt(el.dataset.counter, 10)
+    const prefix = el.dataset.prefix || ''
+    const suffix = el.dataset.suffix || ''
+    const dur = 1400
+    const t0 = performance.now()
+    function tick(t) {
+      const p = Math.min((t - t0) / dur, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      el.textContent = prefix + Math.round(target * eased).toLocaleString('en-US') + suffix
+      if (p < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+}, { threshold: 0.4 })
+document.querySelectorAll('[data-counter]').forEach(el => cobs.observe(el))
+
+// Funnel tabs
+function fnTab(idx) {
+  document.querySelectorAll('.ftab').forEach((b, i) => {
+    b.classList.toggle('on', i === idx)
+    b.setAttribute('aria-selected', i === idx ? 'true' : 'false')
+  })
+  document.querySelectorAll('.fpanel').forEach((p, i) => p.classList.toggle('on', i === idx))
+}
 
 // Float CTA
 const fcta = document.getElementById('float-cta')
@@ -2695,8 +2700,8 @@ async function loadBlog() {
     }
     grid.innerHTML = posts.map(p => \`
       <a href="/blog/\${p.slug}" class="glass gh p-6 block">
-        <span class="inline-block text-xs px-2 py-0.5 rounded-full mb-4" style="background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);color:#c4b5fd">\${p.category||'AI Insights'}</span>
-        <h3 class="text-sm font-bold text-white mb-2 cl2 hover:text-purple-300 transition-colors">\${p.title}</h3>
+        <span class="inline-block text-xs px-2 py-0.5 rounded-full mb-4" style="background:var(--volt-soft);border:1px solid var(--volt-line);color:var(--volt)">\${p.category||'AI Insights'}</span>
+        <h3 class="text-sm font-bold text-white mb-2 cl2">\${p.title}</h3>
         <p class="text-gray-500 text-xs leading-relaxed mb-4 cl3">\${p.excerpt||''}</p>
         <div class="flex justify-between text-xs text-gray-700">
           <span>\${p.author||'Begyn.ai Team'}</span>
@@ -2714,9 +2719,8 @@ function handleDemo(e) {
   btn.disabled = true
   setTimeout(() => {
     btn.textContent = '✓ Check your inbox!'
-    btn.style.background = 'linear-gradient(135deg,#059669,#10b981)'
     document.getElementById('demo-email').value = ''
-    setTimeout(() => { btn.textContent = 'Start Free →'; btn.disabled = false; btn.style.background = ''; }, 4000)
+    setTimeout(() => { btn.textContent = 'Start My Free Trial →'; btn.disabled = false; }, 4000)
   }, 1000)
 }
 
